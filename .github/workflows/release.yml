@@ -18,8 +18,10 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
+            platform_slug: linux-amd64
             runner: ubuntu-latest
           - platform: linux/arm64
+            platform_slug: linux-arm64
             runner: ubuntu-24.04-arm
 
     permissions:
@@ -62,15 +64,15 @@ jobs:
           context: .
           file: Dockerfile
           platforms: ${{ matrix.platform }}
-          push: true
           labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.image.outputs.name }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
-            type=gha,scope=${{ matrix.platform }}
-            type=registry,ref=${{ steps.image.outputs.name }}:buildcache-${{ matrix.platform }}
+            type=gha,scope=${{ matrix.platform_slug }}
+            type=registry,ref=${{ steps.image.outputs.name }}:buildcache-${{ matrix.platform_slug }}
           cache-to: |
-            type=gha,mode=max,scope=${{ matrix.platform }}
-            type=registry,ref=${{ steps.image.outputs.name }}:buildcache-${{ matrix.platform }},mode=max
+            type=gha,mode=max,scope=${{ matrix.platform_slug }}
+            type=registry,ref=${{ steps.image.outputs.name }}:buildcache-${{ matrix.platform_slug }},mode=max
           build-args: |
             RUBY_VERSION=3.3.11
 
@@ -83,7 +85,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.platform }}
+          name: digests-${{ matrix.platform_slug }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1

@@ -17,6 +17,21 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'show renders temperature chart when telemetry exists' do
+    get job_path(@job)
+
+    assert_select '.h-section-label', text: 'Temperatures'
+    assert_match(/chart/i, response.body)
+  end
+
+  test 'show omits temperature chart when job has no telemetry' do
+    job = jobs(:finished)
+
+    get job_path(job)
+
+    assert_select '.h-section-label', text: 'Temperatures', count: 0
+  end
+
   test 'My prints filter shows only the current user\'s jobs' do
     login_as(users(:viewer))
     get jobs_path(owner: 'me')

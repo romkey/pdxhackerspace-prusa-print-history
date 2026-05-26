@@ -4,7 +4,12 @@
       <div class="text-13 text-secondary">
         <%= link_to 'Printers', printers_path, class: 'text-decoration-none' %>
       </div>
-      <h1 class="h-page-title mb-0"><%= @printer.name %></h1>
+      <h1 class="h-page-title mb-0 d-flex align-items-center gap-2">
+        <span id="<%= dom_id(@printer, :prusalink_status) %>">
+          <%= render 'printers/prusalink_status_dot', printer: @printer %>
+        </span>
+        <%= @printer.name %>
+      </h1>
       <div class="text-13 text-secondary mt-1">
         <%= @printer.model.presence || 'Unknown model' %>
         &middot; <%= @printer.location.presence || 'No location' %>

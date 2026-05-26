@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-05-26
+
+### Added
+- Temperature chart on the job show page (bed, enclosure, ambient, tool heads).
+- PrusaLink connectivity dot on the printer page (green = reachable, red = failed).
+- Masked PrusaLink API key on printer settings once configured.
+
 ## [0.1.10] - 2026-05-26
 
 ### Fixed

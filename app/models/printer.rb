@@ -7,6 +7,7 @@ class Printer < ApplicationRecord
   ENVIRONMENT_COLUMNS = %w[
     operational_state ambient_temp enclosure_temp enclosure_humidity environment_updated_at
   ].freeze
+  CONNECTIVITY_COLUMNS = %w[prusalink_reachable prusalink_checked_at].freeze
 
   has_many :jobs, dependent: :destroy
 
@@ -21,6 +22,12 @@ class Printer < ApplicationRecord
   end
 
   delegate :environment_tracking?, to: :class
+
+  def self.connection_tracking?
+    column_names.include?('prusalink_reachable')
+  end
+
+  delegate :connection_tracking?, to: :class
 
   def enclosure_temp_sensor
     return nil if ha_base_sensor.blank?
@@ -58,5 +65,13 @@ class Printer < ApplicationRecord
 
   def idle?
     display_status == 'idle'
+  end
+
+  def prusalink_connection_status
+    return :unconfigured unless prusalink?
+
+    return :unknown unless connection_tracking? && !prusalink_reachable.nil?
+
+    prusalink_reachable ? :reachable : :unreachable
   end
 end

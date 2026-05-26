@@ -28,10 +28,19 @@
     </div>
     <div class="col-md-6">
       <%= f.label :prusalink_key, 'PrusaLink API key', class: 'form-label' %>
-      <%= f.text_field :prusalink_key,
-                       class: 'form-control',
-                       placeholder: printer.persisted? && printer.prusalink_key.present? ? '(stored, leave blank to keep)' : nil %>
-      <div class="form-text">Encrypted at rest.</div>
+      <% if printer.persisted? && printer.prusalink? %>
+        <%= f.password_field :prusalink_key,
+                             class: 'form-control',
+                             placeholder: '••••••••',
+                             autocomplete: 'new-password',
+                             value: '' %>
+        <div class="form-text">Key is saved. Leave blank to keep, or enter a new key to replace.</div>
+      <% else %>
+        <%= f.password_field :prusalink_key,
+                             class: 'form-control',
+                             autocomplete: 'new-password' %>
+        <div class="form-text">Encrypted at rest.</div>
+      <% end %>
     </div>
     <div class="col-md-6">
       <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>

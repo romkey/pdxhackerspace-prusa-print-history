@@ -154,19 +154,19 @@ class PrinterPollerTest < ActiveJob::TestCase
 
     assert_equal 'printing', @printer.operational_state
     assert_in_delta 22.0, @printer.ambient_temp.to_f
+    assert @printer.prusalink_reachable
   end
 
-  test 'skips printer environment update when environment columns are absent' do
-    without_environment_columns do
-      payloads = {
-        status: { 'printer' => { 'state' => 'READY' } },
-        job: nil
-      }
+  test 'marks PrusaLink unreachable when polling fails' do
+    prusalink = Object.new
+    prusalink.define_singleton_method(:status) { raise PrusaLink::Error, 'connection refused' }
 
-      assert_no_changes -> { @printer.reload.updated_at } do
-        PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
-      end
-    end
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    @printer.reload
+
+    assert_not @printer.prusalink_reachable
+    assert_not_nil @printer.prusalink_checked_at
   end
 
   test 'finalizes active jobs when PrusaLink reports FINISHED without a job payload' do
@@ -192,6 +192,19 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_not_nil job.ended_at
     assert_equal 'idle', @printer.operational_state
     assert_nil @printer.current_job
+  end
+
+  test 'skips printer environment update when environment columns are absent' do
+    without_environment_columns do
+      payloads = {
+        status: { 'printer' => { 'state' => 'READY' } },
+        job: nil
+      }
+
+      assert_no_changes -> { @printer.reload.updated_at } do
+        PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+      end
+    end
   end
 
   test 'syncs tool metadata from status and job payloads' do
@@ -227,7 +240,8 @@ class PrinterPollerTest < ActiveJob::TestCase
   private
 
   def without_environment_columns(&)
-    Printer.stub(:column_names, Printer.column_names - Printer::ENVIRONMENT_COLUMNS, &)
+    columns = Printer.column_names - Printer::ENVIRONMENT_COLUMNS - Printer::CONNECTIVITY_COLUMNS
+    Printer.stub(:column_names, columns, &)
   end
 
   def stub_prusalink(payloads)

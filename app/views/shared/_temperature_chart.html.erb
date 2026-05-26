@@ -1,0 +1,12 @@
+<% if chart_series.any? %>
+  <%= line_chart chart_series,
+                 height: '220px',
+                 library: {
+                   scales: { y: { ticks: { callback: nil } } },
+                   plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 } } } }
+                 },
+                 points: false,
+                 suffix: ' °C' %>
+<% else %>
+  <div class="text-secondary text-13 mb-0">No temperature readings recorded.</div>
+<% end %>

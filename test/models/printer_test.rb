@@ -82,9 +82,26 @@ class PrinterTest < ActiveSupport::TestCase
     end
   end
 
+  test 'prusalink_connection_status reflects reachability' do
+    @xl.update!(prusalink_key: 'secret', prusalink_reachable: true)
+
+    assert_equal :reachable, @xl.prusalink_connection_status
+
+    @xl.update!(prusalink_reachable: false)
+
+    assert_equal :unreachable, @xl.prusalink_connection_status
+  end
+
+  test 'prusalink_connection_status is unconfigured without a key' do
+    @mini.update!(prusalink_key: nil)
+
+    assert_equal :unconfigured, @mini.prusalink_connection_status
+  end
+
   private
 
   def without_environment_columns(&)
-    Printer.stub(:column_names, Printer.column_names - Printer::ENVIRONMENT_COLUMNS, &)
+    columns = Printer.column_names - Printer::ENVIRONMENT_COLUMNS - Printer::CONNECTIVITY_COLUMNS
+    Printer.stub(:column_names, columns, &)
   end
 end

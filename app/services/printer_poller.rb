@@ -33,6 +33,7 @@ class PrinterPoller
     return unless @printer.prusalink?
 
     status_payload = @prusalink.status
+    record_prusalink_reachable!
     job_payload    = safe_job_payload
     mapped_status  = map_status(status_payload)
 
@@ -43,6 +44,8 @@ class PrinterPoller
 
     handle_job_poll(status_payload, job_payload, mapped_status)
   rescue PrusaLink::Error => e
+    record_prusalink_unreachable!
+    broadcast_live_update
     Rails.logger.warn("PrinterPoller failed for printer ##{@printer.id}: #{e.message}")
   end
 
@@ -122,6 +125,18 @@ class PrinterPoller
       enclosure_humidity: sensor_value(@printer.humidity_sensor),
       environment_updated_at: Time.current
     )
+  end
+
+  def record_prusalink_reachable!
+    return unless @printer.connection_tracking?
+
+    @printer.update!(prusalink_reachable: true, prusalink_checked_at: Time.current)
+  end
+
+  def record_prusalink_unreachable!
+    return unless @printer.connection_tracking?
+
+    @printer.update!(prusalink_reachable: false, prusalink_checked_at: Time.current)
   end
 
   def broadcast_live_update

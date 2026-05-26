@@ -72,6 +72,52 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/PLA/, response.body)
   end
 
+  test 'show displays PrusaLink status dot when configured' do
+    @printer.update!(prusalink_key: 'secret', prusalink_reachable: true)
+
+    get printer_path(@printer)
+
+    assert_select '.status-dot.status-success[title=?]', 'PrusaLink connected'
+  end
+
+  test 'show displays red PrusaLink dot when unreachable' do
+    @printer.update!(prusalink_key: 'secret', prusalink_reachable: false)
+
+    get printer_path(@printer)
+
+    assert_select '.status-dot.status-danger[title=?]', 'PrusaLink unreachable'
+  end
+
+  test 'show omits PrusaLink dot when no API key is configured' do
+    @printer.update!(prusalink_key: nil)
+
+    get printer_path(@printer)
+
+    assert_select '.status-dot.status-success[title=?]', 'PrusaLink connected', count: 0
+    assert_select '.status-dot.status-danger[title=?]', 'PrusaLink unreachable', count: 0
+  end
+
+  test 'edit masks stored PrusaLink key' do
+    @printer.update!(prusalink_key: 'super-secret-key')
+    login_as(users(:admin))
+    get edit_printer_path(@printer)
+
+    assert_response :success
+    assert_no_match(/super-secret-key/, response.body)
+    assert_select 'input[type=password][name=?]', 'printer[prusalink_key]'
+    assert_match(/••••/, response.body)
+  end
+
+  test 'update keeps existing PrusaLink key when field is left blank' do
+    @printer.update!(prusalink_key: 'keep-me')
+    login_as(users(:admin))
+
+    patch printer_path(@printer), params: { printer: { location: 'Lab', prusalink_key: '' } }
+
+    assert_redirected_to printer_path(@printer)
+    assert_equal 'keep-me', @printer.reload.prusalink_key
+  end
+
   test 'new redirects anonymous users to login' do
     get new_printer_path
 

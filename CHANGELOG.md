@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-26
+
+### Fixed
+- Release workflow manifest merge: build fully qualified `image@sha256:digest`
+  sources instead of passing bare hash filenames to `imagetools create`.
+
 ## [0.1.3] - 2026-05-26
 
 ### Fixed

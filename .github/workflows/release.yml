@@ -139,6 +139,9 @@ jobs:
           DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
         run: |
           tags="$(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")"
+          sources=""
+          for digest in $(find /tmp/digests -type f -printf '%f\n' | sort -u); do
+            sources="${sources} ${IMAGE}@sha256:${digest}"
+          done
           # shellcheck disable=SC2086
-          docker buildx imagetools create ${tags} \
-            $(printf "${IMAGE}@sha256:%s " "$(find /tmp/digests -type f -printf '%f\n')")
+          docker buildx imagetools create ${tags}${sources}

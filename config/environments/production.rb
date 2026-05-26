@@ -18,79 +18,51 @@ Rails.application.configure do
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { 'cache-control' => "public, max-age=#{1.year.to_i}" }
 
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  # config.asset_host = "http://assets.example.com"
-
   # Store uploaded files on a persistent disk volume (see config/storage.yml).
   config.active_storage.service = :production
 
-  # TLS terminates at the reverse proxy. Honor X-Forwarded-Proto from trusted
-  # proxies (see config/initializers/trusted_proxies.rb). Do not use assume_ssl
-  # by default — it marks all session cookies Secure even when the browser is
-  # still on http://, which breaks CSRF/session for login forms.
+  # --- TLS / reverse-proxy (all opt-in; HTTP works out of the box) ---
+  #
+  # RAILS_FORCE_SSL=true     → redirect http to https, HSTS
+  # RAILS_ASSUME_SSL=true    → treat every request as SSL (URL generation only)
+  # SESSION_COOKIE_SECURE    → Secure flag on session cookie (default false)
+  # APP_PROTOCOL             → http or https for generated URLs (default http)
+  #
+  # With the defaults below, the app serves plain HTTP and HTTPS equally — useful
+  # behind a reverse proxy during development. Enable RAILS_FORCE_SSL when you
+  # want to require HTTPS in production.
+
   config.assume_ssl = ENV.fetch('RAILS_ASSUME_SSL', 'false') == 'true'
 
-  # Redirect http clients to https and set secure cookies only when the request
-  # is actually considered SSL (via X-Forwarded-Proto or RAILS_ASSUME_SSL).
-  config.force_ssl = true
+  if ENV.fetch('RAILS_FORCE_SSL', 'false') == 'true'
+    config.force_ssl = true
+    ssl_options = { redirect: { exclude: ->(request) { request.path == '/up' } } }
+    ssl_options[:secure_cookies] = false if ENV.fetch('SESSION_COOKIE_SECURE', 'false') == 'false'
+    config.ssl_options = ssl_options
+  end
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  ssl_options = { redirect: { exclude: ->(request) { request.path == '/up' } } }
-  ssl_options[:secure_cookies] = false if ENV.fetch('SESSION_COOKIE_SECURE', 'true') == 'false'
-  config.ssl_options = ssl_options
+  config.session_store :cookie_store,
+                       secure: ENV.fetch('SESSION_COOKIE_SECURE', 'false') == 'true',
+                       same_site: :lax
 
   app_host = ENV.fetch('APP_HOST', 'example.com')
-  config.action_mailer.default_url_options = { host: app_host, protocol: 'https' }
-  config.default_url_options = { host: app_host, protocol: 'https' }
+  app_protocol = ENV.fetch('APP_PROTOCOL', 'http')
+  config.action_mailer.default_url_options = { host: app_host, protocol: app_protocol }
+  config.default_url_options = { host: app_host, protocol: app_protocol }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [:request_id]
   config.logger   = ActiveSupport::TaggedLogging.logger($stdout)
 
-  # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
 
-  # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = '/up'
 
-  # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  # config.cache_store = :mem_cache_store
-
-  # Replace the default in-process and non-durable queuing backend for Active Job.
-  # config.active_job.queue_adapter = :resque
-
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
-
-  # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
-  # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
 
-  # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [:id]
-
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

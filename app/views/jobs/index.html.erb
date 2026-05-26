@@ -39,10 +39,10 @@
                 <%= job.status %>
               </td>
               <td class="text-secondary"><%= job.owner&.display_name || '—' %></td>
-              <td class="text-secondary text-13" title="<%= job.started_at&.iso8601 %>">
+              <td class="text-secondary text-13" title="<%= job.started_at && l(job.started_at, format: :precise) %>">
                 <%= job.started_at ? l(job.started_at, format: :short) : '—' %>
               </td>
-              <td class="text-secondary text-13" title="<%= job.ended_at&.iso8601 %>">
+              <td class="text-secondary text-13" title="<%= job.ended_at && l(job.ended_at, format: :precise) %>">
                 <%= job.ended_at ? l(job.ended_at, format: :short) : '—' %>
               </td>
             </tr>

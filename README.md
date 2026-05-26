@@ -61,6 +61,8 @@ for the full list; the values you must set on a fresh install are:
   `LOCAL_ADMIN_NAME` — when email and password are both set, the login
   page shows a password form that signs in as a local admin account
   (no Authentik required). Useful for single-user or offline setups.
+- `TIMEZONE` — IANA timezone name (e.g. `America/Los_Angeles`) used
+  for displaying job timestamps and relative times. Defaults to `UTC`.
 
 ## Local development
 

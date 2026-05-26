@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-05-25
+
+### Fixed
+- Stop forcing HTTPS in production: `RAILS_FORCE_SSL` now defaults to off, session
+  cookies default to non-Secure, and `APP_PROTOCOL` defaults to `http`. Set the
+  TLS env vars explicitly when you want to require HTTPS.
+
+### Changed
+- Configurable `TIMEZONE` env var for displaying job timestamps; hover tooltips
+  use a precise local-time format.
+
 ## [0.1.5] - 2026-05-26
 
 ### Fixed

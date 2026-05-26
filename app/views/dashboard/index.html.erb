@@ -68,7 +68,7 @@
                     <%= link_to event.event_type, job_path(event.job), class: 'text-decoration-none' %>
                   </div>
                   <div class="text-secondary text-13"
-                       title="<%= event.occurred_at.iso8601 %>">
+                       title="<%= l(event.occurred_at, format: :precise) %>">
                     <%= time_ago_in_words(event.occurred_at) %> ago
                   </div>
                 </li>

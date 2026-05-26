@@ -69,7 +69,7 @@
                     <td><%= link_to job.filename, job_path(job) %></td>
                     <td class="text-secondary"><%= job.status %></td>
                     <td class="text-secondary"><%= job.owner&.display_name || '—' %></td>
-                    <td class="text-secondary text-13" title="<%= job.started_at&.iso8601 %>">
+                    <td class="text-secondary text-13" title="<%= job.started_at && l(job.started_at, format: :precise) %>">
                       <%= job.started_at ? "#{time_ago_in_words(job.started_at)} ago" : '—' %>
                     </td>
                   </tr>

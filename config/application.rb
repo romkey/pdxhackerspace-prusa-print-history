@@ -27,5 +27,7 @@ module PrusaPrintHistory
     config.active_record.encryption.key_derivation_salt    = ENV.fetch('ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT',
                                                                        nil)
     config.active_record.encryption.support_unencrypted_data = false
+
+    config.time_zone = ENV.fetch('TIMEZONE', 'UTC')
   end
 end

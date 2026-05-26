@@ -29,3 +29,6 @@
 
 en:
   hello: "Hello world"
+  time:
+    formats:
+      precise: "%Y-%m-%d %H:%M:%S %Z"

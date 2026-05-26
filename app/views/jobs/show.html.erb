@@ -82,7 +82,7 @@
                       <% if event.message %>&middot; <%= event.message %><% end %>
                     </div>
                   </div>
-                  <div class="text-secondary text-13" title="<%= event.occurred_at.iso8601 %>">
+                  <div class="text-secondary text-13" title="<%= l(event.occurred_at, format: :precise) %>">
                     <%= l(event.occurred_at, format: :short) %>
                   </div>
                 </li>

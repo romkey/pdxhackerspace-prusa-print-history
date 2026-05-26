@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-05-26
+
+### Fixed
+- Gracefully degrade when v0.1.7 environment columns are not migrated yet: status
+  and ambient display fall back to job-based data instead of raising 500.
+
 ## [0.1.8] - 2026-05-26
 
 ### Fixed

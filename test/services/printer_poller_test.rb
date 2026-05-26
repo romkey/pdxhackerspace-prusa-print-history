@@ -156,7 +156,24 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_in_delta 22.0, @printer.ambient_temp.to_f
   end
 
+  test 'skips printer environment update when environment columns are absent' do
+    without_environment_columns do
+      payloads = {
+        status: { 'printer' => { 'state' => 'READY' } },
+        job: nil
+      }
+
+      assert_no_changes -> { @printer.reload.updated_at } do
+        PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+      end
+    end
+  end
+
   private
+
+  def without_environment_columns(&)
+    Printer.stub(:column_names, Printer.column_names - Printer::ENVIRONMENT_COLUMNS, &)
+  end
 
   def stub_prusalink(payloads)
     obj = Object.new

@@ -3,15 +3,24 @@ class Printer < ApplicationRecord
 
   HA_ENCLOSURE_TEMP_SUFFIX = '_bme680_temperature'.freeze
   HA_HUMIDITY_SUFFIX       = '_bme680_humidity'.freeze
-  OPERATIONAL_STATES       = %w[unknown idle printing paused attention error finished cancelled].freeze
+  OPERATIONAL_STATES  = %w[unknown idle printing paused attention error finished cancelled].freeze
+  ENVIRONMENT_COLUMNS = %w[
+    operational_state ambient_temp enclosure_temp enclosure_humidity environment_updated_at
+  ].freeze
 
   has_many :jobs, dependent: :destroy
 
   validates :name,     presence: true, uniqueness: { case_sensitive: false }
   validates :hostname, presence: true
-  validates :operational_state, inclusion: { in: OPERATIONAL_STATES }
+  validates :operational_state, inclusion: { in: OPERATIONAL_STATES }, if: :environment_tracking?
 
   scope :ordered, -> { order(:name) }
+
+  def self.environment_tracking?
+    column_names.include?('operational_state')
+  end
+
+  delegate :environment_tracking?, to: :class
 
   def enclosure_temp_sensor
     return nil if ha_base_sensor.blank?
@@ -42,7 +51,7 @@ class Printer < ApplicationRecord
   end
 
   def display_status
-    return operational_state if operational_state.present? && operational_state != 'unknown'
+    return operational_state if environment_tracking? && operational_state.present? && operational_state != 'unknown'
 
     current_job&.status || 'idle'
   end

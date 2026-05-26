@@ -74,4 +74,17 @@ class PrinterTest < ActiveSupport::TestCase
 
     assert_equal 'idle', @mini.display_status
   end
+
+  test 'display_status falls back to current job when environment columns are absent' do
+    without_environment_columns do
+      assert_not @xl.environment_tracking?
+      assert_equal 'printing', @xl.display_status
+    end
+  end
+
+  private
+
+  def without_environment_columns(&)
+    Printer.stub(:column_names, Printer.column_names - Printer::ENVIRONMENT_COLUMNS, &)
+  end
 end

@@ -83,6 +83,8 @@ class PrinterPoller
   end
 
   def update_printer_environment!(operational_state:)
+    return unless @printer.environment_tracking?
+
     @printer.update!(
       operational_state: operational_state,
       ambient_temp: sensor_value(Setting.default_ambient_sensor),

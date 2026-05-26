@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-26
+
+### Fixed
+- System dark mode now follows OS preference via Bootstrap `$color-mode-type:
+  media-query`; removed the navbar-only dark override that caused unreadable
+  light-on-light text.
+- Local admin login behind a TLS-terminating reverse proxy: disable CSRF origin
+  scheme check in production, disable Turbo on the login form, add `APP_HOST`.
+
 ## [0.1.2] - 2026-05-26
 
 ### Changed

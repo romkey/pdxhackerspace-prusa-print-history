@@ -1,6 +1,11 @@
 // Custom design-system helpers used across the app.
 // Keep this small and additive; prefer Bootstrap utility classes when possible.
 
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
 .h-page-title {
   font-size: 1.5rem;
   font-weight: 600;

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-05-26
+
+### Fixed
+- Login CSRF failures behind a reverse proxy: stop using `assume_ssl` by default,
+  trust proxy networks, and honor `X-Forwarded-Proto` so session cookies are
+  only marked Secure for HTTPS clients.
+
 ## [0.1.4] - 2026-05-26
 
 ### Fixed

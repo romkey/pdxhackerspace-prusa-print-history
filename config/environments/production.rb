@@ -24,14 +24,20 @@ Rails.application.configure do
   # Store uploaded files on a persistent disk volume (see config/storage.yml).
   config.active_storage.service = :production
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
+  # TLS terminates at the reverse proxy. Honor X-Forwarded-Proto from trusted
+  # proxies (see config/initializers/trusted_proxies.rb). Do not use assume_ssl
+  # by default — it marks all session cookies Secure even when the browser is
+  # still on http://, which breaks CSRF/session for login forms.
+  config.assume_ssl = ENV.fetch('RAILS_ASSUME_SSL', 'false') == 'true'
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+  # Redirect http clients to https and set secure cookies only when the request
+  # is actually considered SSL (via X-Forwarded-Proto or RAILS_ASSUME_SSL).
   config.force_ssl = true
 
   # Skip http-to-https redirect for the default health check endpoint.
-  config.ssl_options = { redirect: { exclude: ->(request) { request.path == '/up' } } }
+  ssl_options = { redirect: { exclude: ->(request) { request.path == '/up' } } }
+  ssl_options[:secure_cookies] = false if ENV.fetch('SESSION_COOKIE_SECURE', 'true') == 'false'
+  config.ssl_options = ssl_options
 
   app_host = ENV.fetch('APP_HOST', 'example.com')
   config.action_mailer.default_url_options = { host: app_host, protocol: 'https' }

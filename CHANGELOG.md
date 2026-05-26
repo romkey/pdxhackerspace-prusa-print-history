@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-26
+
+### Changed
+- Speed up release Docker builds: BuildKit cache mounts for apt, Bundler, and
+  Yarn; prebuilt Node binaries instead of node-build; parallel native amd64/arm64
+  builds on GitHub Actions with per-platform GHA and registry layer caches.
+
 ## [0.1.1] - 2026-05-26
 
 ### Added

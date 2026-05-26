@@ -166,6 +166,8 @@ class PrinterPollerTest < ActiveJob::TestCase
   end
 
   test 'marks PrusaLink unreachable when polling fails' do
+    PrusaLink::Client.new(@printer)
+
     prusalink = Object.new
     prusalink.define_singleton_method(:status) { raise PrusaLink::Error, 'connection refused' }
 

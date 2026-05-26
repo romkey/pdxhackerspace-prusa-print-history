@@ -1,0 +1,52 @@
+<% tools = local_assigns.fetch(:tools, []) %>
+<% live_tool_temps = local_assigns.fetch(:live_tool_temps, {}) %>
+<% show_live_temps = local_assigns.fetch(:show_live_temps, false) %>
+<% section_label = local_assigns[:section_label] %>
+<% empty_message = local_assigns.fetch(:empty_message, 'No print head data.') %>
+<% wrapper_class = local_assigns[:wrapper_class] %>
+
+<% if section_label.present? || tools.any? || (show_live_temps && live_tool_temps.any?) %>
+  <div class="<%= wrapper_class if wrapper_class.present? %>">
+    <% if section_label.present? %>
+      <div class="h-section-label"><%= section_label %></div>
+    <% end %>
+
+    <% if tools.any? %>
+      <table class="table table-compact mb-0 text-13">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Nozzle</th>
+            <th>Material</th>
+            <% if show_live_temps %>
+              <th class="num">Now</th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% tools.each do |tool| %>
+            <% live_temp = live_tool_temps[tool.tool_index.to_s] || live_tool_temps[tool.tool_index] %>
+            <tr>
+              <td>T<%= tool.tool_index %><% if tool.high_flow? %> <span class="badge text-bg-secondary-subtle">HF</span><% end %></td>
+              <td class="text-secondary"><%= tool.nozzle_size_mm.to_f.round(2) %> mm</td>
+              <td><%= tool.material.presence || '—' %></td>
+              <% if show_live_temps %>
+                <td class="num fw-medium"><%= live_temp.present? ? "#{live_temp.to_f.round(1)} °C" : '—' %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% elsif show_live_temps && live_tool_temps.any? %>
+      <table class="table table-compact mb-0 text-13">
+        <tbody>
+          <% live_tool_temps.sort_by { |k, _| k.to_i }.each do |index, temp| %>
+            <tr><th>T<%= index %></th><td class="num fw-medium"><%= temp.to_f.round(1) %> &deg;C</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% elsif section_label.present? %>
+      <div class="text-secondary text-13 mb-0"><%= empty_message %></div>
+    <% end %>
+  </div>
+<% end %>

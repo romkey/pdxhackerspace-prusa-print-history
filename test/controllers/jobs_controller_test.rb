@@ -24,6 +24,16 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/chart/i, response.body)
   end
 
+  test 'show renders print heads used for the job' do
+    get job_path(@job)
+
+    assert_select '.h-section-label', text: 'Print heads used'
+    assert_match(/T0 · 0\.4 mm · PLA/, response.body)
+    assert_match(/T1 · 0\.6 mm · HF · PETG/, response.body)
+    assert_select 'td', text: 'PLA'
+    assert_select 'td', text: 'PETG'
+  end
+
   test 'show renders print preview and camera snapshot when attached' do
     attach_job_images(@job)
 

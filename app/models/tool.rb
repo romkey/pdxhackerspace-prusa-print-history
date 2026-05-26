@@ -11,6 +11,6 @@ class Tool < ApplicationRecord
     parts = ["T#{tool_index}", "#{nozzle_size_mm.to_f.round(2)} mm"]
     parts << 'HF' if high_flow?
     parts << material if material.present?
-    parts.join(' \u00b7 ')
+    parts.join(' · ')
   end
 end

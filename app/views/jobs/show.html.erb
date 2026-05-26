@@ -12,6 +12,14 @@
         <% if @job.ended_at %>&middot; ended <%= l(@job.ended_at, format: :short) %><% end %>
         <% if @job.duration_seconds %>&middot; <%= distance_of_time_in_words(@job.duration_seconds) %><% end %>
       </div>
+      <% if @tools.any? %>
+        <div class="text-13 text-secondary mt-1">
+          <% @tools.each_with_index do |tool, index| %>
+            <% if index.positive? %>&middot; <% end %>
+            <span><%= tool.label %></span>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -19,6 +27,12 @@
 
   <div class="row g-3">
     <div class="col-lg-7">
+      <div class="card mb-3">
+        <div class="card-body">
+          <%= render 'jobs/tools', tools: @tools, section_label: 'Print heads used' %>
+        </div>
+      </div>
+
       <div class="card mb-3">
         <div class="card-body">
           <div class="h-section-label">Owner</div>
@@ -53,24 +67,6 @@
           </div>
         </div>
       <% end %>
-
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="h-section-label">Tools</div>
-          <% if @tools.any? %>
-            <ul class="list-unstyled mb-0">
-              <% @tools.each do |tool| %>
-                <li class="d-flex justify-content-between border-bottom py-2">
-                  <span>T<%= tool.tool_index %> &middot; <%= tool.nozzle_size_mm.to_f.round(2) %> mm <% if tool.high_flow? %><span class="badge text-bg-secondary-subtle ms-1">HF</span><% end %></span>
-                  <span class="text-secondary"><%= tool.material.presence || '—' %></span>
-                </li>
-              <% end %>
-            </ul>
-          <% else %>
-            <div class="text-secondary">No tool data.</div>
-          <% end %>
-        </div>
-      </div>
 
       <div class="card">
         <div class="card-body">

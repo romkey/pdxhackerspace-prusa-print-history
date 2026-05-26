@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.13] - 2026-05-26
+
+### Added
+- Print head and material details on printer and job pages, tied to the job being shown.
+
 ## [0.1.12] - 2026-05-26
 
 ### Added

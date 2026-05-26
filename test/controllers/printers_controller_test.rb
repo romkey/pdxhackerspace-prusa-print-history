@@ -55,6 +55,8 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/Printer is idle/, response.body)
+    assert_select '.h-section-label', text: 'Print heads used'
+    assert_match(/PLA/, response.body)
   end
 
   test 'show subscribes to live printer updates' do
@@ -63,13 +65,14 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-cable-stream-source[channel='Turbo::StreamsChannel']"
   end
 
-  test 'show renders temperature chart and tool heads for active job' do
+  test 'show renders temperature chart and print heads for active job' do
     get printer_path(@printer)
 
     assert_select '.h-section-label', text: 'Temperatures'
-    assert_select '.h-section-label', text: 'Tool heads'
+    assert_select '.h-section-label', text: 'Print heads used'
     assert_match(/T0/, response.body)
     assert_match(/PLA/, response.body)
+    assert_match(/PETG/, response.body)
   end
 
   test 'show renders print preview and camera snapshot for active job' do

@@ -19,6 +19,13 @@
 
           <%= render 'jobs/images', job: current_job, show_camera: true, wrapper_class: 'mt-3' %>
 
+          <%= render 'jobs/tools',
+                     tools: current_job.tools,
+                     live_tool_temps: live_tool_temps,
+                     show_live_temps: true,
+                     section_label: 'Print heads used',
+                     wrapper_class: 'mt-3' %>
+
           <table class="table table-compact mt-3 mb-0 text-13">
             <tbody>
               <tr><th class="text-secondary">PrusaLink job</th><td><%= current_job.prusalink_job_id.presence || '—' %></td></tr>
@@ -37,12 +44,18 @@
           <% end %>
         <% else %>
           <p class="text-secondary mb-0">Printer is idle.</p>
-          <% if display_job && display_job.terminal? %>
+          <% if display_job %>
             <div class="text-13 text-secondary mt-2">
               Last job:
               <%= link_to display_job.filename, job_path(display_job), class: 'text-decoration-none' %>
-              finished <%= display_job.ended_at ? time_ago_in_words(display_job.ended_at) + ' ago' : '' %>
+              <% if display_job.ended_at %>
+                finished <%= time_ago_in_words(display_job.ended_at) %> ago
+              <% end %>
             </div>
+            <%= render 'jobs/tools',
+                       tools: display_job.tools,
+                       section_label: 'Print heads used',
+                       wrapper_class: 'mt-3' %>
           <% end %>
         <% end %>
       </div>
@@ -56,45 +69,6 @@
         </div>
       </div>
     <% end %>
-
-    <div class="card mb-3">
-      <div class="card-body">
-        <div class="h-section-label">Tool heads</div>
-        <% if presenter.tools.any? %>
-          <table class="table table-compact mb-0">
-            <thead>
-              <tr>
-                <th>Tool</th>
-                <th>Nozzle</th>
-                <th>Material</th>
-                <th class="num">Now</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% presenter.tools.each do |tool| %>
-                <% live_temp = live_tool_temps[tool.tool_index.to_s] || live_tool_temps[tool.tool_index] %>
-                <tr>
-                  <td>T<%= tool.tool_index %><% if tool.high_flow? %> <span class="badge text-bg-secondary-subtle">HF</span><% end %></td>
-                  <td class="text-secondary"><%= tool.nozzle_size_mm.to_f.round(2) %> mm</td>
-                  <td class="text-secondary"><%= tool.material.presence || '—' %></td>
-                  <td class="num fw-medium"><%= live_temp.present? ? "#{live_temp.to_f.round(1)} °C" : '—' %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        <% elsif live_tool_temps.any? %>
-          <table class="table table-compact mb-0">
-            <tbody>
-              <% live_tool_temps.sort_by { |k, _| k.to_i }.each do |index, temp| %>
-                <tr><th>T<%= index %></th><td class="num fw-medium"><%= temp.to_f.round(1) %> &deg;C</td></tr>
-              <% end %>
-            </tbody>
-          </table>
-        <% else %>
-          <div class="text-secondary text-13 mb-0">No tool data yet.</div>
-        <% end %>
-      </div>
-    </div>
 
     <% if display_job %>
       <div class="card mb-3">

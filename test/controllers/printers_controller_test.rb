@@ -57,6 +57,21 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Printer is idle/, response.body)
   end
 
+  test 'show subscribes to live printer updates' do
+    get printer_path(@printer)
+
+    assert_select "turbo-cable-stream-source[channel='Turbo::StreamsChannel']"
+  end
+
+  test 'show renders temperature chart and tool heads for active job' do
+    get printer_path(@printer)
+
+    assert_select '.h-section-label', text: 'Temperatures'
+    assert_select '.h-section-label', text: 'Tool heads'
+    assert_match(/T0/, response.body)
+    assert_match(/PLA/, response.body)
+  end
+
   test 'new redirects anonymous users to login' do
     get new_printer_path
 

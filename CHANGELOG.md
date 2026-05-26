@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-05-26
+
+### Fixed
+- Print completion now registers when PrusaLink reports `FINISHED` but the job
+  API is already empty (common after a print ends).
+
+### Added
+- Live printer page updates via Action Cable + Turbo Streams (refreshes every poll).
+- Expanded printer page: full job details, tool heads, job events, temperature
+  charts (Chartkick), and environment readings.
+- Tool metadata sync from PrusaLink job file meta during polling.
+
 ## [0.1.9] - 2026-05-26
 
 ### Fixed

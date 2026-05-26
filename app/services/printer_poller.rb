@@ -1,3 +1,5 @@
+# Polls PrusaLink and Home Assistant, updates jobs, and broadcasts live UI updates.
+# rubocop:disable Metrics/ClassLength
 class PrinterPoller
   PRUSA_TO_STATUS = {
     'PRINTING' => 'printing',
@@ -34,24 +36,51 @@ class PrinterPoller
     job_payload    = safe_job_payload
     mapped_status  = map_status(status_payload)
 
-    if idle_state?(status_payload)
-      finalize_active_jobs!
-      update_printer_environment!(operational_state: 'idle')
-      return
-    end
+    return handle_idle_poll(status_payload) if idle_state?(status_payload)
+    return handle_terminal_without_job(mapped_status, status_payload) if terminal_without_job?(
+      mapped_status, job_payload
+    )
 
-    job = upsert_job(job_payload, mapped_status)
-    update_printer_environment!(operational_state: mapped_status || 'unknown')
-    return if job.nil?
-
-    record_telemetry(job, status_payload)
-    detect_status_change(job, mapped_status)
-    finalize_if_terminal(job, job_payload)
+    handle_job_poll(status_payload, job_payload, mapped_status)
   rescue PrusaLink::Error => e
     Rails.logger.warn("PrinterPoller failed for printer ##{@printer.id}: #{e.message}")
   end
 
   private
+
+  def handle_idle_poll(status_payload)
+    finalize_active_jobs!(status_payload: status_payload)
+    update_printer_environment!(operational_state: 'idle')
+    broadcast_live_update
+  end
+
+  def handle_terminal_without_job(mapped_status, status_payload)
+    finalize_active_jobs!(status: mapped_status, status_payload: status_payload)
+    update_printer_environment!(operational_state: 'idle')
+    broadcast_live_update
+  end
+
+  def handle_job_poll(status_payload, job_payload, mapped_status)
+    job = upsert_job(job_payload, mapped_status)
+    update_printer_environment!(operational_state: mapped_status || 'unknown')
+
+    if job.nil?
+      broadcast_live_update
+      return
+    end
+
+    record_telemetry(job, status_payload)
+    PrinterToolSync.sync!(job, status_payload, job_payload)
+    detect_status_change(job, mapped_status)
+    finalize_if_terminal(job, job_payload)
+    update_printer_environment!(operational_state: 'idle') if job.reload.terminal?
+
+    broadcast_live_update
+  end
+
+  def terminal_without_job?(mapped_status, job_payload)
+    mapped_status.in?(Job::TERMINAL_STATUSES) && job_payload.blank?
+  end
 
   def safe_job_payload
     @prusalink.job
@@ -69,14 +98,15 @@ class PrinterPoller
     IDLE_STATES.include?(raw)
   end
 
-  def finalize_active_jobs!
+  def finalize_active_jobs!(status: 'finished', status_payload: nil)
     @printer.jobs.active.find_each do |job|
+      record_telemetry(job, status_payload) if status_payload.present?
       from_status = job.status
-      job.update!(status: 'finished', ended_at: Time.current)
+      job.update!(status: status, ended_at: Time.current)
       job.events.create!(
-        event_type: 'finished',
+        event_type: EVENT_TYPE_FOR_STATUS.fetch(status, 'finished'),
         from_status: from_status,
-        to_status: 'finished',
+        to_status: status,
         occurred_at: Time.current
       )
     end
@@ -92,6 +122,10 @@ class PrinterPoller
       enclosure_humidity: sensor_value(@printer.humidity_sensor),
       environment_updated_at: Time.current
     )
+  end
+
+  def broadcast_live_update
+    PrinterLiveBroadcaster.broadcast(@printer)
   end
 
   def upsert_job(job_payload, status)
@@ -181,3 +215,4 @@ class PrinterPoller
     )
   end
 end
+# rubocop:enable Metrics/ClassLength

@@ -7,9 +7,7 @@ class PrintersController < ApplicationController
   end
 
   def show
-    @recent_jobs    = @printer.jobs.recent.includes(:owner).limit(10)
-    @current_job    = @printer.current_job
-    @latest_reading = latest_reading_for(@current_job)
+    @presenter = PrinterShowPresenter.new(@printer)
   end
 
   def new
@@ -41,12 +39,6 @@ class PrintersController < ApplicationController
   end
 
   private
-
-  def latest_reading_for(job)
-    return nil if job.nil?
-
-    job.telemetry_readings.reorder(recorded_at: :desc).first
-  end
 
   def set_printer
     @printer = Printer.find(params.expect(:id))

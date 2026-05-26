@@ -50,6 +50,11 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: app_host, protocol: app_protocol }
   config.default_url_options = { host: app_host, protocol: app_protocol }
 
+  config.action_cable.url = "#{app_protocol}://#{app_host}/cable"
+  config.action_cable.allowed_request_origins = [
+    %r{\Ahttps?://#{Regexp.escape(app_host)}(:\d+)?\z}
+  ]
+
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [:request_id]
   config.logger   = ActiveSupport::TaggedLogging.logger($stdout)

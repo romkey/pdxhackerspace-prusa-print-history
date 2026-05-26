@@ -169,6 +169,61 @@ class PrinterPollerTest < ActiveJob::TestCase
     end
   end
 
+  test 'finalizes active jobs when PrusaLink reports FINISHED without a job payload' do
+    job = @printer.jobs.create!(filename: 'thing.gcode', status: 'printing',
+                                prusalink_job_id: 'pl-555', started_at: 20.minutes.ago)
+    job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 20.minutes.ago)
+
+    payloads = {
+      status: { 'printer' => { 'state' => 'FINISHED', 'temp_bed' => 35.0, 'temp_nozzle' => 45.0 } },
+      job: nil
+    }
+
+    assert_difference -> { TelemetryReading.count } => 1 do
+      assert_difference -> { JobEvent.count } => 1 do
+        PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+      end
+    end
+
+    job.reload
+    @printer.reload
+
+    assert_equal 'finished', job.status
+    assert_not_nil job.ended_at
+    assert_equal 'idle', @printer.operational_state
+    assert_nil @printer.current_job
+  end
+
+  test 'syncs tool metadata from status and job payloads' do
+    payloads = {
+      status: {
+        'printer' => { 'state' => 'PRINTING', 'temp_nozzle' => 215.0 },
+        'tools' => [{ 'index' => 0, 'temp' => 215.0 }, { 'index' => 1, 'temp' => 235.0 }]
+      },
+      job: {
+        'id' => 'pl-777',
+        'file' => {
+          'display_name' => 'multi.gcode',
+          'meta' => {
+            'nozzle diameter' => '0.4',
+            'filament type' => 'PLA',
+            'nozzle diameter 2' => '0.6',
+            'filament type 2' => 'PETG'
+          }
+        }
+      }
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    job = Job.find_by!(prusalink_job_id: 'pl-777')
+
+    assert_equal 2, job.tools.count
+    assert_in_delta(0.4, job.tools.find_by!(tool_index: 0).nozzle_size_mm.to_f)
+    assert_equal 'PLA', job.tools.find_by!(tool_index: 0).material
+    assert_in_delta(0.6, job.tools.find_by!(tool_index: 1).nozzle_size_mm.to_f)
+  end
+
   private
 
   def without_environment_columns(&)

@@ -1,0 +1,217 @@
+<% current_job = presenter.current_job %>
+<% display_job = presenter.display_job %>
+<% latest_reading = presenter.latest_reading %>
+<% live_tool_temps = presenter.live_tool_temps %>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="h-section-label">Current job</div>
+        <% if current_job %>
+          <h2 class="h5 mb-2"><%= link_to current_job.filename, job_path(current_job) %></h2>
+          <div class="text-13 text-secondary">
+            <%= current_job.status %>
+            <% if current_job.owner %>&middot; owner <%= current_job.owner.display_name %><% end %>
+            <% if current_job.started_at %>&middot; started <%= time_ago_in_words(current_job.started_at) %> ago<% end %>
+            <% if current_job.duration_seconds %>&middot; <%= distance_of_time_in_words(current_job.duration_seconds) %><% end %>
+          </div>
+
+          <table class="table table-compact mt-3 mb-0 text-13">
+            <tbody>
+              <tr><th class="text-secondary">PrusaLink job</th><td><%= current_job.prusalink_job_id.presence || '—' %></td></tr>
+              <tr><th class="text-secondary">Filament used</th><td class="num"><%= current_job.total_filament_grams.present? ? "#{current_job.total_filament_grams.to_f.round(1)} g" : '—' %></td></tr>
+              <tr><th class="text-secondary">Started</th><td><%= current_job.started_at ? l(current_job.started_at, format: :short) : '—' %></td></tr>
+            </tbody>
+          </table>
+
+          <% if latest_reading %>
+            <hr>
+            <div class="row text-13">
+              <div class="col">Bed<br><span class="fw-medium"><%= latest_reading.bed_temp.to_f.round(1) %> &deg;C</span></div>
+              <div class="col">Enclosure<br><span class="fw-medium"><%= latest_reading.enclosure_temp.to_f.round(1) %> &deg;C</span></div>
+              <div class="col">Humidity<br><span class="fw-medium"><%= latest_reading.enclosure_humidity.to_f.round(0) %>%</span></div>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-secondary mb-0">Printer is idle.</p>
+          <% if display_job && display_job.terminal? %>
+            <div class="text-13 text-secondary mt-2">
+              Last job:
+              <%= link_to display_job.filename, job_path(display_job), class: 'text-decoration-none' %>
+              finished <%= display_job.ended_at ? time_ago_in_words(display_job.ended_at) + ' ago' : '' %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if display_job && presenter.chart_series.any? %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Temperatures</div>
+          <%= line_chart presenter.chart_series,
+                         height: '220px',
+                         library: {
+                           scales: { y: { ticks: { callback: nil } } },
+                           plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 } } } }
+                         },
+                         points: false,
+                         suffix: ' °C' %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="h-section-label">Tool heads</div>
+        <% if presenter.tools.any? %>
+          <table class="table table-compact mb-0">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Nozzle</th>
+                <th>Material</th>
+                <th class="num">Now</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% presenter.tools.each do |tool| %>
+                <% live_temp = live_tool_temps[tool.tool_index.to_s] || live_tool_temps[tool.tool_index] %>
+                <tr>
+                  <td>T<%= tool.tool_index %><% if tool.high_flow? %> <span class="badge text-bg-secondary-subtle">HF</span><% end %></td>
+                  <td class="text-secondary"><%= tool.nozzle_size_mm.to_f.round(2) %> mm</td>
+                  <td class="text-secondary"><%= tool.material.presence || '—' %></td>
+                  <td class="num fw-medium"><%= live_temp.present? ? "#{live_temp.to_f.round(1)} °C" : '—' %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% elsif live_tool_temps.any? %>
+          <table class="table table-compact mb-0">
+            <tbody>
+              <% live_tool_temps.sort_by { |k, _| k.to_i }.each do |index, temp| %>
+                <tr><th>T<%= index %></th><td class="num fw-medium"><%= temp.to_f.round(1) %> &deg;C</td></tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="text-secondary text-13 mb-0">No tool data yet.</div>
+        <% end %>
+      </div>
+    </div>
+
+    <% if display_job %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Job events</div>
+          <% events = presenter.events %>
+          <% if events.any? %>
+            <ul class="list-unstyled mb-0">
+              <% events.each do |event| %>
+                <li class="d-flex justify-content-between border-bottom py-2 text-13">
+                  <div>
+                    <span class="fw-medium"><%= event.event_type.humanize %></span>
+                    <span class="text-secondary">
+                      <% if event.from_status %><%= event.from_status %> → <% end %><%= event.to_status %>
+                    </span>
+                  </div>
+                  <div class="text-secondary" title="<%= l(event.occurred_at, format: :precise) %>">
+                    <%= l(event.occurred_at, format: :short) %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="text-secondary text-13 mb-0">No events recorded.</div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="h-section-label">Recent jobs</div>
+        <% if presenter.recent_jobs.any? %>
+          <table class="table table-compact mb-0">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% presenter.recent_jobs.each do |job| %>
+                <tr>
+                  <td><%= link_to job.filename, job_path(job) %></td>
+                  <td class="text-secondary"><%= job.status %></td>
+                  <td class="text-secondary"><%= job.owner&.display_name || '—' %></td>
+                  <td class="text-secondary text-13" title="<%= job.started_at && l(job.started_at, format: :precise) %>">
+                    <%= job.started_at ? "#{time_ago_in_words(job.started_at)} ago" : '—' %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="text-secondary mb-0">No prints recorded yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="h-section-label">Environment</div>
+        <% if printer.has_attribute?(:ambient_temp) && printer.ambient_temp.present? %>
+          <div class="text-13">
+            Ambient
+            <div class="h5 mb-0 fw-medium"><%= printer.ambient_temp.to_f.round(1) %> &deg;C</div>
+          </div>
+          <% if printer.has_attribute?(:environment_updated_at) && printer.environment_updated_at %>
+            <div class="text-12 text-secondary mt-2"
+                 title="<%= l(printer.environment_updated_at, format: :precise) %>">
+              Updated <%= time_ago_in_words(printer.environment_updated_at) %> ago
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-secondary text-13 mb-0">No ambient reading yet.</div>
+        <% end %>
+
+        <% if printer.has_attribute?(:enclosure_temp) && (printer.enclosure_temp.present? || printer.enclosure_humidity.present?) %>
+          <div class="row text-13 mt-3">
+            <% if printer.enclosure_temp.present? %>
+              <div class="col">Enclosure<br><span class="fw-medium"><%= printer.enclosure_temp.to_f.round(1) %> &deg;C</span></div>
+            <% end %>
+            <% if printer.enclosure_humidity.present? %>
+              <div class="col">Humidity<br><span class="fw-medium"><%= printer.enclosure_humidity.to_f.round(0) %>%</span></div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="h-section-label">Integrations</div>
+        <ul class="list-unstyled mb-0 text-13">
+          <li>
+            <span class="status-dot <%= printer.prusalink? ? 'status-success' : 'status-muted' %> me-2"></span>
+            PrusaLink <%= printer.prusalink? ? 'configured' : 'not configured' %>
+          </li>
+          <li>
+            <span class="status-dot <%= printer.home_assistant? ? 'status-success' : 'status-muted' %> me-2"></span>
+            Home Assistant sensor: <%= printer.ha_base_sensor.presence || '—' %>
+          </li>
+          <li>
+            <span class="status-dot <%= printer.camera? ? 'status-success' : 'status-muted' %> me-2"></span>
+            Camera: <%= printer.camera? ? printer.camera_url : 'none' %>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

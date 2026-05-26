@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-05-26
+
+### Fixed
+- Printers now report idle when PrusaLink returns IDLE/READY: active jobs are
+  finalized and `operational_state` is updated on every poll.
+
+### Changed
+- Ambient temperature is always shown on the printer page (Environment card),
+  updated on every poll even when no job is running.
+
 ## [0.1.6] - 2026-05-25
 
 ### Fixed

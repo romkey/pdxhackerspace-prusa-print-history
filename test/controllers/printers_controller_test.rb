@@ -35,6 +35,28 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select 'a[href=?]', edit_printer_path(@printer)
   end
 
+  test 'show always displays ambient temperature when available' do
+    @printer.update!(ambient_temp: 21.5, environment_updated_at: 2.minutes.ago)
+
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Environment'
+    assert_match(/21\.5.*&deg;C/m, response.body)
+  end
+
+  test 'show displays idle message when printer has no active job' do
+    @printer.jobs.active.find_each do |job|
+      job.update!(status: 'finished', ended_at: Time.current)
+    end
+    @printer.update!(operational_state: 'idle')
+
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_match(/Printer is idle/, response.body)
+  end
+
   test 'new redirects anonymous users to login' do
     get new_printer_path
 

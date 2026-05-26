@@ -11,6 +11,8 @@ class PrinterPoller
     'READY' => nil
   }.freeze
 
+  IDLE_STATES = %w[IDLE READY].freeze
+
   EVENT_TYPE_FOR_STATUS = {
     'paused' => 'paused',
     'attention' => 'attention',
@@ -32,7 +34,14 @@ class PrinterPoller
     job_payload    = safe_job_payload
     mapped_status  = map_status(status_payload)
 
+    if idle_state?(status_payload)
+      finalize_active_jobs!
+      update_printer_environment!(operational_state: 'idle')
+      return
+    end
+
     job = upsert_job(job_payload, mapped_status)
+    update_printer_environment!(operational_state: mapped_status || 'unknown')
     return if job.nil?
 
     record_telemetry(job, status_payload)
@@ -53,6 +62,34 @@ class PrinterPoller
   def map_status(status_payload)
     raw = status_payload.dig('printer', 'state') || status_payload['state']
     PRUSA_TO_STATUS.fetch(raw.to_s.upcase, raw&.downcase)
+  end
+
+  def idle_state?(status_payload)
+    raw = (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
+    IDLE_STATES.include?(raw)
+  end
+
+  def finalize_active_jobs!
+    @printer.jobs.active.find_each do |job|
+      from_status = job.status
+      job.update!(status: 'finished', ended_at: Time.current)
+      job.events.create!(
+        event_type: 'finished',
+        from_status: from_status,
+        to_status: 'finished',
+        occurred_at: Time.current
+      )
+    end
+  end
+
+  def update_printer_environment!(operational_state:)
+    @printer.update!(
+      operational_state: operational_state,
+      ambient_temp: sensor_value(Setting.default_ambient_sensor),
+      enclosure_temp: sensor_value(@printer.enclosure_temp_sensor),
+      enclosure_humidity: sensor_value(@printer.humidity_sensor),
+      environment_updated_at: Time.current
+    )
   end
 
   def upsert_job(job_payload, status)

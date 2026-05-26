@@ -40,7 +40,6 @@
               <div class="row text-13">
                 <div class="col">Bed<br><span class="fw-medium"><%= @latest_reading.bed_temp.to_f.round(1) %> &deg;C</span></div>
                 <div class="col">Enclosure<br><span class="fw-medium"><%= @latest_reading.enclosure_temp.to_f.round(1) %> &deg;C</span></div>
-                <div class="col">Ambient<br><span class="fw-medium"><%= @latest_reading.ambient_temp.to_f.round(1) %> &deg;C</span></div>
                 <div class="col">Humidity<br><span class="fw-medium"><%= @latest_reading.enclosure_humidity.to_f.round(0) %>%</span></div>
               </div>
             <% end %>
@@ -84,6 +83,26 @@
     </div>
 
     <div class="col-lg-5">
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Environment</div>
+          <% if @printer.ambient_temp.present? %>
+            <div class="text-13">
+              Ambient
+              <div class="h5 mb-0 fw-medium"><%= @printer.ambient_temp.to_f.round(1) %> &deg;C</div>
+            </div>
+            <% if @printer.environment_updated_at %>
+              <div class="text-12 text-secondary mt-2"
+                   title="<%= l(@printer.environment_updated_at, format: :precise) %>">
+                Updated <%= time_ago_in_words(@printer.environment_updated_at) %> ago
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-secondary text-13 mb-0">No ambient reading yet.</div>
+          <% end %>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body">
           <div class="h-section-label">Integrations</div>

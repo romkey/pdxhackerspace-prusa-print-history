@@ -37,7 +37,7 @@
                   <%= link_to job.filename, job_path(job), class: 'text-decoration-none' %>
                   <span class="text-secondary text-13"><%= job.status %></span>
                 <% else %>
-                  <span class="text-secondary">idle</span>
+                  <%= render 'shared/printer_status', printer: printer %>
                 <% end %>
               </td>
               <td class="text-secondary text-13"><%= printer.hostname %></td>

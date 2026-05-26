@@ -92,6 +92,70 @@ class PrinterPollerTest < ActiveJob::TestCase
     end
   end
 
+  test 'finalizes active jobs and marks printer idle when PrusaLink reports IDLE' do
+    job = @printer.jobs.create!(filename: 'thing.gcode', status: 'printing',
+                                prusalink_job_id: 'pl-555', started_at: 5.minutes.ago)
+    job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 5.minutes.ago)
+
+    ambient_sensor = Setting.default_ambient_sensor
+    payloads = {
+      status: { 'printer' => { 'state' => 'IDLE', 'temp_bed' => 25.0 } },
+      job: nil
+    }
+    ha = stub_home_assistant(temperatures: { ambient_sensor => '21.5' })
+
+    assert_difference -> { JobEvent.count } => 1 do
+      assert_no_difference -> { Job.count } do
+        PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: ha).poll!
+      end
+    end
+
+    job.reload
+    @printer.reload
+
+    assert_equal 'finished', job.status
+    assert_not_nil job.ended_at
+    assert_equal 'finished', job.events.recent.first.event_type
+    assert_equal 'idle', @printer.operational_state
+    assert_in_delta 21.5, @printer.ambient_temp.to_f
+    assert_not_nil @printer.environment_updated_at
+    assert_nil @printer.current_job
+  end
+
+  test 'updates ambient temperature on idle poll without creating a job' do
+    ambient_sensor = Setting.default_ambient_sensor
+    payloads = {
+      status: { 'printer' => { 'state' => 'READY' } },
+      job: nil
+    }
+    ha = stub_home_assistant(temperatures: { ambient_sensor => '19.0' })
+
+    assert_no_difference -> { Job.count } do
+      PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: ha).poll!
+    end
+
+    @printer.reload
+
+    assert_equal 'idle', @printer.operational_state
+    assert_in_delta 19.0, @printer.ambient_temp.to_f
+  end
+
+  test 'updates printer environment while printing' do
+    ambient_sensor = Setting.default_ambient_sensor
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING', 'temp_bed' => 60.0, 'temp_nozzle' => 215.0 } },
+      job: { 'id' => 'pl-555', 'file' => { 'display_name' => 'thing.gcode' } }
+    }
+    ha = stub_home_assistant(temperatures: { ambient_sensor => '22.0' })
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: ha).poll!
+
+    @printer.reload
+
+    assert_equal 'printing', @printer.operational_state
+    assert_in_delta 22.0, @printer.ambient_temp.to_f
+  end
+
   private
 
   def stub_prusalink(payloads)

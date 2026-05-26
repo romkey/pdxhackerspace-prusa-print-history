@@ -29,14 +29,7 @@
                     <td><%= link_to printer.name, printer_path(printer) %></td>
                     <td class="text-secondary"><%= printer.location.presence || '—' %></td>
                     <td>
-                      <% current = printer.current_job %>
-                      <% if current %>
-                        <span class="status-dot status-success me-1"></span>
-                        <%= current.status %>
-                      <% else %>
-                        <span class="status-dot status-muted me-1"></span>
-                        <span class="text-secondary">idle</span>
-                      <% end %>
+                      <%= render 'shared/printer_status', printer: printer %>
                     </td>
                   </tr>
                 <% end %>

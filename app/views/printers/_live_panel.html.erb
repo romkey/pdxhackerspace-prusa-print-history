@@ -17,6 +17,8 @@
             <% if current_job.duration_seconds %>&middot; <%= distance_of_time_in_words(current_job.duration_seconds) %><% end %>
           </div>
 
+          <%= render 'jobs/images', job: current_job, show_camera: true, wrapper_class: 'mt-3' %>
+
           <table class="table table-compact mt-3 mb-0 text-13">
             <tbody>
               <tr><th class="text-secondary">PrusaLink job</th><td><%= current_job.prusalink_job_id.presence || '—' %></td></tr>

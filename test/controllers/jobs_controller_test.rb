@@ -24,6 +24,15 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/chart/i, response.body)
   end
 
+  test 'show renders print preview and camera snapshot when attached' do
+    attach_job_images(@job)
+
+    get job_path(@job)
+
+    assert_match(/Print preview/, response.body)
+    assert_match(/Camera/, response.body)
+  end
+
   test 'show omits temperature chart when job has no telemetry' do
     job = jobs(:finished)
 
@@ -97,5 +106,20 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to job_path(@job)
     assert_equal users(:other_viewer).id, @job.reload.owner_id
+  end
+
+  private
+
+  def attach_job_images(job)
+    job.preview_image.attach(
+      io: StringIO.new('preview-bytes'),
+      filename: 'preview.png',
+      content_type: 'image/png'
+    )
+    job.camera_snapshot.attach(
+      io: StringIO.new('camera-bytes'),
+      filename: 'camera.jpg',
+      content_type: 'image/jpeg'
+    )
   end
 end

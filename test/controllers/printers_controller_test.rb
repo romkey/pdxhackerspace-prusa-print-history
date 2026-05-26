@@ -72,6 +72,25 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/PLA/, response.body)
   end
 
+  test 'show renders print preview and camera snapshot for active job' do
+    job = jobs(:active_xl)
+    job.preview_image.attach(
+      io: StringIO.new('preview-bytes'),
+      filename: 'preview.png',
+      content_type: 'image/png'
+    )
+    job.camera_snapshot.attach(
+      io: StringIO.new('camera-bytes'),
+      filename: 'camera.jpg',
+      content_type: 'image/jpeg'
+    )
+
+    get printer_path(@printer)
+
+    assert_match(/Print preview/, response.body)
+    assert_match(/Camera/, response.body)
+  end
+
   test 'show displays PrusaLink status dot when configured' do
     @printer.update!(prusalink_key: 'secret', prusalink_reachable: true)
 

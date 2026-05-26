@@ -44,6 +44,20 @@ module PrusaLink
       end
     end
 
+    test 'download returns binary body for thumbnail paths' do
+      stub_http(StubResponse.ok('PNG-BYTES')) do |captured|
+        body = @client.download('/api/thumbnails/local/foo.gcode.orig.png')
+
+        assert_equal 'PNG-BYTES', body
+        assert_equal '/api/thumbnails/local/foo.gcode.orig.png', captured[:request].path
+        assert_equal 'abc-123', captured[:request]['X-Api-Key']
+      end
+    end
+
+    test 'download returns nil for blank path' do
+      assert_nil @client.download(nil)
+    end
+
     private
 
     StubResponse = Struct.new(:klass, :code, :body) do

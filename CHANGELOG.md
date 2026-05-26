@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-05-26
+
+### Added
+- Print preview image from PrusaLink G-code thumbnail, captured once at job start.
+- Rolling camera snapshot on active jobs (updated each poll while printing).
+- Preview and camera images on the printer page (while printing) and job page.
+- PrusaLink connectivity dot on the dashboard printer list.
+
 ## [0.1.11] - 2026-05-26
 
 ### Added

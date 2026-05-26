@@ -74,6 +74,8 @@ class PrinterPoller
 
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, status_payload, job_payload)
+    JobImageCapture.capture_preview!(job, job_payload, client: @prusalink)
+    JobImageCapture.capture_camera_snapshot!(job, printer: @printer)
     detect_status_change(job, mapped_status)
     finalize_if_terminal(job, job_payload)
     update_printer_environment!(operational_state: 'idle') if job.reload.terminal?

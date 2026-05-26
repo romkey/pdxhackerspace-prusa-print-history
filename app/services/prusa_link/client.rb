@@ -31,6 +31,24 @@ module PrusaLink
       get('/api/v1/info')
     end
 
+    def download(path)
+      return nil if path.blank?
+
+      uri = URI.join("http://#{@printer.hostname}", path)
+      request = Net::HTTP::Get.new(uri)
+      request['X-Api-Key'] = @printer.prusalink_key
+
+      response = perform(uri, request)
+
+      case response
+      when Net::HTTPSuccess
+        body = response.body.to_s
+        body.empty? ? nil : body.b
+      else
+        raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
+      end
+    end
+
     private
 
     def get(path)

@@ -9,10 +9,17 @@ class PrinterPollerTest < ActiveJob::TestCase
   test 'creates a job, telemetry reading, and started event on first poll' do
     payloads = {
       status: { 'printer' => { 'state' => 'PRINTING', 'temp_bed' => 60.0, 'temp_nozzle' => 215.0 } },
-      job: { 'id' => 'pl-555', 'file' => { 'display_name' => 'thing.gcode' } }
+      job: {
+        'id' => 'pl-555',
+        'file' => {
+          'display_name' => 'thing.gcode',
+          'refs' => { 'thumbnail' => '/api/thumbnails/local/thing.gcode.orig.png' }
+        }
+      }
     }
 
     prusalink = stub_prusalink(payloads)
+    prusalink.define_singleton_method(:download) { |_path| 'PNG-BYTES' }
     ha = stub_home_assistant(temperatures: { @printer.enclosure_temp_sensor => nil })
 
     assert_difference -> { Job.count } => 1,
@@ -26,6 +33,7 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal 'printing', job.status
     assert_equal 'thing.gcode', job.filename
     assert_equal 'started', job.events.last.event_type
+    assert job.preview_image.attached?
   end
 
   test 'records a status_change event when status flips' do

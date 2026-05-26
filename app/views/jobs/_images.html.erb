@@ -1,0 +1,16 @@
+<% if job.preview_image.attached? || (show_camera && job.camera_snapshot.attached?) %>
+  <div class="row g-3<%= " #{wrapper_class}" if local_assigns[:wrapper_class].present? %>">
+    <% if job.preview_image.attached? %>
+      <div class="<%= job.camera_snapshot.attached? && show_camera ? 'col-md-6' : 'col-12' %>">
+        <div class="text-12 text-secondary mb-1">Print preview</div>
+        <%= image_tag job.preview_image, class: 'img-fluid rounded border', alt: "Preview of #{job.filename}" %>
+      </div>
+    <% end %>
+    <% if show_camera && job.camera_snapshot.attached? %>
+      <div class="<%= job.preview_image.attached? ? 'col-md-6' : 'col-12' %>">
+        <div class="text-12 text-secondary mb-1">Camera</div>
+        <%= image_tag job.camera_snapshot, class: 'img-fluid rounded border', alt: "Camera snapshot of #{job.filename}" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

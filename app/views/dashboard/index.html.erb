@@ -26,7 +26,12 @@
               <tbody>
                 <% @printers.each do |printer| %>
                   <tr>
-                    <td><%= link_to printer.name, printer_path(printer) %></td>
+                    <td>
+                      <span class="d-inline-flex align-items-center gap-1">
+                        <%= render 'printers/prusalink_status_dot', printer: printer %>
+                        <%= link_to printer.name, printer_path(printer) %>
+                      </span>
+                    </td>
                     <td class="text-secondary"><%= printer.location.presence || '—' %></td>
                     <td>
                       <%= render 'shared/printer_status', printer: printer %>

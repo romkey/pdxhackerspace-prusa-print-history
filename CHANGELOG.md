@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-05-26
+
+### Fixed
+- Docker entrypoint now runs `db:prepare` when the app starts via `./bin/thrust
+  ./bin/rails server`, so migrations apply automatically on deploy.
+
 ## [0.1.7] - 2026-05-26
 
 ### Fixed

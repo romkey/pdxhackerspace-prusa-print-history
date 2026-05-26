@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
-if [ "${1}" = './bin/rails' ] && [ "${2}" = 'server' ]; then
+# db:prepare must run before the web server starts. Production CMD uses thrust:
+#   ./bin/thrust ./bin/rails server
+if { [ "${1}" = './bin/rails' ] && [ "${2}" = 'server' ]; } || \
+   { [ "${1}" = './bin/thrust' ] && [ "${2}" = './bin/rails' ] && [ "${3}" = 'server' ]; }; then
   ./bin/rails db:prepare
 fi
 

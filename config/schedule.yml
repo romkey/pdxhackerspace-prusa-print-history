@@ -8,6 +8,12 @@ poll_printers:
   active_job: true
   description: 'Poll every configured printer for status and telemetry once per minute'
 
+capture_printer_photos:
+  cron: '* * * * *'
+  class: 'FanOutPrinterPhotoCapturesJob'
+  active_job: true
+  description: 'Capture a camera photo from every configured printer once per minute'
+
 home_assistant_health:
   cron: '*/5 * * * *'
   class: 'HomeAssistantHealthJob'

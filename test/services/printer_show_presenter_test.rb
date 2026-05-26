@@ -28,9 +28,19 @@ class PrinterShowPresenterTest < ActiveSupport::TestCase
     assert @presenter.live_tool_temps.any?
   end
 
-  test 'camera_refresh_token uses latest telemetry timestamp' do
-    reading = @presenter.latest_reading
+  test 'camera_refresh_token uses latest photo timestamp' do
+    capture = @printer.photo_captures.create!(captured_at: 5.minutes.ago)
+    capture.image.attach(
+      io: StringIO.new('bytes'),
+      filename: 'photo.jpg',
+      content_type: 'image/jpeg'
+    )
 
-    assert_equal reading.recorded_at.to_i, @presenter.camera_refresh_token
+    assert_equal capture.captured_at.to_i, @presenter.camera_refresh_token
+  end
+
+  test 'reported_tools uses current job tools when available' do
+    assert @presenter.reported_tools.any?
+    assert_equal tools(:active_xl_tool_a).material, @presenter.reported_tools.first.material
   end
 end

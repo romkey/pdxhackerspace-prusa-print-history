@@ -23,11 +23,8 @@
     </div>
   </div>
 
-  <%= render 'jobs/images',
-             job: @job,
-             show_camera: true,
-             live_camera_path: (@job.active? && @job.printer.camera? ? camera_printer_path(@job.printer, t: @latest_reading&.recorded_at&.to_i || @job.updated_at.to_i) : nil),
-             wrapper_class: 'mb-3' %>
+  <%= render 'jobs/preview', job: @job, wrapper_class: 'mb-3' %>
+  <%= render 'jobs/photo_gallery', job: @job, photos: @photos, wrapper_class: 'mb-3' %>
 
   <div class="row g-3">
     <div class="col-lg-7">

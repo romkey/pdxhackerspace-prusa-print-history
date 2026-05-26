@@ -1,0 +1,40 @@
+require 'test_helper'
+
+class JobPhotosPresenterTest < ActiveSupport::TestCase
+  setup do
+    @job = jobs(:active_xl)
+  end
+
+  test 'identifies initial and final progress photos' do
+    attach_progress_photo(captured_at: 30.minutes.ago)
+    attach_progress_photo(captured_at: 20.minutes.ago)
+    attach_progress_photo(captured_at: 10.minutes.ago)
+
+    presenter = JobPhotosPresenter.new(@job)
+
+    assert_equal @job.photo_captures.chronological.first, presenter.initial_photo
+    assert_equal @job.photo_captures.chronological.last, presenter.final_photo
+    assert_equal 3, presenter.progress_photos.size
+  end
+
+  test 'returns only initial photo when job has one capture' do
+    attach_progress_photo(captured_at: 10.minutes.ago)
+
+    presenter = JobPhotosPresenter.new(@job)
+
+    assert presenter.initial_photo
+    assert_nil presenter.final_photo
+  end
+
+  private
+
+  def attach_progress_photo(captured_at:)
+    capture = @job.photo_captures.create!(printer: @job.printer, captured_at: captured_at)
+    capture.image.attach(
+      io: StringIO.new('bytes'),
+      filename: 'photo.jpg',
+      content_type: 'image/jpeg'
+    )
+    capture
+  end
+end

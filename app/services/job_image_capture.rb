@@ -3,15 +3,10 @@ class JobImageCapture
     new(job, job_payload, client: client).capture_preview!
   end
 
-  def self.capture_camera_snapshot!(job, printer: job.printer, client: nil)
-    new(job, nil, client: client, printer: printer).capture_camera_snapshot!
-  end
-
-  def initialize(job, job_payload, client:, printer: job.printer)
+  def initialize(job, job_payload, client:)
     @job = job
     @job_payload = job_payload
     @client = client
-    @printer = printer
   end
 
   def capture_preview!
@@ -24,20 +19,6 @@ class JobImageCapture
   rescue PrusaLink::Error => e
     Rails.logger.warn("JobImageCapture preview failed for job ##{@job.id}: #{e.message}")
     nil
-  end
-
-  def capture_camera_snapshot!
-    return unless @job.active?
-    return unless @printer.camera? || @printer.prusalink?
-
-    snapshot = PrinterCamera.snapshot(@printer, client: @client)
-    return if snapshot.nil?
-
-    @job.camera_snapshot.attach(
-      io: snapshot[:io],
-      filename: snapshot[:filename],
-      content_type: snapshot[:content_type]
-    )
   end
 
   private

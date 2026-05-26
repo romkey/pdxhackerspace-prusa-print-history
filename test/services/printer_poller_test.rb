@@ -120,8 +120,8 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal 'finished', job.events.recent.first.event_type
   end
 
-  test 'does not enqueue photo job when printer has no camera' do
-    @printer.update!(camera_url: nil)
+  test 'does not enqueue photo job when printer has no camera configured' do
+    @printer.update!(camera_url: nil, prusalink_key: nil)
     payloads = {
       status: { 'printer' => { 'state' => 'PRINTING' } },
       job: { 'id' => 'pl-555', 'file' => { 'display_name' => 'thing.gcode' } }

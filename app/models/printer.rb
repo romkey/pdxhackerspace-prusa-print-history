@@ -10,6 +10,7 @@ class Printer < ApplicationRecord
   CONNECTIVITY_COLUMNS = %w[prusalink_reachable prusalink_checked_at].freeze
 
   has_many :jobs, dependent: :destroy
+  has_many :photo_captures, dependent: :destroy
 
   validates :name,     presence: true, uniqueness: { case_sensitive: false }
   validates :hostname, presence: true
@@ -43,6 +44,10 @@ class Printer < ApplicationRecord
 
   def camera?
     camera_url.present?
+  end
+
+  def camera_configured?
+    camera? || prusalink?
   end
 
   def prusalink?

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_26_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_26_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_26_150000) do
     t.index ["printer_id"], name: "index_jobs_on_printer_id"
     t.index ["started_at"], name: "index_jobs_on_started_at"
     t.index ["status"], name: "index_jobs_on_status"
+  end
+
+  create_table "photo_captures", force: :cascade do |t|
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.bigint "job_event_id"
+    t.bigint "job_id"
+    t.bigint "printer_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_event_id"], name: "index_photo_captures_on_job_event_id"
+    t.index ["job_id", "captured_at"], name: "index_photo_captures_on_job_id_and_captured_at"
+    t.index ["job_id"], name: "index_photo_captures_on_job_id"
+    t.index ["printer_id", "captured_at"], name: "index_photo_captures_on_printer_id_and_captured_at"
+    t.index ["printer_id"], name: "index_photo_captures_on_printer_id"
   end
 
   create_table "printers", force: :cascade do |t|
@@ -145,6 +159,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_26_150000) do
   add_foreign_key "job_events", "jobs"
   add_foreign_key "jobs", "printers"
   add_foreign_key "jobs", "users", column: "owner_id"
+  add_foreign_key "photo_captures", "job_events"
+  add_foreign_key "photo_captures", "jobs"
+  add_foreign_key "photo_captures", "printers"
   add_foreign_key "telemetry_readings", "jobs"
   add_foreign_key "tools", "jobs"
 end

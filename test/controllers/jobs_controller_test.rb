@@ -34,13 +34,15 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'td', text: 'PETG'
   end
 
-  test 'show renders print preview and camera snapshot when attached' do
-    attach_job_images(@job)
+  test 'show renders print preview and photo gallery when photos exist' do
+    attach_job_photos(@job)
 
     get job_path(@job)
 
     assert_match(/Print preview/, response.body)
-    assert_match(/Camera/, response.body)
+    assert_select '.h-section-label', text: 'Print photos'
+    assert_match(/Start/, response.body)
+    assert_match(/Finish/, response.body)
   end
 
   test 'show omits temperature chart when job has no telemetry' do
@@ -120,16 +122,15 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def attach_job_images(job)
+  def attach_job_photos(job)
     job.preview_image.attach(
       io: StringIO.new('preview-bytes'),
       filename: 'preview.png',
       content_type: 'image/png'
     )
-    job.camera_snapshot.attach(
-      io: StringIO.new('camera-bytes'),
-      filename: 'camera.jpg',
-      content_type: 'image/jpeg'
-    )
+    start = job.photo_captures.create!(printer: job.printer, captured_at: 2.hours.ago)
+    start.image.attach(io: StringIO.new('start-bytes'), filename: 'start.jpg', content_type: 'image/jpeg')
+    finish = job.photo_captures.create!(printer: job.printer, captured_at: 1.hour.ago)
+    finish.image.attach(io: StringIO.new('finish-bytes'), filename: 'finish.jpg', content_type: 'image/jpeg')
   end
 end

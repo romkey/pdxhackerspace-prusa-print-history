@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.15] - 2026-05-26
+
+### Added
+- Minute-by-minute camera captures stored as `PhotoCapture` records.
+- Job photo gallery with start/finish defaults and browsable progress photos.
+- Always-visible print head and material info on the printer page sidebar.
+- Idle printers keep only their latest camera photo; active jobs retain all progress photos.
+
 ## [0.1.14] - 2026-05-26
 
 ### Added

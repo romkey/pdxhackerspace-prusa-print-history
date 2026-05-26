@@ -9,9 +9,9 @@ class Job < ApplicationRecord
   has_many :tools,              -> { order(:tool_index) },  dependent: :destroy, inverse_of: :job
   has_many :telemetry_readings, -> { order(:recorded_at) }, dependent: :destroy, inverse_of: :job
   has_many :events, -> { order(:occurred_at) }, class_name: 'JobEvent', dependent: :destroy, inverse_of: :job
+  has_many :photo_captures, dependent: :destroy
 
   has_one_attached :preview_image
-  has_one_attached :camera_snapshot
 
   validates :filename, presence: true
   validates :status, presence: true, inclusion: { in: STATUSES }

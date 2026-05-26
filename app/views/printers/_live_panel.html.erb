@@ -2,6 +2,8 @@
 <% display_job = presenter.display_job %>
 <% latest_reading = presenter.latest_reading %>
 <% live_tool_temps = presenter.live_tool_temps %>
+<% reported_tools = presenter.reported_tools %>
+<% latest_photo = presenter.latest_photo %>
 
 <div class="row g-3">
   <div class="col-lg-7">
@@ -17,18 +19,7 @@
             <% if current_job.duration_seconds %>&middot; <%= distance_of_time_in_words(current_job.duration_seconds) %><% end %>
           </div>
 
-          <%= render 'jobs/images',
-                     job: current_job,
-                     show_camera: true,
-                     live_camera_path: (camera_printer_path(printer, t: presenter.camera_refresh_token) if printer.camera?),
-                     wrapper_class: 'mt-3' %>
-
-          <%= render 'jobs/tools',
-                     tools: current_job.tools,
-                     live_tool_temps: live_tool_temps,
-                     show_live_temps: true,
-                     section_label: 'Print heads used',
-                     wrapper_class: 'mt-3' %>
+          <%= render 'jobs/preview', job: current_job, wrapper_class: 'mt-3' %>
 
           <table class="table table-compact mt-3 mb-0 text-13">
             <tbody>
@@ -59,10 +50,6 @@
                 finished <%= time_ago_in_words(display_job.ended_at) %> ago
               <% end %>
             </div>
-            <%= render 'jobs/tools',
-                       tools: display_job.tools,
-                       section_label: 'Print heads used',
-                       wrapper_class: 'mt-3' %>
           <% end %>
         <% end %>
       </div>
@@ -139,6 +126,37 @@
   </div>
 
   <div class="col-lg-5">
+    <% if printer.camera_configured? %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Camera</div>
+          <% if latest_photo&.image&.attached? %>
+            <%= image_tag latest_photo.image,
+                          class: 'img-fluid rounded border',
+                          alt: "Camera view of #{printer.name}" %>
+            <div class="text-12 text-secondary mt-1" title="<%= l(latest_photo.captured_at, format: :precise) %>">
+              <%= time_ago_in_words(latest_photo.captured_at) %> ago
+            </div>
+          <% else %>
+            <%= image_tag camera_printer_path(printer, t: presenter.camera_refresh_token),
+                          class: 'img-fluid rounded border',
+                          alt: "Camera view of #{printer.name}" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <%= render 'jobs/tools',
+                   tools: reported_tools,
+                   live_tool_temps: live_tool_temps,
+                   show_live_temps: current_job.present?,
+                   section_label: 'Print heads',
+                   empty_message: 'No print head data yet.' %>
+      </div>
+    </div>
+
     <div class="card mb-3">
       <div class="card-body">
         <div class="h-section-label">Environment</div>
@@ -170,17 +188,6 @@
       </div>
     </div>
 
-    <% if printer.camera? && !current_job %>
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="h-section-label">Camera</div>
-          <%= image_tag camera_printer_path(printer, t: presenter.camera_refresh_token),
-                        class: 'img-fluid rounded border',
-                        alt: "Camera view of #{printer.name}" %>
-        </div>
-      </div>
-    <% end %>
-
     <div class="card">
       <div class="card-body">
         <div class="h-section-label">Integrations</div>
@@ -194,8 +201,8 @@
             Home Assistant sensor: <%= printer.ha_base_sensor.presence || '—' %>
           </li>
           <li>
-            <span class="status-dot <%= printer.camera? ? 'status-success' : 'status-muted' %> me-2"></span>
-            Camera: <%= printer.camera? ? printer.camera_url : 'none' %>
+            <span class="status-dot <%= printer.camera_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
+            Camera: <%= printer.camera? ? printer.camera_url : (printer.prusalink? ? 'PrusaLink' : 'none') %>
           </li>
         </ul>
       </div>

@@ -11,6 +11,15 @@ class PrintersController < ApplicationController
   end
 
   def camera
+    capture = @printer.photo_captures.reverse_chronological.includes(image_attachment: :blob).first
+    if capture&.image&.attached?
+      send_data capture.image.download,
+                type: capture.image.content_type,
+                disposition: 'inline',
+                filename: capture.image.filename.to_s
+      return
+    end
+
     snapshot = PrinterCamera.snapshot(@printer)
     return head :service_unavailable if snapshot.nil?
 

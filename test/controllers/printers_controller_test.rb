@@ -55,7 +55,7 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/Printer is idle/, response.body)
-    assert_select '.h-section-label', text: 'Print heads used'
+    assert_select '.h-section-label', text: 'Print heads'
     assert_match(/PLA/, response.body)
   end
 
@@ -69,19 +69,35 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get printer_path(@printer)
 
     assert_select '.h-section-label', text: 'Temperatures'
-    assert_select '.h-section-label', text: 'Print heads used'
+    assert_select '.h-section-label', text: 'Print heads'
     assert_match(/T0/, response.body)
     assert_match(/PLA/, response.body)
     assert_match(/PETG/, response.body)
   end
 
-  test 'show renders live camera from configured URL for active job' do
+  test 'show renders camera section when camera is configured' do
     get printer_path(@printer)
 
+    assert_select '.h-section-label', text: 'Camera'
     assert_select 'img[src^=?]', camera_printer_path(@printer)
   end
 
-  test 'camera endpoint proxies configured camera URL' do
+  test 'camera endpoint serves stored photo when available' do
+    capture = @printer.photo_captures.create!(captured_at: Time.current)
+    capture.image.attach(
+      io: StringIO.new('STORED-BYTES'),
+      filename: 'stored.jpg',
+      content_type: 'image/jpeg'
+    )
+
+    get camera_printer_path(@printer)
+
+    assert_response :success
+    assert_equal 'image/jpeg', response.media_type
+    assert_equal 'STORED-BYTES', response.body
+  end
+
+  test 'camera endpoint proxies configured camera URL when no stored photo' do
     snapshot = {
       io: StringIO.new('JPEG-BYTES'),
       filename: 'camera.jpg',
@@ -105,14 +121,15 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_response :service_unavailable
   end
 
-  test 'show renders print preview and camera snapshot for active job' do
+  test 'show renders print preview and stored camera photo for active job' do
     job = jobs(:active_xl)
     job.preview_image.attach(
       io: StringIO.new('preview-bytes'),
       filename: 'preview.png',
       content_type: 'image/png'
     )
-    job.camera_snapshot.attach(
+    capture = job.photo_captures.create!(printer: @printer, captured_at: Time.current)
+    capture.image.attach(
       io: StringIO.new('camera-bytes'),
       filename: 'camera.jpg',
       content_type: 'image/jpeg'
@@ -121,7 +138,7 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get printer_path(@printer)
 
     assert_match(/Print preview/, response.body)
-    assert_match(/Camera/, response.body)
+    assert_select '.h-section-label', text: 'Camera'
   end
 
   test 'show displays PrusaLink status dot when configured' do

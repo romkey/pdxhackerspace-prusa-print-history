@@ -3,7 +3,6 @@ require 'test_helper'
 class JobImageCaptureTest < ActiveSupport::TestCase
   setup do
     @job = jobs(:active_xl)
-    @printer = @job.printer
     @job_payload = {
       'file' => {
         'refs' => {
@@ -37,51 +36,11 @@ class JobImageCaptureTest < ActiveSupport::TestCase
     assert @job.preview_image.attached?
   end
 
-  test 'captures camera snapshot for active jobs when camera is configured' do
-    snapshot = {
-      io: StringIO.new('JPEG-BYTES'),
-      filename: 'printer_1_123.jpg',
-      content_type: 'image/jpeg'
-    }
-
-    PrinterCamera.stub(:snapshot, snapshot) do
-      JobImageCapture.capture_camera_snapshot!(@job, printer: @printer)
-    end
-
-    assert @job.camera_snapshot.attached?
-  end
-
-  test 'captures camera snapshot via PrusaLink when no camera URL is configured' do
-    @printer.update!(camera_url: nil, prusalink_key: 'secret')
-    snapshot = {
-      io: StringIO.new('PNG-BYTES'),
-      filename: 'printer_1_123.png',
-      content_type: 'image/png'
-    }
-
-    PrinterCamera.stub(:snapshot, snapshot) do
-      JobImageCapture.capture_camera_snapshot!(@job, printer: @printer, client: stub_client(download: nil))
-    end
-
-    assert @job.camera_snapshot.attached?
-  end
-
-  test 'does not capture camera snapshot for finished jobs' do
-    @job.update!(status: 'finished', ended_at: Time.current)
-
-    PrinterCamera.stub(:snapshot, ->(*) { flunk 'camera should not be called' }) do
-      JobImageCapture.capture_camera_snapshot!(@job, printer: @printer)
-    end
-
-    assert_not @job.camera_snapshot.attached?
-  end
-
   private
 
   def stub_client(download:)
     obj = Object.new
     obj.define_singleton_method(:download) { |_path| download }
-    obj.define_singleton_method(:camera_snapshot) { nil }
     obj
   end
 end

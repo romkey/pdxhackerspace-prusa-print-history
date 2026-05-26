@@ -34,6 +34,20 @@ module PrusaLink
     def download(path)
       return nil if path.blank?
 
+      binary_get(path)
+    end
+
+    def camera_snapshot
+      binary_get('/api/v1/cameras/snap')
+    rescue Error => e
+      raise unless camera_unavailable?(e)
+
+      nil
+    end
+
+    private
+
+    def binary_get(path)
       uri = URI.join("http://#{@printer.hostname}", path)
       request = Net::HTTP::Get.new(uri)
       request['X-Api-Key'] = @printer.prusalink_key
@@ -47,9 +61,13 @@ module PrusaLink
       else
         raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
       end
+    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+      raise Error, "PrusaLink GET #{path} failed: #{e.class} #{e.message}"
     end
 
-    private
+    def camera_unavailable?(error)
+      error.message.match?(/\b(204|404|503)\b/)
+    end
 
     def get(path)
       uri = URI.join("http://#{@printer.hostname}", path)

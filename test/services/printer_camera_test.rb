@@ -46,6 +46,36 @@ class PrinterCameraTest < ActiveSupport::TestCase
     assert_nil result.snapshot
   end
 
+  test 'uses basic auth from camera URL when configured' do
+    captured_request = nil
+    response = build_ok_response('JPEG-BYTES', 'image/jpeg')
+    fake_http = Object.new
+    fake_http.define_singleton_method(:request) do |req|
+      captured_request = req
+      response
+    end
+
+    printer = printers(:prusa_xl)
+    printer.camera_url = 'http://user:pass@printer.local/snapshot.jpg'
+
+    Net::HTTP.stub(:start, ->(*_args, **_kwargs, &block) { block.call(fake_http) }) do
+      PrinterCamera.snapshot(printer)
+    end
+
+    assert_match(/\ABasic /, captured_request['Authorization'])
+  end
+
+  test 'uses PrusaLink camera snap when no camera URL is configured' do
+    @without_camera.update!(prusalink_key: 'secret', camera_url: nil)
+    client = Object.new
+    client.define_singleton_method(:camera_snapshot) { 'PNG-BYTES' }
+
+    snapshot = PrinterCamera.snapshot(@without_camera, client: client)
+
+    assert_equal 'image/png', snapshot[:content_type]
+    assert_equal 'PNG-BYTES', snapshot[:io].read
+  end
+
   private
 
   def build_ok_response(body, content_type)

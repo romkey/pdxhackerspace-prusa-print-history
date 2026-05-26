@@ -3,6 +3,7 @@
 class PrinterPoller
   PRUSA_TO_STATUS = {
     'PRINTING' => 'printing',
+    'BUSY' => 'printing',
     'PAUSED' => 'paused',
     'ATTENTION' => 'attention',
     'ERROR' => 'error',
@@ -34,7 +35,7 @@ class PrinterPoller
 
     status_payload = @prusalink.status
     record_prusalink_reachable!
-    job_payload    = safe_job_payload
+    job_payload    = resolve_job_payload(status_payload)
     mapped_status  = map_status(status_payload)
 
     return handle_idle_poll(status_payload) if idle_state?(status_payload)
@@ -65,6 +66,7 @@ class PrinterPoller
 
   def handle_job_poll(status_payload, job_payload, mapped_status)
     job = upsert_job(job_payload, mapped_status)
+    job ||= ensure_active_job!(mapped_status, job_payload, status_payload)
     update_printer_environment!(operational_state: mapped_status || 'unknown')
 
     if job.nil?
@@ -75,7 +77,7 @@ class PrinterPoller
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, status_payload, job_payload)
     JobImageCapture.capture_preview!(job, job_payload, client: @prusalink)
-    JobImageCapture.capture_camera_snapshot!(job, printer: @printer)
+    JobImageCapture.capture_camera_snapshot!(job, printer: @printer, client: @prusalink)
     detect_status_change(job, mapped_status)
     finalize_if_terminal(job, job_payload)
     update_printer_environment!(operational_state: 'idle') if job.reload.terminal?
@@ -91,6 +93,38 @@ class PrinterPoller
     @prusalink.job
   rescue PrusaLink::Error
     nil
+  end
+
+  def resolve_job_payload(status_payload)
+    payload = safe_job_payload
+    return payload if payload.present?
+
+    status_payload['job'].presence
+  end
+
+  def ensure_active_job!(mapped_status, job_payload, status_payload)
+    return nil unless mapped_status.in?(Job::ACTIVE_STATUSES)
+
+    existing = @printer.jobs.active.first
+    return existing if existing
+
+    save_active_job!(mapped_status, job_payload, status_payload)
+  end
+
+  def save_active_job!(mapped_status, job_payload, status_payload)
+    stub = job_payload.presence || status_payload['job'] || {}
+    job = job_for_status_stub(stub)
+    job.filename = extract_filename(job_payload) || job.filename || fallback_filename(stub)
+    job.status = mapped_status
+    job.started_at ||= Time.current
+    job.save!
+    job
+  end
+
+  def job_for_status_stub(stub)
+    return @printer.jobs.find_or_initialize_by(prusalink_job_id: stub['id'].to_s) if stub['id'].present?
+
+    @printer.jobs.new
   end
 
   def map_status(status_payload)
@@ -149,7 +183,7 @@ class PrinterPoller
     return nil if job_payload.blank?
 
     job = find_or_initialize_job(job_payload)
-    job.filename     = extract_filename(job_payload) || job.filename
+    job.filename     = extract_filename(job_payload) || job.filename || fallback_filename(job_payload)
     job.status       = status if status.present?
     job.started_at ||= Time.current
     job.save!
@@ -166,7 +200,13 @@ class PrinterPoller
   def extract_filename(job_payload)
     job_payload.dig('file', 'display_name') ||
       job_payload.dig('file', 'name') ||
-      job_payload['filename']
+      job_payload['filename'] ||
+      job_payload['display_name']
+  end
+
+  def fallback_filename(job_payload)
+    id = job_payload['id']
+    id.present? ? "Print job #{id}" : 'Active print'
   end
 
   def record_telemetry(job, status_payload)

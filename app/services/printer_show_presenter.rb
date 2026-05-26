@@ -41,6 +41,10 @@ class PrinterShowPresenter
     latest_reading&.tool_temps || {}
   end
 
+  def camera_refresh_token
+    latest_reading&.recorded_at&.to_i || printer.updated_at.to_i
+  end
+
   def locals
     {
       printer: printer,

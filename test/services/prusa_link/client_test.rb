@@ -58,6 +58,21 @@ module PrusaLink
       assert_nil @client.download(nil)
     end
 
+    test 'camera_snapshot returns binary body' do
+      stub_http(StubResponse.ok('PNG-BYTES')) do |captured|
+        body = @client.camera_snapshot
+
+        assert_equal 'PNG-BYTES', body
+        assert_equal '/api/v1/cameras/snap', captured[:request].path
+      end
+    end
+
+    test 'camera_snapshot returns nil when camera is unavailable' do
+      stub_http(StubResponse.new(Net::HTTPNotFound, '404')) do
+        assert_nil @client.camera_snapshot
+      end
+    end
+
     private
 
     StubResponse = Struct.new(:klass, :code, :body) do

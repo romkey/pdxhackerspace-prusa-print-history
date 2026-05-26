@@ -3,8 +3,8 @@ class JobImageCapture
     new(job, job_payload, client: client).capture_preview!
   end
 
-  def self.capture_camera_snapshot!(job, printer: job.printer)
-    new(job, nil, client: nil, printer: printer).capture_camera_snapshot!
+  def self.capture_camera_snapshot!(job, printer: job.printer, client: nil)
+    new(job, nil, client: client, printer: printer).capture_camera_snapshot!
   end
 
   def initialize(job, job_payload, client:, printer: job.printer)
@@ -28,9 +28,9 @@ class JobImageCapture
 
   def capture_camera_snapshot!
     return unless @job.active?
-    return unless @printer.camera?
+    return unless @printer.camera? || @printer.prusalink?
 
-    snapshot = PrinterCamera.snapshot(@printer)
+    snapshot = PrinterCamera.snapshot(@printer, client: @client)
     return if snapshot.nil?
 
     @job.camera_snapshot.attach(

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-05-26
+
+### Added
+- Live camera on the printer page, fetched from the configured camera URL via a server-side proxy.
+- PrusaLink camera snap as a fallback when no camera URL is configured.
+
+### Fixed
+- Live PrusaLink telemetry when the job endpoint is empty but status includes job data.
+- Active job detection for `BUSY` printer state and status-only job payloads.
+- Camera URLs with HTTP basic auth.
+
 ## [0.1.13] - 2026-05-26
 
 ### Added

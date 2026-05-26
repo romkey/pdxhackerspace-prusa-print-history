@@ -4,6 +4,7 @@ class PrinterPollerTest < ActiveJob::TestCase
   setup do
     @printer = printers(:prusa_mini) # no jobs in fixtures
     @printer.update!(prusalink_key: 'key', camera_url: 'http://printer/snapshot.jpg')
+    PrusaLink::Client.new(@printer)
   end
 
   test 'creates a job, telemetry reading, and started event on first poll' do
@@ -34,6 +35,48 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal 'thing.gcode', job.filename
     assert_equal 'started', job.events.last.event_type
     assert job.preview_image.attached?
+  end
+
+  test 'creates job and telemetry from status payload when job endpoint is empty' do
+    payloads = {
+      status: {
+        'printer' => { 'state' => 'PRINTING', 'temp_bed' => 60.0, 'temp_nozzle' => 215.0 },
+        'job' => { 'id' => 420, 'progress' => 42.0 }
+      },
+      job: nil
+    }
+
+    prusalink = stub_prusalink(payloads)
+    ha = stub_home_assistant
+
+    assert_difference -> { Job.count } => 1,
+                      -> { TelemetryReading.count } => 1 do
+      PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: ha).poll!
+    end
+
+    job = Job.find_by!(prusalink_job_id: '420')
+
+    assert_equal 'printing', job.status
+    assert_equal 'Print job 420', job.filename
+    assert_in_delta 60.0, job.telemetry_readings.last.bed_temp.to_f
+    assert_in_delta 215.0, job.telemetry_readings.last.tool_temp(0).to_f
+  end
+
+  test 'maps BUSY printer state to an active printing job' do
+    payloads = {
+      status: {
+        'printer' => { 'state' => 'BUSY', 'temp_bed' => 55.0, 'temp_nozzle' => 200.0 },
+        'job' => { 'id' => 777, 'progress' => 0.0 }
+      },
+      job: nil
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    job = Job.find_by!(prusalink_job_id: '777')
+
+    assert_equal 'printing', job.status
+    assert job.telemetry_readings.any?
   end
 
   test 'records a status_change event when status flips' do
@@ -258,6 +301,8 @@ class PrinterPollerTest < ActiveJob::TestCase
     obj = Object.new
     obj.define_singleton_method(:status) { payloads[:status] }
     obj.define_singleton_method(:job)    { payloads[:job] }
+    obj.define_singleton_method(:download) { |_path| nil }
+    obj.define_singleton_method(:camera_snapshot) { nil }
     obj
   end
 

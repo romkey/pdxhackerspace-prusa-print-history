@@ -27,4 +27,10 @@ class PrinterShowPresenterTest < ActiveSupport::TestCase
     assert @presenter.latest_reading.present?
     assert @presenter.live_tool_temps.any?
   end
+
+  test 'camera_refresh_token uses latest telemetry timestamp' do
+    reading = @presenter.latest_reading
+
+    assert_equal reading.recorded_at.to_i, @presenter.camera_refresh_token
+  end
 end

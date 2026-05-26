@@ -17,7 +17,11 @@
             <% if current_job.duration_seconds %>&middot; <%= distance_of_time_in_words(current_job.duration_seconds) %><% end %>
           </div>
 
-          <%= render 'jobs/images', job: current_job, show_camera: true, wrapper_class: 'mt-3' %>
+          <%= render 'jobs/images',
+                     job: current_job,
+                     show_camera: true,
+                     live_camera_path: (camera_printer_path(printer, t: presenter.camera_refresh_token) if printer.camera?),
+                     wrapper_class: 'mt-3' %>
 
           <%= render 'jobs/tools',
                      tools: current_job.tools,
@@ -38,6 +42,9 @@
             <hr>
             <div class="row text-13">
               <div class="col">Bed<br><span class="fw-medium"><%= latest_reading.bed_temp.to_f.round(1) %> &deg;C</span></div>
+              <% if latest_reading.tool_temp(0).present? %>
+                <div class="col">Nozzle<br><span class="fw-medium"><%= latest_reading.tool_temp(0).to_f.round(1) %> &deg;C</span></div>
+              <% end %>
               <div class="col">Enclosure<br><span class="fw-medium"><%= latest_reading.enclosure_temp.to_f.round(1) %> &deg;C</span></div>
               <div class="col">Humidity<br><span class="fw-medium"><%= latest_reading.enclosure_humidity.to_f.round(0) %>%</span></div>
             </div>
@@ -162,6 +169,17 @@
         <% end %>
       </div>
     </div>
+
+    <% if printer.camera? && !current_job %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Camera</div>
+          <%= image_tag camera_printer_path(printer, t: presenter.camera_refresh_token),
+                        class: 'img-fluid rounded border',
+                        alt: "Camera view of #{printer.name}" %>
+        </div>
+      </div>
+    <% end %>
 
     <div class="card">
       <div class="card-body">

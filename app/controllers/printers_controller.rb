@@ -1,6 +1,6 @@
 class PrintersController < ApplicationController
   before_action :require_admin, only: %i[new create edit update destroy]
-  before_action :set_printer,   only: %i[show edit update destroy]
+  before_action :set_printer, only: %i[show edit update destroy camera]
 
   def index
     @printers = Printer.ordered
@@ -8,6 +8,16 @@ class PrintersController < ApplicationController
 
   def show
     @presenter = PrinterShowPresenter.new(@printer)
+  end
+
+  def camera
+    snapshot = PrinterCamera.snapshot(@printer)
+    return head :service_unavailable if snapshot.nil?
+
+    send_data snapshot[:io].read,
+              type: snapshot[:content_type],
+              disposition: 'inline',
+              filename: snapshot[:filename]
   end
 
   def new

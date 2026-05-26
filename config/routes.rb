@@ -6,6 +6,9 @@ Rails.application.routes.draw do
   root 'dashboard#index'
 
   resources :printers do
+    member do
+      get :camera
+    end
     resources :jobs, only: %i[index]
   end
 

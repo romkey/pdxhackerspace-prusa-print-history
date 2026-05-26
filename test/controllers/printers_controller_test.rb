@@ -75,6 +75,36 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/PETG/, response.body)
   end
 
+  test 'show renders live camera from configured URL for active job' do
+    get printer_path(@printer)
+
+    assert_select 'img[src^=?]', camera_printer_path(@printer)
+  end
+
+  test 'camera endpoint proxies configured camera URL' do
+    snapshot = {
+      io: StringIO.new('JPEG-BYTES'),
+      filename: 'camera.jpg',
+      content_type: 'image/jpeg'
+    }
+
+    PrinterCamera.stub(:snapshot, snapshot) do
+      get camera_printer_path(@printer)
+    end
+
+    assert_response :success
+    assert_equal 'image/jpeg', response.media_type
+    assert_equal 'JPEG-BYTES', response.body
+  end
+
+  test 'camera endpoint returns service unavailable when fetch fails' do
+    PrinterCamera.stub(:snapshot, nil) do
+      get camera_printer_path(@printer)
+    end
+
+    assert_response :service_unavailable
+  end
+
   test 'show renders print preview and camera snapshot for active job' do
     job = jobs(:active_xl)
     job.preview_image.attach(

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-26
+
+### Added
+- System-default light/dark mode via Bootstrap `data-bs-theme="auto"`.
+- Optional local admin login configured with `LOCAL_ADMIN_EMAIL` and
+  `LOCAL_ADMIN_PASSWORD` in `.env`.
+
+### Changed
+- Bootstrap upgraded from 5.2.3 to 5.3.3 for native color-mode support.
+
+## [0.1.0] - 2026-05-25
+
 ### Added
 - Initial Rails 8.1 skeleton (Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8).
 - Bootstrap 5.2.3 + Bootstrap Icons via cssbundling-rails and importmap-rails.

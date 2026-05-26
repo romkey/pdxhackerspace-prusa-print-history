@@ -56,7 +56,11 @@ for the full list; the values you must set on a fresh install are:
 - `ADMIN_EMAILS=you@example.com,colleague@example.com` &mdash; users
   matching one of these emails are auto-promoted to admin on first
   sign-in. You can also promote a user by hand:
-  `Printer.find_by(email: 'foo@example.com').update!(admin: true)`.
+  `User.find_by(email: 'foo@example.com').update!(admin: true)`.
+- `LOCAL_ADMIN_EMAIL`, `LOCAL_ADMIN_PASSWORD`, and optionally
+  `LOCAL_ADMIN_NAME` — when email and password are both set, the login
+  page shows a password form that signs in as a local admin account
+  (no Authentik required). Useful for single-user or offline setups.
 
 ## Local development
 

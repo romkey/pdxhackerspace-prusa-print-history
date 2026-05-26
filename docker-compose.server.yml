@@ -30,6 +30,9 @@ x-app-base: &app-base
     AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET}
     AUTHENTIK_REDIRECT_URI: ${AUTHENTIK_REDIRECT_URI}
     ADMIN_EMAILS: ${ADMIN_EMAILS}
+    LOCAL_ADMIN_EMAIL: ${LOCAL_ADMIN_EMAIL:-}
+    LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:-}
+    LOCAL_ADMIN_NAME: ${LOCAL_ADMIN_NAME:-Local Admin}
   volumes:
     - prusa-print-history-storage:/data/storage
   networks:

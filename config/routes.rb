@@ -18,8 +18,9 @@ Rails.application.routes.draw do
 
   resource :settings, only: %i[show update]
 
-  get    '/login',                   to: 'sessions#new',     as: :login
-  get    '/auth/:provider/callback', to: 'sessions#create',  as: :auth_callback
+  get    '/login',                   to: 'sessions#new',          as: :login
+  post   '/login/local',             to: 'sessions#create_local', as: :local_login
+  get    '/auth/:provider/callback', to: 'sessions#create', as: :auth_callback
   post   '/auth/:provider/callback', to: 'sessions#create'
   get    '/auth/failure',            to: 'sessions#failure'
   delete '/logout',                  to: 'sessions#destroy', as: :logout

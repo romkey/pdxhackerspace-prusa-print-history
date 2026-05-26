@@ -11,6 +11,21 @@ class SessionsController < ApplicationController
     redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
   end
 
+  def create_local
+    unless LocalAdmin.configured?
+      head :not_found
+      return
+    end
+
+    user = LocalAdmin.authenticate(params[:email], params[:password])
+    if user
+      session[:user_id] = user.id
+      redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
+    else
+      redirect_to login_path, alert: 'Invalid email or password.'
+    end
+  end
+
   def destroy
     reset_session
     redirect_to root_path, notice: 'Signed out.'

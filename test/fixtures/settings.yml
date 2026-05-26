@@ -1,0 +1,3 @@
+default_ambient_sensor:
+  key: default_ambient_sensor
+  value: sensor.shop_ambient_temperature

@@ -1,0 +1,13 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join('tmp/storage') %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join('storage') %>
+
+# Production stores uploads in /data/storage, which is mounted as a
+# persistent named volume in docker-compose.server.yml.
+production:
+  service: Disk
+  root: <%= ENV.fetch('STORAGE_ROOT', '/data/storage') %>

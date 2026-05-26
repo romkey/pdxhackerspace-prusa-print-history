@@ -1,0 +1,20 @@
+active_xl_started:
+  job: active_xl
+  event_type: started
+  to_status: printing
+  occurred_at: <%= 30.minutes.ago.iso8601 %>
+
+active_xl_attention:
+  job: orphaned_active
+  event_type: attention
+  from_status: printing
+  to_status: attention
+  message: Filament runout sensor triggered
+  occurred_at: <%= 5.minutes.ago.iso8601 %>
+
+finished_done:
+  job: finished
+  event_type: finished
+  from_status: printing
+  to_status: finished
+  occurred_at: <%= 1.hour.ago.iso8601 %>

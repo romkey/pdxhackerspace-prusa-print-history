@@ -1,0 +1,89 @@
+<div class="container py-4" style="max-width: 880px;">
+  <div class="mb-3">
+    <h1 class="h-page-title mb-0">Settings</h1>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="h-section-label">Default ambient temperature sensor</div>
+      <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-9">
+            <%= label_tag 'settings[default_ambient_sensor]', 'Home Assistant entity ID', class: 'form-label' %>
+            <%= text_field_tag 'settings[default_ambient_sensor]', @ambient_sensor,
+                               class: 'form-control', placeholder: 'sensor.shop_ambient_temperature' %>
+          </div>
+          <div class="col-md-3">
+            <%= f.submit 'Save', class: 'btn btn-primary w-100' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card mb-3" id="ha-health">
+    <div class="card-body">
+      <div class="h-section-label">Home Assistant health</div>
+      <% status = @home_assistant[:status] %>
+      <div class="d-flex align-items-center gap-2">
+        <% case status %>
+        <% when 'ok' %>
+          <span class="status-dot status-success"></span>
+          <span class="fw-medium">Reachable</span>
+        <% when 'unreachable' %>
+          <span class="status-dot status-danger"></span>
+          <span class="fw-medium">Unreachable</span>
+        <% when 'not_configured' %>
+          <span class="status-dot status-muted"></span>
+          <span class="fw-medium">Not configured</span>
+        <% else %>
+          <span class="status-dot status-muted"></span>
+          <span class="text-secondary">Status unknown</span>
+        <% end %>
+      </div>
+      <% if @home_assistant[:polled_at] %>
+        <div class="text-13 text-secondary mt-1">
+          Last checked <%= time_ago_in_words(@home_assistant[:polled_at]) %> ago
+        </div>
+      <% end %>
+      <% if @home_assistant[:error].present? %>
+        <div class="alert alert-warning mt-2 mb-0 text-13"><%= @home_assistant[:error] %></div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="h-section-label">Printers</div>
+      <% if @printers.any? %>
+        <table class="table table-compact mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Hostname</th>
+              <th>HA base sensor</th>
+              <th>Camera</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @printers.each do |printer| %>
+              <tr>
+                <td><%= link_to printer.name, printer_path(printer) %></td>
+                <td class="text-secondary text-13"><%= printer.hostname %></td>
+                <td class="text-secondary text-13"><%= printer.ha_base_sensor.presence || '—' %></td>
+                <td class="text-secondary text-13"><%= printer.camera? ? 'yes' : '—' %></td>
+                <td class="text-end">
+                  <%= link_to 'Edit', edit_printer_path(printer), class: 'btn btn-outline-secondary btn-sm' %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-secondary mb-2">No printers configured yet.</p>
+        <%= link_to '+ Add printer', new_printer_path, class: 'btn btn-primary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+</div>

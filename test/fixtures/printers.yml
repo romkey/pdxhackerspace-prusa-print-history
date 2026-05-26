@@ -1,0 +1,20 @@
+prusa_xl:
+  name: Prusa XL
+  location: Shop
+  model: XL 5-tool
+  hostname: prusa-xl.local
+  ha_base_sensor: sensor.prusa_xl_monitor
+  camera_url: http://prusa-xl.local/snapshot.jpg
+
+prusa_mk4:
+  name: Prusa MK4
+  location: Office
+  model: MK4
+  hostname: prusa-mk4.local
+  ha_base_sensor: sensor.prusa_mk4_monitor
+
+prusa_mini:
+  name: Prusa Mini
+  location: Studio
+  model: Mini+
+  hostname: prusa-mini.local

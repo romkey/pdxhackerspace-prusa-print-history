@@ -1,0 +1,11 @@
+<div class="container py-4" style="max-width: 880px;">
+  <div class="mb-3">
+    <div class="text-13 text-secondary">
+      <%= link_to 'Printers', printers_path, class: 'text-decoration-none' %> /
+      <%= link_to @printer.name, printer_path(@printer), class: 'text-decoration-none' %>
+    </div>
+    <h1 class="h-page-title mb-0">Printer settings</h1>
+  </div>
+
+  <%= render 'form', printer: @printer %>
+</div>

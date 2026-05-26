@@ -1,0 +1,130 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <div class="text-13 text-secondary">
+        <%= link_to 'Jobs', jobs_path, class: 'text-decoration-none' %> /
+        <%= link_to @job.printer.name, printer_path(@job.printer), class: 'text-decoration-none' %>
+      </div>
+      <h1 class="h-page-title mb-0"><%= @job.filename %></h1>
+      <div class="text-13 text-secondary mt-1">
+        <span class="badge text-bg-secondary-subtle"><%= @job.status %></span>
+        <% if @job.started_at %>&middot; started <%= l(@job.started_at, format: :short) %><% end %>
+        <% if @job.ended_at %>&middot; ended <%= l(@job.ended_at, format: :short) %><% end %>
+        <% if @job.duration_seconds %>&middot; <%= distance_of_time_in_words(@job.duration_seconds) %><% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Owner</div>
+          <% if @job.owner %>
+            <div class="fw-medium"><%= @job.owner.display_name %></div>
+            <div class="text-secondary text-13"><%= @job.owner.email %></div>
+          <% else %>
+            <div class="text-secondary">No owner.</div>
+          <% end %>
+
+          <% if logged_in? %>
+            <div class="mt-3 d-flex gap-2">
+              <% if @job.owner.nil? || @job.owner_id != current_user.id %>
+                <%= button_to 'Claim', claim_job_path(@job), method: :patch, class: 'btn btn-outline-secondary btn-sm' %>
+              <% end %>
+              <% if @job.owner_id == current_user.id %>
+                <%= button_to 'Release', claim_job_path(@job), method: :delete, class: 'btn btn-outline-secondary btn-sm' %>
+              <% end %>
+              <% if admin? && @job.owner %>
+                <%= button_to "Force release (admin)", claim_job_path(@job), method: :delete, class: 'btn btn-outline-danger btn-sm' %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="h-section-label">Tools</div>
+          <% if @tools.any? %>
+            <ul class="list-unstyled mb-0">
+              <% @tools.each do |tool| %>
+                <li class="d-flex justify-content-between border-bottom py-2">
+                  <span>T<%= tool.tool_index %> &middot; <%= tool.nozzle_size_mm.to_f.round(2) %> mm <% if tool.high_flow? %><span class="badge text-bg-secondary-subtle ms-1">HF</span><% end %></span>
+                  <span class="text-secondary"><%= tool.material.presence || '—' %></span>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="text-secondary">No tool data.</div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="h-section-label">Events</div>
+          <% if @events.any? %>
+            <ul class="list-unstyled mb-0">
+              <% @events.each do |event| %>
+                <li class="d-flex gap-3 border-bottom py-2">
+                  <div style="width: 96px;">
+                    <% if event.photo.attached? %>
+                      <%= image_tag event.photo, class: 'img-fluid rounded', style: 'max-height: 64px;' %>
+                    <% else %>
+                      <div class="text-secondary text-13">No photo</div>
+                    <% end %>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="fw-medium"><%= event.event_type.humanize %></div>
+                    <div class="text-13 text-secondary">
+                      <% if event.from_status %><%= event.from_status %> → <% end %><%= event.to_status %>
+                      <% if event.message %>&middot; <%= event.message %><% end %>
+                    </div>
+                  </div>
+                  <div class="text-secondary text-13" title="<%= event.occurred_at.iso8601 %>">
+                    <%= l(event.occurred_at, format: :short) %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="text-secondary">No events recorded.</div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-body">
+          <div class="h-section-label">Latest telemetry</div>
+          <% if @latest_reading %>
+            <table class="table table-compact mb-0">
+              <tbody>
+                <tr><th>Recorded</th><td class="text-secondary"><%= l(@latest_reading.recorded_at, format: :short) %></td></tr>
+                <tr><th>Bed</th><td><%= @latest_reading.bed_temp.to_f.round(1) %> &deg;C</td></tr>
+                <tr><th>Enclosure</th><td><%= @latest_reading.enclosure_temp.to_f.round(1) %> &deg;C</td></tr>
+                <tr><th>Ambient</th><td><%= @latest_reading.ambient_temp.to_f.round(1) %> &deg;C</td></tr>
+                <tr><th>Humidity</th><td><%= @latest_reading.enclosure_humidity.to_f.round(0) %>%</td></tr>
+              </tbody>
+            </table>
+
+            <% if @latest_reading.tool_temps.present? %>
+              <div class="h-section-label mt-3">Tools</div>
+              <table class="table table-compact mb-0">
+                <tbody>
+                  <% @latest_reading.tool_temps.sort_by { |k, _| k.to_i }.each do |index, temp| %>
+                    <tr><th>T<%= index %></th><td><%= temp.to_f.round(1) %> &deg;C</td></tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% end %>
+          <% else %>
+            <div class="text-secondary">No readings yet.</div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

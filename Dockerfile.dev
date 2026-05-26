@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+# check=error=true
+
+# Development/test image. Source is bind-mounted at runtime from the host;
+# the image only carries system packages and Node so the host's edits show
+# up instantly without rebuilding.
+
+ARG RUBY_VERSION=3.3.11
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+ENV LANG=C.UTF-8 \
+    BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_APP_CONFIG=/usr/local/bundle \
+    BUNDLE_BIN=/usr/local/bundle/bin \
+    PATH=/usr/local/bundle/bin:/usr/local/node/bin:/rails/bin:$PATH
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+        build-essential \
+        curl \
+        git \
+        libpq-dev \
+        libvips \
+        libyaml-dev \
+        node-gyp \
+        pkg-config \
+        postgresql-client \
+        python-is-python3 \
+        tzdata && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+ARG NODE_VERSION=24.10.0
+RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
+    /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
+    rm -rf /tmp/node-build-master
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+# Match the bundler version in Gemfile.lock's "BUNDLED WITH" line. The
+# version of bundler that ships with Ruby 3.3.11 is in the 2.5.x line,
+# so we don't need to install anything additional.
+
+WORKDIR /rails
+
+EXPOSE 3000
+
+CMD ["bash"]

@@ -1,0 +1,23 @@
+# Same as docker-compose.lint.yml but includes a build: target so the
+# RuboCop image can be rebuilt when its Dockerfile changes.
+#
+#   docker compose -f docker-compose.lint.build.yml build rubocop
+#   docker compose -f docker-compose.lint.build.yml run --rm rubocop
+name: prusa-print-history-lint
+
+services:
+  rubocop:
+    image: prusa-print-history-rubocop:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.rubocop
+    container_name: prusa-print-history-lint-rubocop
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    networks:
+      - prusa-print-history-lint
+
+networks:
+  prusa-print-history-lint:
+    name: prusa-print-history-lint

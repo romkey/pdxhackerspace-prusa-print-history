@@ -1,0 +1,20 @@
+admin:
+  email: admin@example.com
+  name: Admin User
+  provider: authentik
+  uid: admin-uid-1
+  admin: true
+
+viewer:
+  email: viewer@example.com
+  name: Viewer User
+  provider: authentik
+  uid: viewer-uid-2
+  admin: false
+
+other_viewer:
+  email: other@example.com
+  name: Other Viewer
+  provider: authentik
+  uid: viewer-uid-3
+  admin: false

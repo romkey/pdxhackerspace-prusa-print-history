@@ -1,0 +1,52 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0">Printers</h1>
+      <div class="text-13 text-secondary mt-1">
+        <%= pluralize(@printers.count, 'printer') %>
+      </div>
+    </div>
+    <% if admin? %>
+      <div>
+        <%= link_to '+ Add printer', new_printer_path, class: 'btn btn-primary btn-sm' %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @printers.any? %>
+    <div class="card">
+      <table class="table table-compact mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Model</th>
+            <th>Location</th>
+            <th>Current job</th>
+            <th>Hostname</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @printers.each do |printer| %>
+            <tr>
+              <td><%= link_to printer.name, printer_path(printer), class: 'fw-medium' %></td>
+              <td class="text-secondary"><%= printer.model.presence || '—' %></td>
+              <td class="text-secondary"><%= printer.location.presence || '—' %></td>
+              <td>
+                <% job = printer.current_job %>
+                <% if job %>
+                  <%= link_to job.filename, job_path(job), class: 'text-decoration-none' %>
+                  <span class="text-secondary text-13"><%= job.status %></span>
+                <% else %>
+                  <span class="text-secondary">idle</span>
+                <% end %>
+              </td>
+              <td class="text-secondary text-13"><%= printer.hostname %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-secondary">No printers configured yet.</p>
+  <% end %>
+</div>

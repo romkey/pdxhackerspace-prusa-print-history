@@ -1,0 +1,20 @@
+active_xl_tool_a:
+  job: active_xl
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: PLA
+
+active_xl_tool_b:
+  job: active_xl
+  tool_index: 1
+  nozzle_size_mm: 0.60
+  high_flow: true
+  material: PETG
+
+mk4_tool_a:
+  job: orphaned_active
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: ASA

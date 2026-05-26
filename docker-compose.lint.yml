@@ -1,0 +1,23 @@
+# Lint stack (fast).
+#
+# Assumes prusa-print-history-rubocop:latest already exists. Build/refresh with:
+#   docker compose -f docker-compose.lint.build.yml build rubocop
+#
+# Usage:
+#   docker compose -f docker-compose.lint.yml run --rm rubocop
+#   docker compose -f docker-compose.lint.yml run --rm rubocop --auto-correct
+name: prusa-print-history-lint
+
+services:
+  rubocop:
+    image: prusa-print-history-rubocop:latest
+    container_name: prusa-print-history-lint-rubocop
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    networks:
+      - prusa-print-history-lint
+
+networks:
+  prusa-print-history-lint:
+    name: prusa-print-history-lint

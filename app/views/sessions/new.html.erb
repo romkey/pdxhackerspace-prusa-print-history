@@ -1,0 +1,27 @@
+<div class="container py-5" style="max-width: 520px;">
+  <div class="card">
+    <div class="card-body text-center">
+      <h1 class="h-page-title mb-1">Sign in</h1>
+      <p class="text-13 text-secondary mb-4">
+        Sign in via Authentik to claim prints and access admin features.
+        Anonymous visitors can still view all printer and job pages.
+      </p>
+
+      <% if ENV['AUTHENTIK_ISSUER'].present? %>
+        <%= button_to '/auth/authentik', method: :post, class: 'btn btn-primary w-100', data: { turbo: false } do %>
+          <i class="bi bi-shield-lock me-2"></i> Sign in with Authentik
+        <% end %>
+      <% else %>
+        <p class="text-warning text-13 mb-3">Authentik is not configured on this server.</p>
+      <% end %>
+
+      <% if Rails.env.development? || Rails.env.test? %>
+        <hr>
+        <p class="text-13 text-secondary mb-2">Developer login</p>
+        <%= button_to '/auth/developer', method: :post, class: 'btn btn-outline-secondary w-100', data: { turbo: false } do %>
+          Sign in (developer)
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

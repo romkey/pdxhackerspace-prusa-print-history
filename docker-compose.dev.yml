@@ -1,0 +1,132 @@
+# Local development stack.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml build
+#   docker compose -f docker-compose.dev.yml up
+#   docker compose -f docker-compose.dev.yml --profile tools run --rm migrate
+#   docker compose -f docker-compose.dev.yml --profile tools run --rm console
+#
+# Source is bind-mounted into /rails so host edits show up immediately.
+name: prusa-print-history-dev
+
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  image: prusa-print-history-dev:latest
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    RAILS_ENV: development
+    NODE_ENV: development
+    DB_HOST: prusa-print-history-dev-postgres
+    DB_PORT: 5432
+    DB_USERNAME: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: prusa_print_history_development
+    REDIS_URL: redis://prusa-print-history-dev-redis:6379/0
+    BOOTSNAP_CACHE_DIR: /rails/tmp/cache/bootsnap
+    ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY:-development_only_primary_key_padded_to_32+_chars}
+    ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY:-development_only_deterministic_key_padded_to_32+_chars}
+    ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT:-development_only_key_derivation_salt_padded_to_32+_chars}
+  volumes:
+    - .:/rails
+    - prusa-print-history-dev-bundle:/usr/local/bundle
+    - prusa-print-history-dev-node-modules:/rails/node_modules
+    - prusa-print-history-dev-storage:/rails/storage
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  networks:
+    - prusa-print-history-dev
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: prusa-print-history-dev-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: prusa_print_history_development
+    ports:
+      # Distinct host port so it can coexist with other Postgres servers
+      - '${POSTGRES_HOST_PORT:-5442}:5432'
+    volumes:
+      - prusa-print-history-dev-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - prusa-print-history-dev
+
+  redis:
+    image: redis:8-alpine
+    container_name: prusa-print-history-dev-redis
+    ports:
+      - '${REDIS_HOST_PORT:-6479}:6379'
+    volumes:
+      - prusa-print-history-dev-redisdata:/data
+    networks:
+      - prusa-print-history-dev
+
+  web:
+    <<: *app-base
+    container_name: prusa-print-history-dev-web
+    command: >
+      bash -c "bundle check || bundle install &&
+               yarn install &&
+               yarn build:css &&
+               rm -f tmp/pids/server.pid &&
+               bin/rails server -b 0.0.0.0 -p 3000"
+    ports:
+      - '3000:3000'
+
+  css:
+    <<: *app-base
+    container_name: prusa-print-history-dev-css
+    command: yarn watch:css
+
+  sidekiq:
+    <<: *app-base
+    container_name: prusa-print-history-dev-sidekiq
+    command: >
+      bash -c "bundle check || bundle install &&
+               bundle exec sidekiq"
+
+  migrate:
+    <<: *app-base
+    container_name: prusa-print-history-dev-migrate
+    profiles: ['tools']
+    command: bash -c "bundle check || bundle install && bin/rails db:prepare"
+
+  console:
+    <<: *app-base
+    container_name: prusa-print-history-dev-console
+    profiles: ['tools']
+    command: bin/rails console
+    stdin_open: true
+    tty: true
+
+  shell:
+    <<: *app-base
+    container_name: prusa-print-history-dev-shell
+    profiles: ['tools']
+    command: bash
+    stdin_open: true
+    tty: true
+
+volumes:
+  prusa-print-history-dev-pgdata:
+  prusa-print-history-dev-redisdata:
+  prusa-print-history-dev-bundle:
+  prusa-print-history-dev-node-modules:
+  prusa-print-history-dev-storage:
+
+networks:
+  prusa-print-history-dev:
+    name: prusa-print-history-dev

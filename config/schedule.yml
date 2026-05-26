@@ -1,0 +1,15 @@
+# sidekiq-cron schedule. Each job uses `active_job: true` and lets its
+# job class's `queue_as` decide the queue (see
+# .cursor/rules/sidekiq-queues.mdc).
+
+poll_printers:
+  cron: '* * * * *'
+  class: 'FanOutPrinterPollsJob'
+  active_job: true
+  description: 'Poll every configured printer for status and telemetry once per minute'
+
+home_assistant_health:
+  cron: '*/5 * * * *'
+  class: 'HomeAssistantHealthJob'
+  active_job: true
+  description: 'Check Home Assistant reachability and update the settings panel'

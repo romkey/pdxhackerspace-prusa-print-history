@@ -1,0 +1,60 @@
+<%= form_with model: printer, local: true do |f| %>
+  <% if printer.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% printer.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <%= f.label :name, class: 'form-label' %>
+      <%= f.text_field :name, class: 'form-control', required: true %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :model, class: 'form-label' %>
+      <%= f.text_field :model, class: 'form-control', placeholder: 'XL, MK4, Mini+, ...' %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :location, class: 'form-label' %>
+      <%= f.text_field :location, class: 'form-control' %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :hostname, class: 'form-label' %>
+      <%= f.text_field :hostname, class: 'form-control', required: true, placeholder: 'printer.local or 10.0.0.50' %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :prusalink_key, 'PrusaLink API key', class: 'form-label' %>
+      <%= f.text_field :prusalink_key,
+                       class: 'form-control',
+                       placeholder: printer.persisted? && printer.prusalink_key.present? ? '(stored, leave blank to keep)' : nil %>
+      <div class="form-text">Encrypted at rest.</div>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
+      <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
+      <div class="form-text">Suffixes <code>_bme680_temperature</code> and <code>_bme680_humidity</code> are appended automatically.</div>
+    </div>
+    <div class="col-md-12">
+      <%= f.label :camera_url, class: 'form-label' %>
+      <%= f.url_field :camera_url, class: 'form-control', placeholder: 'http://printer.local/snapshot.jpg' %>
+      <div class="form-text">Optional. Leave blank if the printer has no camera.</div>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <%= f.submit class: 'btn btn-primary' %>
+    <%= link_to 'Cancel', (printer.persisted? ? printer_path(printer) : printers_path), class: 'btn btn-outline-secondary' %>
+    <% if printer.persisted? %>
+      <div class="ms-auto">
+        <%= button_to 'Delete printer', printer_path(printer),
+                      method: :delete,
+                      data: { turbo_confirm: "Delete #{printer.name}? This removes all of its print history." },
+                      class: 'btn btn-outline-danger btn-sm' %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

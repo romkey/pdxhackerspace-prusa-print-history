@@ -1,0 +1,57 @@
+// Custom design-system helpers used across the app.
+// Keep this small and additive; prefer Bootstrap utility classes when possible.
+
+.h-page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.h-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bs-secondary-color);
+  margin-bottom: 0.5rem;
+}
+
+.text-11 { font-size: 11px; }
+.text-12 { font-size: 12px; }
+.text-13 { font-size: 13px; }
+.fw-medium { font-weight: 500; }
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--bs-secondary-color);
+
+  &.status-success { background-color: var(--bs-success); }
+  &.status-danger  { background-color: var(--bs-danger);  }
+  &.status-warning { background-color: var(--bs-warning); }
+  &.status-muted   { background-color: var(--bs-secondary-color); }
+}
+
+.table-compact {
+  font-size: 13px;
+
+  th, td {
+    padding: 0.4rem 0.6rem;
+    vertical-align: middle;
+  }
+
+  thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bs-secondary-color);
+    font-weight: 600;
+  }
+}

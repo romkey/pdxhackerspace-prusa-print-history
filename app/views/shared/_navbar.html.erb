@@ -1,0 +1,93 @@
+<nav class="navbar navbar-expand-md border-bottom" data-bs-theme="dark">
+  <div class="container-fluid">
+    <%= link_to root_path, class: 'navbar-brand d-flex align-items-center gap-2' do %>
+      <i class="bi bi-printer"></i>
+      <span>Prusa Print History</span>
+    <% end %>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-md-0">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            Printers
+          </a>
+          <ul class="dropdown-menu">
+            <% Printer.ordered.each do |printer| %>
+              <li><%= link_to printer.name, printer_path(printer), class: 'dropdown-item' %></li>
+            <% end %>
+            <% if Printer.none? %>
+              <li><span class="dropdown-item-text text-secondary">No printers yet.</span></li>
+            <% end %>
+            <% if admin? %>
+              <li><hr class="dropdown-divider"></li>
+              <li><%= link_to 'Add a printer&hellip;'.html_safe, new_printer_path, class: 'dropdown-item' %></li>
+            <% end %>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <%= link_to 'Jobs', jobs_path, class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] != 'me'}" %>
+        </li>
+
+        <% if logged_in? %>
+          <li class="nav-item">
+            <%= link_to 'My prints', jobs_path(owner: 'me'),
+                        class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] == 'me'}" %>
+          </li>
+        <% end %>
+
+        <% if admin? %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              Settings
+            </a>
+            <ul class="dropdown-menu">
+              <li><%= link_to 'App settings', settings_path, class: 'dropdown-item' %></li>
+              <li><%= link_to 'Home Assistant health', settings_path(anchor: 'ha-health'), class: 'dropdown-item' %></li>
+              <% printers = Printer.ordered %>
+              <% if printers.any? %>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">Edit printer</h6></li>
+                <% printers.each do |printer| %>
+                  <li><%= link_to printer.name, edit_printer_path(printer), class: 'dropdown-item' %></li>
+                <% end %>
+              <% end %>
+              <li><hr class="dropdown-divider"></li>
+              <li><%= link_to 'Sidekiq', '/sidekiq', class: 'dropdown-item', target: '_blank', rel: 'noopener' %></li>
+            </ul>
+          </li>
+        <% end %>
+      </ul>
+
+      <ul class="navbar-nav">
+        <% if logged_in? %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <span><%= current_user.display_name %></span>
+              <% if admin? %>
+                <span class="badge text-bg-secondary-subtle">Admin</span>
+              <% end %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><span class="dropdown-item-text text-13 text-secondary"><%= current_user.email %></span></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><%= button_to 'Sign out', logout_path, method: :delete, class: 'dropdown-item' %></li>
+            </ul>
+          </li>
+        <% else %>
+          <li class="nav-item">
+            <%= link_to 'Sign in', login_path, class: 'nav-link' %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</nav>

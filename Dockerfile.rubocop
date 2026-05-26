@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+# check=error=true
+
+# Lightweight image containing only what RuboCop needs.
+# Source is bind-mounted at /workspace at runtime so the host's edits
+# are linted directly. We don't pin versions here — RuboCop releases are
+# frequent and we want every container build to pick up the latest cops.
+
+ARG RUBY_VERSION=3.3.11
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+ENV LANG=C.UTF-8 \
+    BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_APP_CONFIG=/usr/local/bundle \
+    BUNDLE_BIN=/usr/local/bundle/bin \
+    PATH=/usr/local/bundle/bin:$PATH
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential git && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+RUN gem install --no-document \
+        rubocop \
+        rubocop-rails \
+        rubocop-performance \
+        rubocop-minitest
+
+WORKDIR /workspace
+
+ENTRYPOINT ["rubocop"]
+CMD ["--parallel"]

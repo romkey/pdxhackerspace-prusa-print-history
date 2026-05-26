@@ -1,0 +1,77 @@
+# Production-style stack to run behind an external reverse proxy.
+#
+# Postgres is NOT included here — point at an external database via
+# DATABASE_URL (or DB_HOST / DB_PORT / DB_USERNAME / DB_PASSWORD / DB_NAME).
+# Redis is included for Sidekiq unless REDIS_URL points elsewhere.
+#
+# Usage:
+#   docker compose -f docker-compose.server.yml --env-file .env.production up -d
+#   docker compose -f docker-compose.server.yml --profile tools run --rm migrate
+name: prusa-print-history
+
+x-app-base: &app-base
+  image: ${IMAGE:-ghcr.io/romkey/prusa-print-history:latest}
+  environment:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: '1'
+    RAILS_SERVE_STATIC_FILES: '1'
+    SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    DATABASE_URL: ${DATABASE_URL}
+    REDIS_URL: ${REDIS_URL:-redis://prusa-print-history-redis:6379/0}
+    APP_VERSION: ${APP_VERSION:-unknown}
+    STORAGE_ROOT: /data/storage
+    HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL}
+    HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN}
+    ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}
+    ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}
+    ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
+    AUTHENTIK_ISSUER: ${AUTHENTIK_ISSUER}
+    AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID}
+    AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET}
+    AUTHENTIK_REDIRECT_URI: ${AUTHENTIK_REDIRECT_URI}
+    ADMIN_EMAILS: ${ADMIN_EMAILS}
+  volumes:
+    - prusa-print-history-storage:/data/storage
+  networks:
+    - prusa-print-history
+
+services:
+  redis:
+    image: redis:8-alpine
+    container_name: prusa-print-history-redis
+    restart: unless-stopped
+    volumes:
+      - prusa-print-history-redisdata:/data
+    networks:
+      - prusa-print-history
+
+  web:
+    <<: *app-base
+    container_name: prusa-print-history-web
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - '${WEB_PORT:-3000}:80'
+
+  sidekiq:
+    <<: *app-base
+    container_name: prusa-print-history-sidekiq
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: bundle exec sidekiq
+
+  migrate:
+    <<: *app-base
+    container_name: prusa-print-history-migrate
+    profiles: ['tools']
+    command: bin/rails db:prepare
+
+volumes:
+  prusa-print-history-redisdata:
+  prusa-print-history-storage:
+
+networks:
+  prusa-print-history:
+    name: prusa-print-history

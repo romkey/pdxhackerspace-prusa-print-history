@@ -113,4 +113,43 @@ class PrusaLinkPrintMetadataTest < ActiveSupport::TestCase
     assert_equal 'PLA', entries[0].material
     assert_equal 'PETG', entries[1].material
   end
+
+  test 'reads Core One legacy printer telemetry material while printing' do
+    legacy_payload = {
+      'telemetry' => {
+        'temp-bed' => 84.5,
+        'temp-nozzle' => 250.5,
+        'print-speed' => 100,
+        'z-height' => 0.6,
+        'material' => 'PETG'
+      },
+      'state' => {
+        'text' => 'Printing',
+        'flags' => { 'link_state' => 'PRINTING', 'printing' => true }
+      }
+    }
+
+    entries = PrusaLink::PrintMetadata.tool_entries(
+      status_payload: { 'printer' => { 'state' => 'PRINTING' } },
+      info_payload: { 'nozzle_diameter' => 0.4 },
+      legacy_payload: legacy_payload
+    )
+
+    assert_equal 'PETG', entries[0].material
+    assert_in_delta 0.4, entries[0].nozzle_size_mm.to_f
+  end
+
+  test 'legacy telemetry material overrides gcode file metadata on tool zero' do
+    entries = PrusaLink::PrintMetadata.tool_entries(
+      status_payload: {},
+      job_payload: {
+        'file' => {
+          'meta' => { 'filament_type' => 'PLA', 'nozzle_diameter' => 0.4 }
+        }
+      },
+      legacy_payload: { 'telemetry' => { 'material' => 'PETG' } }
+    )
+
+    assert_equal 'PETG', entries[0].material
+  end
 end

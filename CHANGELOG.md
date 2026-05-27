@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-05-27
+
+### Fixed
+- Treat `/api/printer` `telemetry.material` as the loaded filament source of truth, always applied to T0 ahead of gcode file metadata.
+
 ## [0.1.18] - 2026-05-27
 
 ### Fixed

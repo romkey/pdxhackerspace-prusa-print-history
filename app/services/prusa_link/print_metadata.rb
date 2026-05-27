@@ -20,15 +20,43 @@ module PrusaLink
       meta = file_meta.presence || job_payload&.dig('file', 'meta') || {}
       indices = collect_indices(status_payload, meta, info_payload: info_payload)
 
-      indices.map do |tool_index|
+      entries = indices.map do |tool_index|
         merge_entry(
           tool_index,
-          from_meta(meta, tool_index),
-          from_status_tool(status_payload, tool_index),
-          from_legacy(legacy_payload, tool_index),
-          from_info(info_payload, tool_index)
+          legacy: from_legacy(legacy_payload, tool_index),
+          info: from_info(info_payload, tool_index),
+          status: from_status_tool(status_payload, tool_index),
+          meta: from_meta(meta, tool_index)
         )
       end
+
+      apply_loaded_filament_from_legacy(entries, legacy_payload)
+    end
+
+    def legacy_telemetry_material(legacy_payload)
+      return nil if legacy_payload.blank?
+
+      string(
+        legacy_payload.dig('telemetry', 'material') ||
+        legacy_payload.dig('printer', 'telemetry', 'material')
+      )
+    end
+
+    def apply_loaded_filament_from_legacy(entries, legacy_payload)
+      material = legacy_telemetry_material(legacy_payload)
+      return entries if material.blank?
+
+      remaining = entries.reject { |entry| entry.tool_index.zero? }
+      existing = entries.find { |entry| entry.tool_index.zero? }
+
+      remaining << ToolEntry.new(
+        tool_index: 0,
+        nozzle_size_mm: existing&.nozzle_size_mm || DEFAULT_NOZZLE_MM,
+        material: material,
+        high_flow: existing&.high_flow == true
+      )
+
+      remaining.sort_by(&:tool_index)
     end
 
     def collect_indices(status_payload, meta, info_payload: {})
@@ -39,10 +67,12 @@ module PrusaLink
       indices.uniq.sort
     end
 
-    def merge_entry(tool_index, *sources)
-      nozzle = sources.filter_map { |s| s[:nozzle_size_mm] }.first
-      material = sources.filter_map { |s| s[:material] }.find { |v| meaningful_material?(v) }
-      high_flow = sources.filter_map { |s| s[:high_flow] }.find { |v| !v.nil? }
+    def merge_entry(tool_index, legacy:, info:, status:, meta:)
+      nozzle = [info, status, meta, legacy].filter_map { |source| source[:nozzle_size_mm] }.first
+      material = [legacy, info, status, meta].filter_map { |source| source[:material] }
+                                             .find { |value| meaningful_material?(value) }
+      high_flow = [info, status, meta, legacy].filter_map { |source| source[:high_flow] }
+                                              .find { |value| !value.nil? }
 
       ToolEntry.new(
         tool_index: tool_index,
@@ -77,11 +107,10 @@ module PrusaLink
     def from_legacy(legacy_payload, tool_index)
       return {} unless tool_index.zero?
 
-      material = legacy_payload.dig('telemetry', 'material') ||
-                 legacy_payload.dig('printer', 'telemetry', 'material')
-      {
-        material: string(material)
-      }
+      material = legacy_telemetry_material(legacy_payload)
+      return {} if material.blank?
+
+      { material: material }
     end
 
     def from_info(info_payload, tool_index)

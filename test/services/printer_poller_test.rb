@@ -310,6 +310,27 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal 'PETG', head.material
   end
 
+  test 'syncs legacy telemetry material while printing on Core One style payload' do
+    @printer.printer_heads.delete_all
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING', 'temp_nozzle' => 250.5 } },
+      job: { 'id' => 'pl-core', 'file' => { 'display_name' => 'part.gcode' } },
+      info: { 'nozzle_diameter' => 0.4 },
+      legacy: {
+        'telemetry' => { 'material' => 'PETG', 'temp-nozzle' => 250.5 },
+        'state' => { 'flags' => { 'printing' => true } }
+      }
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    head = @printer.printer_heads.find_by!(tool_index: 0)
+    job = Job.find_by!(prusalink_job_id: 'pl-core')
+
+    assert_equal 'PETG', head.material
+    assert_equal 'PETG', job.tools.find_by!(tool_index: 0).material
+  end
+
   test 'fetches file metadata when job payload omits meta block' do
     payloads = {
       status: { 'printer' => { 'state' => 'PRINTING', 'temp_nozzle' => 215.0 } },

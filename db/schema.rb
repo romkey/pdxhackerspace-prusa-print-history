@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_26_240000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_26_250000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,12 +58,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_26_240000) do
   create_table "jobs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "ended_at"
+    t.datetime "estimated_finish_at"
     t.string "filename", null: false
     t.bigint "owner_id"
     t.bigint "printer_id", null: false
+    t.decimal "progress_percent", precision: 5, scale: 2
     t.string "prusalink_job_id"
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
+    t.integer "time_printing_seconds"
     t.integer "total_duration_seconds"
     t.decimal "total_filament_grams", precision: 10, scale: 2
     t.datetime "updated_at", null: false

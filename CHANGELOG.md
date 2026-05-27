@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.20] - 2026-05-27
+
+### Added
+- Job progress bar and estimated finish time synced from PrusaLink status/job telemetry.
+- Dashboard printer cards with status, progress, filament/nozzle, and small preview/camera thumbnails.
+- Footer version always reads from the embedded `VERSION` file.
+
 ## [0.1.19] - 2026-05-27
 
 ### Fixed

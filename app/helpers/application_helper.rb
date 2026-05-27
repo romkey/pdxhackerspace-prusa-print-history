@@ -17,11 +17,19 @@ module ApplicationHelper
   end
 
   def app_version
-    ENV.fetch('APP_VERSION') do
-      Rails.root.join('VERSION').read.strip
-    end
+    @app_version ||= Rails.root.join('VERSION').read.strip
   rescue Errno::ENOENT
     'unknown'
+  end
+
+  def job_eta_label(job)
+    return nil unless job&.estimated_finish_at
+
+    if job.estimated_finish_at <= Time.current
+      'finishing soon'
+    else
+      "Done in #{distance_of_time_in_words(Time.current, job.estimated_finish_at)}"
+    end
   end
 
   GITHUB_REPO_URL = 'https://github.com/romkey/pdxhackerspace-prusa-print-history'.freeze

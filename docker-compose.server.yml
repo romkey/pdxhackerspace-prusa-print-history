@@ -18,7 +18,6 @@ x-app-base: &app-base
     SECRET_KEY_BASE: ${SECRET_KEY_BASE}
     DATABASE_URL: ${DATABASE_URL}
     REDIS_URL: ${REDIS_URL:-redis://prusa-print-history-redis:6379/0}
-    APP_VERSION: ${APP_VERSION:-unknown}
     STORAGE_ROOT: /data/storage
     HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL}
     HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN}

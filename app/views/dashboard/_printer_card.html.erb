@@ -1,0 +1,65 @@
+<% card = local_assigns.fetch(:card) %>
+<% printer = card.printer %>
+<% current_job = card.current_job %>
+
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+      <div class="min-w-0">
+        <div class="d-flex align-items-center gap-2">
+          <%= render 'printers/prusalink_status_dot', printer: printer %>
+          <h2 class="h6 mb-0 text-truncate">
+            <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
+          </h2>
+        </div>
+        <div class="text-12 text-secondary mt-1">
+          <%= printer.model.presence || 'Unknown model' %>
+          &middot; <%= printer.location.presence || 'No location' %>
+        </div>
+      </div>
+      <div class="text-end text-13">
+        <%= render 'shared/printer_status', printer: printer %>
+      </div>
+    </div>
+
+    <% if current_job %>
+      <div class="text-13 mb-2">
+        <%= link_to current_job.filename, job_path(current_job), class: 'fw-medium text-decoration-none' %>
+      </div>
+      <%= render 'jobs/progress', job: current_job, wrapper_class: 'mb-2' %>
+    <% elsif card.head_labels.present? %>
+      <div class="text-13 text-secondary mb-2"><%= card.head_labels %></div>
+    <% else %>
+      <div class="text-13 text-secondary mb-2">No active job</div>
+    <% end %>
+
+    <% if current_job && card.head_labels.present? %>
+      <div class="text-12 text-secondary mb-2"><%= card.head_labels %></div>
+    <% end %>
+
+    <% if card.preview_attached? || card.snapshot_attached? %>
+      <div class="d-flex gap-2 dashboard-thumbs">
+        <% if card.preview_attached? %>
+          <div>
+            <div class="text-11 text-secondary mb-1">Preview</div>
+            <%= link_to job_path(current_job) do %>
+              <%= image_tag storage_blob_path(current_job.preview_image),
+                            class: 'dashboard-thumb rounded border',
+                            alt: "Preview of #{current_job.filename}" %>
+            <% end %>
+          </div>
+        <% end %>
+        <% if card.snapshot_attached? %>
+          <div>
+            <div class="text-11 text-secondary mb-1">Camera</div>
+            <%= link_to printer_path(printer) do %>
+              <%= image_tag storage_blob_path(card.snapshot.image),
+                            class: 'dashboard-thumb rounded border',
+                            alt: "Camera view of #{printer.name}" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

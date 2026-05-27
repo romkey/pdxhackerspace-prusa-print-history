@@ -60,3 +60,14 @@ body {
     font-weight: 600;
   }
 }
+
+.dashboard-thumb {
+  display: block;
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+}
+
+.dashboard-thumbs {
+  margin-top: 0.25rem;
+}

@@ -3,80 +3,55 @@
     <div>
       <h1 class="h-page-title mb-0">Overview</h1>
       <div class="text-13 text-secondary mt-1">
-        <%= pluralize(@printers.size, 'printer') %> &middot;
-        <span class="text-body"><%= @active_jobs.size %></span> active jobs
+        <span class="text-body"><%= @presenter.printer_count %></span> printers &middot;
+        <span class="text-body"><%= @presenter.active_job_count %></span> active jobs
       </div>
     </div>
+    <% if admin? %>
+      <%= link_to 'Manage printers', printers_path, class: 'btn btn-outline-secondary btn-sm' %>
+    <% end %>
   </div>
 
-  <div class="row g-3">
-    <div class="col-lg-6">
-      <div class="card">
-        <div class="card-body">
-          <div class="h-section-label">Printers</div>
-          <% if @printers.any? %>
-            <table class="table table-compact mb-0">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @printers.each do |printer| %>
-                  <tr>
-                    <td>
-                      <span class="d-inline-flex align-items-center gap-1">
-                        <%= render 'printers/prusalink_status_dot', printer: printer %>
-                        <%= link_to printer.name, printer_path(printer) %>
-                      </span>
-                    </td>
-                    <td class="text-secondary"><%= printer.location.presence || '—' %></td>
-                    <td>
-                      <%= render 'shared/printer_status', printer: printer %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          <% else %>
-            <p class="text-13 text-secondary mb-0">
-              No printers configured yet.
-              <% if admin? %>
-                <%= link_to 'Add one', new_printer_path %>.
-              <% end %>
-            </p>
-          <% end %>
+  <% if @presenter.cards.any? %>
+    <div class="row g-3 mb-3">
+      <% @presenter.cards.each do |card| %>
+        <div class="col-lg-6">
+          <%= render 'dashboard/printer_card', card: card %>
         </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card mb-3">
+      <div class="card-body text-13 text-secondary">
+        No printers configured yet.
+        <% if admin? %>
+          <%= link_to 'Add one', new_printer_path %>.
+        <% end %>
       </div>
     </div>
+  <% end %>
 
-    <div class="col-lg-6">
-      <div class="card">
-        <div class="card-body">
-          <div class="h-section-label">Recent events</div>
-          <% if @recent_events.any? %>
-            <ul class="list-unstyled mb-0">
-              <% @recent_events.each do |event| %>
-                <li class="d-flex justify-content-between border-bottom py-2">
-                  <div>
-                    <%= link_to event.job.printer.name, printer_path(event.job.printer), class: 'fw-medium' %>
-                    <span class="text-secondary">&middot;</span>
-                    <%= link_to event.event_type, job_path(event.job), class: 'text-decoration-none' %>
-                  </div>
-                  <div class="text-secondary text-13"
-                       title="<%= l(event.occurred_at, format: :precise) %>">
-                    <%= time_ago_in_words(event.occurred_at) %> ago
-                  </div>
-                </li>
-              <% end %>
-            </ul>
-          <% else %>
-            <p class="text-13 text-secondary mb-0">No events yet.</p>
+  <div class="card">
+    <div class="card-body">
+      <div class="h-section-label">Recent events</div>
+      <% if @presenter.recent_events.any? %>
+        <ul class="list-unstyled mb-0">
+          <% @presenter.recent_events.each do |event| %>
+            <li class="d-flex justify-content-between border-bottom py-2 text-13">
+              <div>
+                <%= link_to event.job.printer.name, printer_path(event.job.printer), class: 'fw-medium' %>
+                <span class="text-secondary">&middot;</span>
+                <%= link_to event.event_type.humanize, job_path(event.job), class: 'text-decoration-none text-secondary' %>
+              </div>
+              <div class="text-secondary" title="<%= l(event.occurred_at, format: :precise) %>">
+                <%= time_ago_in_words(event.occurred_at) %> ago
+              </div>
+            </li>
           <% end %>
-        </div>
-      </div>
+        </ul>
+      <% else %>
+        <p class="text-13 text-secondary mb-0">No events yet.</p>
+      <% end %>
     </div>
   </div>
 </div>

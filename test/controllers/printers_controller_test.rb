@@ -133,6 +133,7 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
 
   test 'show renders print preview and stored camera photo for active job' do
     job = jobs(:active_xl)
+    job.update!(progress_percent: 35.0, estimated_finish_at: 1.hour.from_now, time_printing_seconds: 900)
     job.preview_image.attach(
       io: StringIO.new('preview-bytes'),
       filename: 'preview.png',
@@ -148,6 +149,7 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get printer_path(@printer)
 
     assert_match(/Print preview/, response.body)
+    assert_select '.progress-bar'
     assert_select '.h-section-label', text: 'Camera'
   end
 

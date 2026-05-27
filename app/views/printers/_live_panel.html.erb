@@ -16,8 +16,9 @@
             <%= current_job.status %>
             <% if current_job.owner %>&middot; owner <%= current_job.owner.display_name %><% end %>
             <% if current_job.started_at %>&middot; started <%= time_ago_in_words(current_job.started_at) %> ago<% end %>
-            <% if current_job.duration_seconds %>&middot; <%= distance_of_time_in_words(current_job.duration_seconds) %><% end %>
           </div>
+
+          <%= render 'jobs/progress', job: current_job, wrapper_class: 'mt-2' %>
 
           <%= render 'jobs/preview', job: current_job, wrapper_class: 'mt-3' %>
 

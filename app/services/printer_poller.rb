@@ -80,6 +80,7 @@ class PrinterPoller
       return
     end
 
+    sync_job_progress!(job, job_payload, status_payload)
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
     JobImageCapture.capture_preview!(job, job_payload, client: @prusalink)
@@ -203,7 +204,13 @@ class PrinterPoller
     @printer.jobs.active.find_each do |job|
       record_telemetry(job, status_payload) if status_payload.present?
       from_status = job.status
-      job.update!(status: status, ended_at: Time.current)
+      job.update!(
+        status: status,
+        ended_at: Time.current,
+        progress_percent: nil,
+        estimated_finish_at: nil,
+        time_printing_seconds: nil
+      )
       job.events.create!(
         event_type: EVENT_TYPE_FOR_STATUS.fetch(status, 'finished'),
         from_status: from_status,
@@ -330,8 +337,35 @@ class PrinterPoller
     job.update!(
       ended_at: Time.current,
       total_duration_seconds: (job_payload && job_payload['time_printing'].presence) || job.duration_seconds,
-      total_filament_grams: filament_grams_from_meta(job_payload)
+      total_filament_grams: filament_grams_from_meta(job_payload),
+      progress_percent: nil,
+      estimated_finish_at: nil,
+      time_printing_seconds: nil
     )
+  end
+
+  def sync_job_progress!(job, job_payload, status_payload)
+    telemetry = job_status_data(job_payload, status_payload)
+    return if telemetry.blank?
+
+    attrs = {}
+    attrs[:progress_percent] = telemetry['progress'].to_f unless telemetry['progress'].nil?
+    unless telemetry['time_remaining'].nil?
+      attrs[:estimated_finish_at] = Time.current + telemetry['time_remaining'].to_i.seconds
+    end
+    attrs[:time_printing_seconds] = telemetry['time_printing'].to_i unless telemetry['time_printing'].nil?
+
+    job.update!(attrs) if attrs.any?
+  end
+
+  def job_status_data(job_payload, status_payload)
+    status_job = status_payload['job'] || {}
+    payload = job_payload || {}
+
+    %w[progress time_remaining time_printing].each_with_object({}) do |key, data|
+      value = payload.key?(key) ? payload[key] : status_job[key]
+      data[key] = value unless value.nil?
+    end
   end
 
   def filament_grams_from_meta(job_payload)

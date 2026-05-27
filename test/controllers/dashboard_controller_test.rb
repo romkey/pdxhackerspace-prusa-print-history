@@ -35,6 +35,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.status-dot.status-danger[title=?]', 'PrusaLink unreachable'
   end
 
+  test 'dashboard shows printer cards with progress for active jobs' do
+    job = jobs(:active_xl)
+    job.update!(progress_percent: 20.0, estimated_finish_at: 90.minutes.from_now, time_printing_seconds: 2472)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.progress-bar'
+    assert_match(/20%/, response.body)
+    assert_match(/PLA/, response.body)
+  end
+
   test 'layout footer shows version and GitHub link' do
     get root_path
 

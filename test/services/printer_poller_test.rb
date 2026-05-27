@@ -1,6 +1,8 @@
 require 'test_helper'
 
 class PrinterPollerTest < ActiveJob::TestCase
+  include ActiveSupport::Testing::TimeHelpers
+
   setup do
     @printer = printers(:prusa_mini) # no jobs in fixtures
     @printer.update!(prusalink_key: 'key', camera_url: 'http://printer/snapshot.jpg')
@@ -329,6 +331,33 @@ class PrinterPollerTest < ActiveJob::TestCase
 
     assert_equal 'PETG', head.material
     assert_equal 'PETG', job.tools.find_by!(tool_index: 0).material
+  end
+
+  test 'syncs progress from status job telemetry when job endpoint is empty' do
+    payloads = {
+      status: {
+        'printer' => { 'state' => 'PRINTING', 'temp_nozzle' => 250.0 },
+        'job' => {
+          'id' => 177,
+          'progress' => 20.0,
+          'time_remaining' => 6120,
+          'time_printing' => 2472
+        }
+      },
+      job: nil,
+      info: { 'nozzle_diameter' => 0.4 },
+      legacy: nil
+    }
+
+    freeze_time do
+      PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+    end
+
+    job = Job.find_by!(prusalink_job_id: '177')
+
+    assert_in_delta 20.0, job.progress_percent.to_f
+    assert_equal 2472, job.time_printing_seconds
+    assert_in_delta 6120, job.estimated_finish_at - Time.current, 2
   end
 
   test 'fetches file metadata when job payload omits meta block' do

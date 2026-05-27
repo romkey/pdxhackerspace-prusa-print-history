@@ -22,6 +22,13 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select '.h-section-label', text: 'Temperatures'
     assert_match(/chart/i, response.body)
+    assert_match(/"name":"Bed"/, response.body)
+    assert_match(/"name":"Enclosure"/, response.body)
+    assert_match(/"name":"Ambient"/, response.body)
+    assert_match(/"name":"T0"/, response.body)
+    assert_match(/"color":"#e07a5f"/, response.body)
+    assert_match(/"xmin":/, response.body)
+    assert_match(/"xmax":/, response.body)
   end
 
   test 'show renders print heads used for the job' do

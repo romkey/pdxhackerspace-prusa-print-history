@@ -22,6 +22,15 @@ class PrinterShowPresenterTest < ActiveSupport::TestCase
     assert presenter.chart_series.any?
   end
 
+  test 'exposes chart series and options for display job' do
+    series = @presenter.chart_series
+    options = @presenter.chart_options
+
+    assert(series.all? { |entry| entry.key?(:name) && entry.key?(:color) })
+    assert_equal @presenter.display_job.started_at, options[:xmin]
+    assert options[:xmax].present?
+  end
+
   test 'exposes tool and telemetry data for display job' do
     assert @presenter.tools.any?
     assert @presenter.latest_reading.present?

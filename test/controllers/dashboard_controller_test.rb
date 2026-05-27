@@ -55,6 +55,14 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'footer a[href=?]', ApplicationHelper::GITHUB_REPO_URL, text: 'GitHub'
   end
 
+  test 'layout uses the printer icon favicon' do
+    get root_path
+
+    assert_response :success
+    assert_select 'link[rel=?][href=?]', 'icon', '/icon.svg'
+    assert_select 'link[rel=?][href=?]', 'apple-touch-icon', '/icon.svg'
+  end
+
   private
 
   def app_version_from_repo

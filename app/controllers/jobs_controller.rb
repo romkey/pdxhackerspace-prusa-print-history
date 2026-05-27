@@ -17,7 +17,8 @@ class JobsController < ApplicationController
     @telemetry         = @job.telemetry_readings.ordered
     @tools             = @job.tools
     @latest_reading    = @telemetry.last
-    @chart_series      = JobTelemetryCharts.series_for(@telemetry.to_a)
+    @chart_series      = JobTelemetryCharts.series_for(@telemetry.to_a, job: @job)
+    @chart_options     = JobTelemetryCharts.chart_options(@job)
     @photos            = JobPhotosPresenter.new(@job)
   end
 

@@ -68,7 +68,9 @@
       <div class="card mb-3">
         <div class="card-body">
           <div class="h-section-label">Temperatures</div>
-          <%= render 'shared/temperature_chart', chart_series: presenter.chart_series %>
+          <%= render 'shared/temperature_chart',
+                     chart_series: presenter.chart_series,
+                     chart_options: presenter.chart_options %>
         </div>
       </div>
     <% end %>

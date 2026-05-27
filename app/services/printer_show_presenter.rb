@@ -53,7 +53,11 @@ class PrinterShowPresenter
   end
 
   def chart_series
-    JobTelemetryCharts.series_for(telemetry_readings.to_a)
+    JobTelemetryCharts.series_for(telemetry_readings.to_a, job: display_job)
+  end
+
+  def chart_options
+    JobTelemetryCharts.chart_options(display_job)
   end
 
   def live_tool_temps

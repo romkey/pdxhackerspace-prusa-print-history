@@ -39,8 +39,8 @@ class PrinterShowPresenterTest < ActiveSupport::TestCase
     assert_equal capture.captured_at.to_i, @presenter.camera_refresh_token
   end
 
-  test 'reported_tools uses current job tools when available' do
+  test 'reported_tools prefers printer heads over job history' do
     assert @presenter.reported_tools.any?
-    assert_equal tools(:active_xl_tool_a).material, @presenter.reported_tools.first.material
+    assert_equal printer_heads(:xl_head_a).material, @presenter.reported_tools.first.material
   end
 end

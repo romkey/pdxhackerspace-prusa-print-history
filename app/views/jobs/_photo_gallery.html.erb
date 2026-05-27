@@ -6,7 +6,7 @@
       <% if (initial = photos.initial_photo) %>
         <div class="<%= photos.final_photo ? 'col-md-6' : 'col-12' %>">
           <div class="text-12 text-secondary mb-1"><%= photos.final_photo ? 'Start' : 'Progress' %></div>
-          <%= image_tag initial.image, class: 'img-fluid rounded border', alt: "Start of #{job.filename}" %>
+          <%= image_tag storage_blob_path(initial.image), class: 'img-fluid rounded border', alt: "Start of #{job.filename}" %>
           <div class="text-12 text-secondary mt-1" title="<%= l(initial.captured_at, format: :precise) %>">
             <%= l(initial.captured_at, format: :short) %>
           </div>
@@ -16,7 +16,7 @@
       <% if (final = photos.final_photo) %>
         <div class="col-md-6">
           <div class="text-12 text-secondary mb-1">Finish</div>
-          <%= image_tag final.image, class: 'img-fluid rounded border', alt: "Finish of #{job.filename}" %>
+          <%= image_tag storage_blob_path(final.image), class: 'img-fluid rounded border', alt: "Finish of #{job.filename}" %>
           <div class="text-12 text-secondary mt-1" title="<%= l(final.captured_at, format: :precise) %>">
             <%= l(final.captured_at, format: :short) %>
           </div>
@@ -32,7 +32,7 @@
         <div class="row g-2 mt-2">
           <% photos.progress_photos.each_with_index do |photo, index| %>
             <div class="col-6 col-md-4 col-lg-3">
-              <%= image_tag photo.image,
+              <%= image_tag storage_blob_path(photo.image),
                             class: 'img-fluid rounded border',
                             alt: "Progress photo #{index + 1} of #{job.filename}" %>
               <div class="text-12 text-secondary mt-1" title="<%= l(photo.captured_at, format: :precise) %>">

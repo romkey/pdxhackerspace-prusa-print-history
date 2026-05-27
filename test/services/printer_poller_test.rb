@@ -271,13 +271,15 @@ class PrinterPollerTest < ActiveJob::TestCase
         'file' => {
           'display_name' => 'multi.gcode',
           'meta' => {
-            'nozzle diameter' => '0.4',
-            'filament type' => 'PLA',
-            'nozzle diameter 2' => '0.6',
-            'filament type 2' => 'PETG'
+            'nozzle_diameter' => 0.4,
+            'filament_type' => 'PLA',
+            'nozzle_diameter per tool' => [0.4, 0.6],
+            'filament_type per tool' => %w[PLA PETG]
           }
         }
-      }
+      },
+      info: { 'nozzle_diameter' => 0.4 },
+      legacy: nil
     }
 
     PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
@@ -288,6 +290,53 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_in_delta(0.4, job.tools.find_by!(tool_index: 0).nozzle_size_mm.to_f)
     assert_equal 'PLA', job.tools.find_by!(tool_index: 0).material
     assert_in_delta(0.6, job.tools.find_by!(tool_index: 1).nozzle_size_mm.to_f)
+    assert_equal 'PETG', job.tools.find_by!(tool_index: 1).material
+  end
+
+  test 'syncs printer heads on idle poll from info and legacy endpoints' do
+    @printer.printer_heads.delete_all
+    payloads = {
+      status: { 'printer' => { 'state' => 'IDLE' } },
+      job: nil,
+      info: { 'nozzle_diameter' => 0.5 },
+      legacy: { 'telemetry' => { 'material' => 'PETG' } }
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    head = @printer.printer_heads.find_by!(tool_index: 0)
+
+    assert_in_delta 0.5, head.nozzle_size_mm.to_f
+    assert_equal 'PETG', head.material
+  end
+
+  test 'fetches file metadata when job payload omits meta block' do
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING', 'temp_nozzle' => 215.0 } },
+      job: {
+        'id' => 'pl-888',
+        'file' => {
+          'display_name' => 'part.gcode',
+          'refs' => { 'download' => '/usb/part.gcode' }
+        }
+      },
+      info: { 'nozzle_diameter' => 0.4 },
+      legacy: nil,
+      file_info: {
+        '/usb/part.gcode' => {
+          'meta' => {
+            'filament_type' => 'ASA',
+            'nozzle_diameter' => 0.4
+          }
+        }
+      }
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    head = @printer.printer_heads.find_by!(tool_index: 0)
+
+    assert_equal 'ASA', head.material
   end
 
   private
@@ -301,6 +350,11 @@ class PrinterPollerTest < ActiveJob::TestCase
     obj = Object.new
     obj.define_singleton_method(:status) { payloads[:status] }
     obj.define_singleton_method(:job)    { payloads[:job] }
+    obj.define_singleton_method(:info)   { payloads.fetch(:info, {}) }
+    obj.define_singleton_method(:legacy_printer) { payloads[:legacy] }
+    obj.define_singleton_method(:file_info) do |path|
+      payloads.fetch(:file_info, {})[path]
+    end
     obj.define_singleton_method(:download) { |_path| nil }
     obj.define_singleton_method(:camera_snapshot) { nil }
     obj

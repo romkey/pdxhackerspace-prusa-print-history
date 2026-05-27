@@ -16,6 +16,14 @@
         &middot; <%= @printer.hostname %>
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
+      <% if @presenter.reported_tools.any? %>
+        <div class="text-13 text-secondary mt-1">
+          <% @presenter.reported_tools.each_with_index do |head, index| %>
+            <% if index.positive? %>&middot; <% end %>
+            <span><%= head.label %></span>
+          <% end %>
+        </div>
+      <% end %>
     </div>
     <% if admin? %>
       <div>

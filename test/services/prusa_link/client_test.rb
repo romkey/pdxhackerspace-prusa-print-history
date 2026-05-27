@@ -15,6 +15,29 @@ module PrusaLink
       end
     end
 
+    test 'logs pretty printed JSON for json responses' do
+      payload = { 'printer' => { 'state' => 'IDLE' } }
+      logs = capture_prusalink_logs do
+        stub_http(StubResponse.ok(payload.to_json)) do
+          @client.status
+        end
+      end
+
+      assert_match(%r{\[PrusaLink JSON\].*GET /api/v1/status}, logs)
+      assert_match(/"state": "IDLE"/, logs)
+    end
+
+    test 'logs binary fetch size without dumping body' do
+      logs = capture_prusalink_logs do
+        stub_http(StubResponse.ok('PNG-BYTES')) do
+          @client.download('/api/thumbnails/local/foo.gcode.orig.png')
+        end
+      end
+
+      assert_match(/\[PrusaLink binary\].*9 bytes/, logs)
+      assert_no_match(/PNG-BYTES/, logs)
+    end
+
     test 'request carries the X-Api-Key header' do
       stub_http(StubResponse.ok('{}')) do |captured|
         @client.status
@@ -74,6 +97,16 @@ module PrusaLink
     end
 
     private
+
+    def capture_prusalink_logs
+      io = StringIO.new
+      old_logger = Rails.logger
+      Rails.logger = ActiveSupport::Logger.new(io)
+      yield
+      io.string
+    ensure
+      Rails.logger = old_logger
+    end
 
     StubResponse = Struct.new(:klass, :code, :body) do
       def self.ok(body)

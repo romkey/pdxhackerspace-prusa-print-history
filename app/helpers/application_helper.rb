@@ -29,4 +29,8 @@ module ApplicationHelper
   def github_repo_url
     GITHUB_REPO_URL
   end
+
+  def storage_blob_path(attachment)
+    rails_blob_path(attachment, only_path: true)
+  end
 end

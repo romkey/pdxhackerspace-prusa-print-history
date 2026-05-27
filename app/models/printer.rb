@@ -11,6 +11,7 @@ class Printer < ApplicationRecord
 
   has_many :jobs, dependent: :destroy
   has_many :photo_captures, dependent: :destroy
+  has_many :printer_heads, -> { order(:tool_index) }, dependent: :destroy, inverse_of: :printer
 
   validates :name,     presence: true, uniqueness: { case_sensitive: false }
   validates :hostname, presence: true

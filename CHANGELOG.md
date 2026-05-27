@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.18] - 2026-05-27
+
+### Fixed
+- Active Storage images (print preview, camera photos, progress photos) no longer break after live Turbo updates rewrote URLs to `example.com`.
+- Production default `APP_HOST` fallback is now `localhost` instead of `example.com`.
+
+### Added
+- Pretty-printed PrusaLink JSON logged on every API fetch (`[PrusaLink JSON]` in logs).
+- Parsed print head summary logged after each poll (`[PrinterHeadSync]`).
+- Additional filament metadata key formats: bracket suffixes, `printing_filament_types`, and per-tool `info.tools` hash.
+
+## [0.1.17] - 2026-05-27
+
+### Fixed
+- Parse PrusaLink gcode metadata using snake_case keys and per-tool arrays (`filament_type`, `nozzle_diameter per tool`).
+- Fetch file metadata from PrusaLink when the job endpoint omits the meta block.
+- Read idle nozzle size from `/api/v1/info` and loaded material from the legacy `/api/printer` endpoint.
+- Persist printer-level print head state on every poll so nozzle and material stay visible when idle.
+
+### Added
+- Print head summary in the printer page header.
+- Loaded print heads shown on the idle printer status card.
+
 ## [0.1.16] - 2026-05-26
 
 ### Added

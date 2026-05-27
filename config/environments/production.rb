@@ -45,10 +45,11 @@ Rails.application.configure do
                        secure: ENV.fetch('SESSION_COOKIE_SECURE', 'false') == 'true',
                        same_site: :lax
 
-  app_host = ENV.fetch('APP_HOST', 'example.com')
+  app_host = ENV.fetch('APP_HOST', 'localhost')
   app_protocol = ENV.fetch('APP_PROTOCOL', 'http')
   config.action_mailer.default_url_options = { host: app_host, protocol: app_protocol }
   config.default_url_options = { host: app_host, protocol: app_protocol }
+  config.active_storage.default_url_options = { host: app_host, protocol: app_protocol }
 
   config.action_cable.url = "#{app_protocol}://#{app_host}/cable"
   config.action_cable.allowed_request_origins = [

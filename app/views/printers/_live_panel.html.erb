@@ -42,6 +42,14 @@
           <% end %>
         <% else %>
           <p class="text-secondary mb-0">Printer is idle.</p>
+          <% if reported_tools.any? %>
+            <div class="mt-3">
+              <%= render 'jobs/tools',
+                         tools: reported_tools,
+                         section_label: 'Loaded print heads',
+                         empty_message: 'No print head data yet.' %>
+            </div>
+          <% end %>
           <% if display_job %>
             <div class="text-13 text-secondary mt-2">
               Last job:
@@ -131,7 +139,7 @@
         <div class="card-body">
           <div class="h-section-label">Camera</div>
           <% if latest_photo&.image&.attached? %>
-            <%= image_tag latest_photo.image,
+            <%= image_tag storage_blob_path(latest_photo.image),
                           class: 'img-fluid rounded border',
                           alt: "Camera view of #{printer.name}" %>
             <div class="text-12 text-secondary mt-1" title="<%= l(latest_photo.captured_at, format: :precise) %>">

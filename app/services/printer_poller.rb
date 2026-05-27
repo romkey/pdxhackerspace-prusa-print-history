@@ -35,15 +35,21 @@ class PrinterPoller
 
     status_payload = @prusalink.status
     record_prusalink_reachable!
-    job_payload    = resolve_job_payload(status_payload)
-    mapped_status  = map_status(status_payload)
+    info_payload     = safe_info
+    legacy_payload   = safe_legacy_printer
+    job_payload      = resolve_job_payload(status_payload)
+    file_meta        = resolve_file_meta(job_payload)
+    head_entries     = build_head_entries(status_payload, job_payload, info_payload, legacy_payload, file_meta)
+    sync_printer_heads!(head_entries)
+
+    mapped_status = map_status(status_payload)
 
     return handle_idle_poll(status_payload) if idle_state?(status_payload)
     return handle_terminal_without_job(mapped_status, status_payload) if terminal_without_job?(
       mapped_status, job_payload
     )
 
-    handle_job_poll(status_payload, job_payload, mapped_status)
+    handle_job_poll(status_payload, job_payload, mapped_status, head_entries)
   rescue PrusaLink::Error => e
     record_prusalink_unreachable!
     broadcast_live_update
@@ -64,7 +70,7 @@ class PrinterPoller
     broadcast_live_update
   end
 
-  def handle_job_poll(status_payload, job_payload, mapped_status)
+  def handle_job_poll(status_payload, job_payload, mapped_status, head_entries)
     job = upsert_job(job_payload, mapped_status)
     job ||= ensure_active_job!(mapped_status, job_payload, status_payload)
     update_printer_environment!(operational_state: mapped_status || 'unknown')
@@ -75,7 +81,7 @@ class PrinterPoller
     end
 
     record_telemetry(job, status_payload)
-    PrinterToolSync.sync!(job, status_payload, job_payload)
+    PrinterToolSync.sync!(job, head_entries)
     JobImageCapture.capture_preview!(job, job_payload, client: @prusalink)
     detect_status_change(job, mapped_status)
     finalize_if_terminal(job, job_payload)
@@ -92,6 +98,63 @@ class PrinterPoller
     @prusalink.job
   rescue PrusaLink::Error
     nil
+  end
+
+  def safe_info
+    @prusalink.info
+  rescue PrusaLink::Error
+    {}
+  end
+
+  def safe_legacy_printer
+    @prusalink.legacy_printer
+  rescue PrusaLink::Error
+    nil
+  end
+
+  def build_head_entries(status_payload, job_payload, info_payload, legacy_payload, file_meta)
+    PrusaLink::PrintMetadata.tool_entries(
+      status_payload: status_payload,
+      job_payload: job_payload,
+      info_payload: info_payload || {},
+      legacy_payload: legacy_payload || {},
+      file_meta: file_meta
+    )
+  end
+
+  def sync_printer_heads!(head_entries)
+    return if head_entries.blank?
+
+    summary = head_entries.map do |entry|
+      material = entry.material.presence || '—'
+      "T#{entry.tool_index} #{entry.nozzle_size_mm}mm #{material}"
+    end.join(', ')
+    Rails.logger.info("[PrinterHeadSync] printer ##{@printer.id} (#{@printer.name}): #{summary}")
+
+    PrinterHeadSync.sync!(@printer, head_entries)
+  end
+
+  def resolve_file_meta(job_payload)
+    meta = job_payload&.dig('file', 'meta')
+    return meta if meta.present?
+
+    storage_path = file_storage_path(job_payload)
+    return nil if storage_path.blank?
+
+    @prusalink.file_info(storage_path)&.dig('meta')
+  rescue PrusaLink::Error
+    nil
+  end
+
+  def file_storage_path(job_payload)
+    download = job_payload&.dig('file', 'refs', 'download')
+    return download if download.present?
+
+    dir  = job_payload&.dig('file', 'path')
+    name = job_payload&.dig('file', 'name')
+    return nil if dir.blank? || name.blank?
+
+    "#{dir}/#{name}"
   end
 
   def resolve_job_payload(status_payload)
@@ -267,8 +330,13 @@ class PrinterPoller
     job.update!(
       ended_at: Time.current,
       total_duration_seconds: (job_payload && job_payload['time_printing'].presence) || job.duration_seconds,
-      total_filament_grams: job_payload&.dig('file', 'meta', 'filament used [g]')
+      total_filament_grams: filament_grams_from_meta(job_payload)
     )
+  end
+
+  def filament_grams_from_meta(job_payload)
+    meta = job_payload&.dig('file', 'meta') || {}
+    meta['filament used [g]'] || meta['filament_used_g']
   end
 end
 # rubocop:enable Metrics/ClassLength

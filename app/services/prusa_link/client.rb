@@ -31,6 +31,27 @@ module PrusaLink
       get('/api/v1/info')
     end
 
+    def legacy_printer
+      get('/api/printer')
+    rescue Error => e
+      raise unless e.message.include?('404')
+
+      nil
+    end
+
+    def file_info(storage_path)
+      return nil if storage_path.blank?
+
+      storage, path = split_storage_path(storage_path)
+      return nil if storage.blank? || path.blank?
+
+      get("/api/v1/files/#{storage}#{path}")
+    rescue Error => e
+      raise unless e.message.include?('404')
+
+      nil
+    end
+
     def download(path)
       return nil if path.blank?
 
@@ -57,6 +78,7 @@ module PrusaLink
       case response
       when Net::HTTPSuccess
         body = response.body.to_s
+        ResponseLogger.log_binary!(printer: @printer, path: path, byte_size: body.bytesize)
         body.empty? ? nil : body.b
       else
         raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
@@ -80,8 +102,11 @@ module PrusaLink
       case response
       when Net::HTTPSuccess
         body = response.body.to_s
-        body.empty? ? {} : JSON.parse(body)
+        parsed = body.empty? ? {} : JSON.parse(body)
+        ResponseLogger.log_json!(printer: @printer, path: path, payload: parsed)
+        parsed
       when Net::HTTPNoContent
+        ResponseLogger.log_json!(printer: @printer, path: path, payload: nil)
         nil
       else
         raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
@@ -97,6 +122,14 @@ module PrusaLink
                       read_timeout: @timeout) do |http|
         http.request(request)
       end
+    end
+
+    def split_storage_path(storage_path)
+      normalized = storage_path.to_s.strip
+      normalized = normalized.delete_prefix('/')
+      storage, path = normalized.split('/', 2)
+      path = "/#{path}" if path.present? && !path.start_with?('/')
+      [storage, path]
     end
   end
 end

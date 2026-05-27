@@ -78,7 +78,7 @@
                 <li class="d-flex gap-3 border-bottom py-2">
                   <div style="width: 96px;">
                     <% if event.photo.attached? %>
-                      <%= image_tag event.photo, class: 'img-fluid rounded', style: 'max-height: 64px;' %>
+                      <%= image_tag storage_blob_path(event.photo), class: 'img-fluid rounded', style: 'max-height: 64px;' %>
                     <% else %>
                       <div class="text-secondary text-13">No photo</div>
                     <% end %>

@@ -1,5 +1,11 @@
 class PrinterLiveBroadcaster
   def self.broadcast(printer)
+    AppUrl.with_url_options do
+      broadcast_with_urls(printer)
+    end
+  end
+
+  def self.broadcast_with_urls(printer)
     printer = printer.reload
     presenter = PrinterShowPresenter.new(printer)
 
@@ -17,4 +23,6 @@ class PrinterLiveBroadcaster
       locals: { printer: printer }
     )
   end
+
+  private_class_method :broadcast_with_urls
 end

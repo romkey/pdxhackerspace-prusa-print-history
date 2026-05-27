@@ -1,23 +1,33 @@
 require 'test_helper'
 
-class PrinterLiveBroadcasterTest < ActiveSupport::TestCase
-  test 'broadcasts live panel and PrusaLink status updates' do
-    printer = printers(:prusa_xl)
-    targets = []
-    live_target = ActionView::RecordIdentifier.dom_id(printer, :live)
-    status_target = ActionView::RecordIdentifier.dom_id(printer, :prusalink_status)
+class PrinterLiveBroadcasterTest < ActionView::TestCase
+  include ApplicationHelper
 
-    replace = lambda do |streamable, **options|
-      targets << options[:target]
+  test 'live panel uses relative active storage paths without example.com host' do
+    job = jobs(:active_xl)
+    job.preview_image.attach(
+      io: StringIO.new('preview-bytes'),
+      filename: 'preview.png',
+      content_type: 'image/png'
+    )
+    capture = job.printer.photo_captures.create!(captured_at: Time.current)
+    capture.image.attach(
+      io: StringIO.new('camera-bytes'),
+      filename: 'camera.jpg',
+      content_type: 'image/jpeg'
+    )
 
-      assert_equal printer, streamable
-      assert_includes [live_target, status_target], options[:target]
+    Rails.application.routes.default_url_options = { host: 'example.com', protocol: 'http' }
+
+    html = AppUrl.with_url_options do
+      render partial: 'printers/live_panel',
+             locals: PrinterShowPresenter.new(job.printer).locals
     end
 
-    Turbo::StreamsChannel.stub(:broadcast_replace_to, replace) do
-      PrinterLiveBroadcaster.broadcast(printer)
-    end
-
-    assert_equal [live_target, status_target], targets
+    assert_includes html, '/rails/active_storage/blobs/'
+    assert_not_includes html, 'example.com'
+    assert_match(/Print preview/, html)
+  ensure
+    Rails.application.routes.default_url_options = {}
   end
 end

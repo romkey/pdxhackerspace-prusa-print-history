@@ -34,11 +34,18 @@ class PrinterShowPresenter
   end
 
   def reported_tools
+    heads = printer.printer_heads.order(:tool_index).to_a
+    return heads if heads.any?
+
     if current_job&.tools&.any?
       current_job.tools.order(:tool_index).to_a
     else
       latest_tools_from_history
     end
+  end
+
+  def head_labels
+    reported_tools.map(&:label).join(' · ')
   end
 
   def latest_tools_from_history

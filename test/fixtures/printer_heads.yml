@@ -1,0 +1,20 @@
+xl_head_a:
+  printer: prusa_xl
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: PLA
+
+xl_head_b:
+  printer: prusa_xl
+  tool_index: 1
+  nozzle_size_mm: 0.60
+  high_flow: true
+  material: PETG
+
+mk4_head_a:
+  printer: prusa_mk4
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: ASA

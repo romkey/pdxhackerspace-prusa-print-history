@@ -15,4 +15,18 @@ module ApplicationHelper
   def bootstrap_class_for(flash_type)
     FLASH_CLASSES.fetch(flash_type.to_s, 'info')
   end
+
+  def app_version
+    ENV.fetch('APP_VERSION') do
+      Rails.root.join('VERSION').read.strip
+    end
+  rescue Errno::ENOENT
+    'unknown'
+  end
+
+  GITHUB_REPO_URL = 'https://github.com/romkey/pdxhackerspace-prusa-print-history'.freeze
+
+  def github_repo_url
+    GITHUB_REPO_URL
+  end
 end

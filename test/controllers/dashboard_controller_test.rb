@@ -34,4 +34,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '.status-dot.status-danger[title=?]', 'PrusaLink unreachable'
   end
+
+  test 'layout footer shows version and GitHub link' do
+    get root_path
+
+    assert_response :success
+    assert_match(/Prusa Print History v#{Regexp.escape(app_version_from_repo)}/, response.body)
+    assert_select 'footer a[href=?]', ApplicationHelper::GITHUB_REPO_URL, text: 'GitHub'
+  end
+
+  private
+
+  def app_version_from_repo
+    Rails.root.join('VERSION').read.strip
+  end
 end

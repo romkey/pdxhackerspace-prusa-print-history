@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-05-26
+
+### Added
+- Site footer with app version and GitHub repository link.
+
+### Fixed
+- Hide the printer page camera section when no camera URL is configured.
+
 ## [0.1.15] - 2026-05-26
 
 ### Added

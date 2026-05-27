@@ -82,6 +82,16 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select 'img[src^=?]', camera_printer_path(@printer)
   end
 
+  test 'show omits camera section when printer has no camera URL' do
+    printer = printers(:prusa_mk4)
+    printer.update!(prusalink_key: 'secret')
+
+    get printer_path(printer)
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Camera', count: 0
+  end
+
   test 'camera endpoint serves stored photo when available' do
     capture = @printer.photo_captures.create!(captured_at: Time.current)
     capture.image.attach(

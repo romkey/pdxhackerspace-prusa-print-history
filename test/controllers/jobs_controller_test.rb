@@ -127,6 +127,54 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:other_viewer).id, @job.reload.owner_id
   end
 
+  test 'print_label is admin-only' do
+    post print_label_job_path(@job)
+
+    assert_redirected_to login_path
+
+    login_as(users(:viewer))
+    post print_label_job_path(@job)
+
+    assert_response :forbidden
+  end
+
+  test 'admin can print label for active job' do
+    login_as(users(:admin))
+    JobLabelPrintService.stub(:call, JobLabelPrintService::Result.new(
+                                       job_id: 'DYMO-1', email_sent: false, slack_sent: false, notification_errors: []
+                                     )) do
+      post print_label_job_path(@job)
+    end
+
+    assert_redirected_to job_path(@job)
+    assert_match(/DYMO-1/, flash[:notice])
+  end
+
+  test 'print_label rejected for pending job' do
+    job = jobs(:finished)
+    job.update!(status: 'pending', ended_at: nil)
+    login_as(users(:admin))
+
+    post print_label_job_path(job)
+
+    assert_redirected_to job_path(job)
+    assert_match(/in-progress or finished/i, flash[:alert])
+  end
+
+  test 'show renders print label form for admin on printable job' do
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'input[type=submit][value=?]', 'Print label'
+  end
+
+  test 'admin can update owner slack handle from job page' do
+    login_as(users(:admin))
+    patch user_path(users(:viewer)), params: { user: { slack_handle: 'makerbot' } }
+
+    assert_equal 'makerbot', users(:viewer).reload.slack_handle
+  end
+
   private
 
   def attach_job_photos(job)

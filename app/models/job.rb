@@ -30,6 +30,10 @@ class Job < ApplicationRecord
     TERMINAL_STATUSES.include?(status)
   end
 
+  def label_printable?
+    active? || status == 'finished'
+  end
+
   def duration_seconds
     return total_duration_seconds if total_duration_seconds.present?
     return nil if started_at.nil?

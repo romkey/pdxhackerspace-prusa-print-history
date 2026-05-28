@@ -1,0 +1,96 @@
+<%= form_with model: label_printer, local: true do |f| %>
+  <% if label_printer.errors.any? %>
+    <div class="alert alert-danger text-13">
+      <%= pluralize(label_printer.errors.count, 'error') %> prevented this printer from being saved:
+      <ul class="mb-0 mt-1">
+        <% label_printer.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :name, 'Display name', class: 'form-label' %>
+    <%= f.text_field :name, class: 'form-control', required: true, placeholder: 'e.g. Front desk label printer' %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :cups_printer_server, 'CUPS printer server', class: 'form-label' %>
+    <%= f.text_field :cups_printer_server, class: 'form-control', placeholder: 'e.g. print.example.org' %>
+    <div class="form-text text-13">Leave blank to use the local/default CUPS server.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :cups_printer_name, 'CUPS printer name', class: 'form-label' %>
+    <% if cups_printers.any? %>
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        <% cups_printers.each do |cp| %>
+          <button type="button" class="btn btn-outline-secondary btn-sm cups-printer-btn"
+                  data-cups-name="<%= cp[:name] %>"><%= cp[:name] %></button>
+        <% end %>
+      </div>
+    <% end %>
+    <%= f.text_field :cups_printer_name, class: 'form-control', required: true,
+                     placeholder: 'e.g. DYMO_LabelWriter', id: 'label_printer_cups_printer_name' %>
+    <div class="form-text text-13">The CUPS queue name. Click a detected printer above or type manually.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, class: 'form-label' %>
+    <%= f.text_field :description, class: 'form-control', placeholder: 'Optional notes' %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :thermal_roll_width_mm, 'Label paper', class: 'form-label' %>
+    <%= f.select :thermal_roll_width_mm,
+                 [
+                   ['Letter / A4 (full-page PDF)', ''],
+                   ['58 mm thermal roll', 58],
+                   ['72 mm thermal roll', 72],
+                   ['80 mm thermal roll', 80],
+                   ['88 mm thermal roll', 88]
+                 ],
+                 {},
+                 class: 'form-select' %>
+    <div class="form-text text-13">
+      For thermal label printers, choose the roll width so labels print at full width.
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <%= f.label :position, class: 'form-label' %>
+      <%= f.number_field :position, class: 'form-control', value: label_printer.position || 0 %>
+    </div>
+    <div class="col-md-8 d-flex align-items-end">
+      <div class="form-check">
+        <%= f.check_box :default_printer, class: 'form-check-input' %>
+        <%= f.label :default_printer, 'Default label printer', class: 'form-check-label' %>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= f.submit class: 'btn btn-primary' %>
+    <%= link_to 'Cancel', label_printers_path, class: 'btn btn-outline-secondary' %>
+  </div>
+<% end %>
+
+<script>
+  (function() {
+    function initLabelPrinterForm() {
+      var cupsField = document.getElementById('label_printer_cups_printer_name');
+      if (!cupsField) return;
+
+      document.querySelectorAll('.cups-printer-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          cupsField.value = this.dataset.cupsName;
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initLabelPrinterForm);
+    document.addEventListener('turbo:load', initLabelPrinterForm);
+  })();
+</script>

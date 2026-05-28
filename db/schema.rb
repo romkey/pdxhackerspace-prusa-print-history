@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_27_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -75,6 +75,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_200000) do
     t.index ["printer_id"], name: "index_jobs_on_printer_id"
     t.index ["started_at"], name: "index_jobs_on_started_at"
     t.index ["status"], name: "index_jobs_on_status"
+  end
+
+  create_table "label_printers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "cups_printer_name", null: false
+    t.string "cups_printer_server"
+    t.boolean "default_printer", default: false, null: false
+    t.string "description"
+    t.string "health_status", default: "unknown", null: false
+    t.datetime "last_health_check_at"
+    t.string "last_health_error"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "thermal_roll_width_mm"
+    t.datetime "updated_at", null: false
+    t.index ["cups_printer_name", "cups_printer_server"], name: "idx_on_cups_printer_name_cups_printer_server_8a21ab59a5", unique: true
+    t.index ["name"], name: "index_label_printers_on_name", unique: true
   end
 
   create_table "photo_captures", force: :cascade do |t|
@@ -163,6 +180,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_200000) do
     t.string "email", null: false
     t.string "name"
     t.string "provider", null: false
+    t.string "slack_handle"
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true

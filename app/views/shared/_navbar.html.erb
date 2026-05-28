@@ -49,6 +49,7 @@
               </a>
               <ul class="dropdown-menu">
                 <li><%= link_to 'App settings', settings_path, class: 'dropdown-item' %></li>
+                <li><%= link_to 'Label printers', label_printers_path, class: 'dropdown-item' %></li>
                 <li><%= link_to 'Home Assistant health', settings_path(anchor: 'ha-health'), class: 'dropdown-item' %></li>
                 <% printers = Printer.ordered %>
                 <% if printers.any? %>

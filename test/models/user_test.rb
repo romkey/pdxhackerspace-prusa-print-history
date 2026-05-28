@@ -77,4 +77,12 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'Renamed Admin', user.name
     assert_predicate user, :admin?
   end
+
+  test 'normalizes slack_handle by stripping @ prefix' do
+    user = users(:viewer)
+    user.slack_handle = '@makerbot'
+    user.save!
+
+    assert_equal 'makerbot', user.slack_handle
+  end
 end

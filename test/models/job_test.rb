@@ -59,4 +59,10 @@ class JobTest < ActiveSupport::TestCase
     assert nil_one.save
     assert nil_two.save
   end
+
+  test 'label_printable? is true for active and finished jobs' do
+    assert jobs(:active_xl).label_printable?
+    assert jobs(:finished).label_printable?
+    assert_not Job.new(status: 'pending').label_printable?
+  end
 end

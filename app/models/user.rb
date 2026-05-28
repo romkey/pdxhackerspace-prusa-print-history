@@ -6,6 +6,7 @@ class User < ApplicationRecord
   validates :uid, presence: true, uniqueness: { scope: :provider }
 
   normalizes :email, with: ->(value) { value.to_s.downcase.strip }
+  normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
 
   def self.find_or_create_from_auth(auth)
     user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)

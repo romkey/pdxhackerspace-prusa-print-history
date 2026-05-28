@@ -1,0 +1,8 @@
+front_desk:
+  name: Front desk label printer
+  cups_printer_name: DYMO_LabelWriter
+  cups_printer_server:
+  default_printer: true
+  position: 0
+  thermal_roll_width_mm: 80
+  health_status: unknown

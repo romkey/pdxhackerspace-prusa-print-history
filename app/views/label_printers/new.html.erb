@@ -1,0 +1,15 @@
+<div class="container py-4" style="max-width: 880px;">
+  <div class="mb-3">
+    <div class="text-13 text-secondary">
+      <%= link_to 'Settings', settings_path, class: 'text-decoration-none' %> /
+      <%= link_to 'Label printers', label_printers_path, class: 'text-decoration-none' %>
+    </div>
+    <h1 class="h-page-title mb-0">Add label printer</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <%= render 'form', label_printer: @label_printer, cups_printers: @cups_printers %>
+    </div>
+  </div>
+</div>

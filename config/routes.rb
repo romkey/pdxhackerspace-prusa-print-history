@@ -16,6 +16,14 @@ Rails.application.routes.draw do
     member do
       patch  :claim
       delete :claim, action: :unclaim
+      post   :print_label
+    end
+  end
+
+  resources :users, only: %i[update]
+  resources :label_printers, path: 'settings/label_printers' do
+    member do
+      post :test_print
     end
   end
 

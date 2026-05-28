@@ -1,0 +1,41 @@
+<% if admin? && job.label_printable? && local_assigns.fetch(:label_printers, LabelPrinter.ordered).any? %>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="h-section-label">Print label</div>
+      <%= form_with url: print_label_job_path(job), method: :post, local: true do |f| %>
+        <% printers = local_assigns.fetch(:label_printers) %>
+        <% if printers.many? %>
+          <div class="mb-2">
+            <%= label_tag :label_printer_id, 'Printer', class: 'form-label text-13' %>
+            <%= select_tag :label_printer_id,
+                           options_from_collection_for_select(printers, :id, :name, local_assigns[:default_label_printer]&.id),
+                           class: 'form-select form-select-sm' %>
+          </div>
+        <% end %>
+
+        <% if job.owner.present? %>
+          <div class="mb-2">
+            <div class="form-check">
+              <%= check_box_tag :notify_email, '1', false, class: 'form-check-input', id: 'notify_email' %>
+              <%= label_tag :notify_email, "Email #{job.owner.email}", class: 'form-check-label text-13' %>
+            </div>
+            <div class="form-check">
+              <%= check_box_tag :notify_slack, '1', false, class: 'form-check-input', id: 'notify_slack',
+                                disabled: job.owner.slack_handle.blank? %>
+              <%= label_tag :notify_slack, class: 'form-check-label text-13' do %>
+                Slack
+                <% if job.owner.slack_handle.present? %>
+                  @<%= job.owner.slack_handle %>
+                <% else %>
+                  <span class="text-secondary">(add Slack handle below)</span>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= f.submit 'Print label', class: 'btn btn-outline-secondary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

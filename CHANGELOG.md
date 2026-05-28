@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.1.20] - 2026-05-27
+## [0.2.0] - 2026-05-28
+
+### Added
+- Configurable dashboard heading, footer text, and footer link in Settings.
+- Expanded kiosk-style dashboard with four printers across, live clock, photo and preview images, availability, temperature table, and material/nozzle summary.
+
+### Changed
+- Home page dashboard layout redesigned to match the shop display: centered heading, printer cards with camera/preview placeholders, and simplified footer.
+
+## [0.1.22] - 2026-05-28
 
 ### Added
 - Job progress bar and estimated finish time synced from PrusaLink status/job telemetry.

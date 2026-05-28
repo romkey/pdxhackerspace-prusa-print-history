@@ -1,3 +1,4 @@
 Time::DATE_FORMATS[:short] = ->(time) { time.strftime('%b %-d, %H:%M') }
 Time::DATE_FORMATS[:precise] = ->(time) { time.strftime('%Y-%m-%d %H:%M:%S %Z') }
+Time::DATE_FORMATS[:dashboard_clock] = ->(time) { time.strftime('%H:%M:%S %A %Y-%m-%d') }
 Date::DATE_FORMATS[:short] = ->(date) { date.strftime('%b %-d') }

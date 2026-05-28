@@ -41,4 +41,26 @@ module ApplicationHelper
   def storage_blob_path(attachment)
     rails_blob_path(attachment, only_path: true)
   end
+
+  def dashboard_heading
+    Setting.dashboard_heading.presence || 'Prusa Print History'
+  end
+
+  def footer_text
+    Setting.footer_text.presence || "Prusa Print History v#{app_version}"
+  end
+
+  def footer_link_label
+    Setting.footer_link_label.presence || 'GitHub'
+  end
+
+  def footer_link_url
+    Setting.footer_link_url.presence || github_repo_url
+  end
+
+  def dashboard_temp_label(value)
+    return 'n/a' if value.blank?
+
+    value.to_f.round(0).to_s
+  end
 end

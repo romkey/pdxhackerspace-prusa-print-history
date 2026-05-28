@@ -24,10 +24,22 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
   test 'admins can update settings' do
     login_as(users(:admin))
-    patch settings_path, params: { settings: { default_ambient_sensor: 'sensor.new_ambient' } }
+    patch settings_path, params: {
+      settings: {
+        default_ambient_sensor: 'sensor.new_ambient',
+        dashboard_heading: 'PDX Hackerspace 3D Printers',
+        footer_text: 'PDX Hackerspace 3D Printing',
+        footer_link_label: 'FAQ',
+        footer_link_url: 'https://example.com/faq'
+      }
+    }
 
     assert_redirected_to settings_path
     assert_equal 'sensor.new_ambient', Setting.default_ambient_sensor
+    assert_equal 'PDX Hackerspace 3D Printers', Setting.dashboard_heading
+    assert_equal 'PDX Hackerspace 3D Printing', Setting.footer_text
+    assert_equal 'FAQ', Setting.footer_link_label
+    assert_equal 'https://example.com/faq', Setting.footer_link_url
   end
 
   test 'non-admins cannot update settings' do

@@ -32,3 +32,4 @@ en:
   time:
     formats:
       precise: "%Y-%m-%d %H:%M:%S %Z"
+      dashboard_clock: "%H:%M:%S %A %Y-%m-%d"

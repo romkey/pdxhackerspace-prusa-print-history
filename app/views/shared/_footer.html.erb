@@ -1,8 +1,9 @@
 <footer class="border-top mt-4 py-3">
-  <div class="container text-12 text-secondary d-flex flex-wrap justify-content-between gap-2">
-    <div>Prusa Print History v<%= app_version %></div>
-    <div>
-      <%= link_to 'GitHub', github_repo_url, class: 'text-secondary', target: '_blank', rel: 'noopener' %>
-    </div>
+  <div class="container text-12 text-center text-secondary">
+    <span><%= footer_text %></span>
+    <% if footer_link_label.present? && footer_link_url.present? %>
+      <span class="mx-1">&middot;</span>
+      <%= link_to footer_link_label, footer_link_url, target: '_blank', rel: 'noopener' %>
+    <% end %>
   </div>
 </footer>

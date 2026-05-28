@@ -44,6 +44,28 @@ class SettingTest < ActiveSupport::TestCase
     assert_equal 'sensor.foo', Setting.default_ambient_sensor
   end
 
+  test 'dashboard and footer accessors strip blanks to nil' do
+    Setting.dashboard_heading = '  '
+    Setting.footer_text = '  '
+    Setting.footer_link_label = '  '
+    Setting.footer_link_url = '  '
+
+    assert_nil Setting.dashboard_heading
+    assert_nil Setting.footer_text
+    assert_nil Setting.footer_link_label
+    assert_nil Setting.footer_link_url
+
+    Setting.dashboard_heading = 'Shop printers'
+    Setting.footer_text = 'PDX Hackerspace 3D Printing'
+    Setting.footer_link_label = 'FAQ'
+    Setting.footer_link_url = 'https://example.com/faq'
+
+    assert_equal 'Shop printers', Setting.dashboard_heading
+    assert_equal 'PDX Hackerspace 3D Printing', Setting.footer_text
+    assert_equal 'FAQ', Setting.footer_link_label
+    assert_equal 'https://example.com/faq', Setting.footer_link_url
+  end
+
   test 'home_assistant_health returns a hash with parsed timestamp' do
     Setting.set(:ha_last_status, 'ok')
     Setting.set(:ha_last_polled_at, Time.zone.parse('2026-05-25 10:00:00').iso8601)

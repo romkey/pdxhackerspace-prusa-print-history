@@ -2,64 +2,75 @@
 <% printer = card.printer %>
 <% current_job = card.current_job %>
 
-<div class="card h-100">
-  <div class="card-body">
-    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-      <div class="min-w-0">
-        <div class="d-flex align-items-center gap-2">
-          <%= render 'printers/prusalink_status_dot', printer: printer %>
-          <h2 class="h6 mb-0 text-truncate">
-            <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
-          </h2>
-        </div>
-        <div class="text-12 text-secondary mt-1">
-          <%= printer.model.presence || 'Unknown model' %>
-          &middot; <%= printer.location.presence || 'No location' %>
-        </div>
-      </div>
-      <div class="text-end text-13">
-        <%= render 'shared/printer_status', printer: printer %>
-      </div>
+<div class="dashboard-printer-card h-100 text-center">
+  <h2 class="dashboard-printer-name mb-2">
+    <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
+  </h2>
+
+  <div class="dashboard-images mb-2">
+    <div class="dashboard-image-wrap mb-2">
+      <% if card.snapshot_attached? %>
+        <%= link_to printer_path(printer) do %>
+          <%= image_tag storage_blob_path(card.snapshot.image),
+                        class: 'dashboard-image',
+                        alt: "Camera view of #{printer.name}" %>
+        <% end %>
+      <% else %>
+        <%= image_tag '/images/placeholder-photo.svg',
+                      class: 'dashboard-image dashboard-image-placeholder',
+                      alt: "No camera photo for #{printer.name}" %>
+      <% end %>
     </div>
 
-    <% if current_job %>
-      <div class="text-13 mb-2">
-        <%= link_to current_job.filename, job_path(current_job), class: 'fw-medium text-decoration-none' %>
-      </div>
-      <%= render 'jobs/progress', job: current_job, wrapper_class: 'mb-2' %>
-    <% elsif card.head_labels.present? %>
-      <div class="text-13 text-secondary mb-2"><%= card.head_labels %></div>
-    <% else %>
-      <div class="text-13 text-secondary mb-2">No active job</div>
-    <% end %>
-
-    <% if current_job && card.head_labels.present? %>
-      <div class="text-12 text-secondary mb-2"><%= card.head_labels %></div>
-    <% end %>
-
-    <% if card.preview_attached? || card.snapshot_attached? %>
-      <div class="d-flex gap-2 dashboard-thumbs">
-        <% if card.preview_attached? %>
-          <div>
-            <div class="text-11 text-secondary mb-1">Preview</div>
-            <%= link_to job_path(current_job) do %>
-              <%= image_tag storage_blob_path(current_job.preview_image),
-                            class: 'dashboard-thumb rounded border',
-                            alt: "Preview of #{current_job.filename}" %>
-            <% end %>
-          </div>
+    <div class="dashboard-image-wrap">
+      <% if card.preview_attached? %>
+        <%= link_to job_path(current_job) do %>
+          <%= image_tag storage_blob_path(current_job.preview_image),
+                        class: 'dashboard-image',
+                        alt: "Preview of #{current_job.filename}" %>
         <% end %>
-        <% if card.snapshot_attached? %>
-          <div>
-            <div class="text-11 text-secondary mb-1">Camera</div>
-            <%= link_to printer_path(printer) do %>
-              <%= image_tag storage_blob_path(card.snapshot.image),
-                            class: 'dashboard-thumb rounded border',
-                            alt: "Camera view of #{printer.name}" %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
+      <% else %>
+        <%= image_tag '/images/placeholder-preview.svg',
+                      class: 'dashboard-image dashboard-image-placeholder',
+                      alt: "No preview for #{printer.name}" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="text-13 mb-1">
+    <%= render 'shared/printer_status', printer: printer %>
+  </div>
+
+  <div class="text-13 mb-2 <%= card.availability_muted? ? 'text-secondary' : 'text-body' %>">
+    <%= card.availability_label %>
+  </div>
+
+  <div class="dashboard-temps text-start mx-auto mb-2">
+    <div class="text-11 text-secondary mb-1">Temperatures &deg;C</div>
+    <table class="table table-compact table-borderless mb-0 w-100">
+      <tbody>
+        <tr>
+          <th class="text-secondary fw-normal">Bed</th>
+          <td class="num text-end"><%= dashboard_temp_label(card.bed_temp_c) %></td>
+        </tr>
+        <tr>
+          <th class="text-secondary fw-normal">Nozzle</th>
+          <td class="num text-end"><%= dashboard_temp_label(card.nozzle_temp_c) %></td>
+        </tr>
+        <tr>
+          <th class="text-secondary fw-normal">Enclosure</th>
+          <td class="num text-end"><%= dashboard_temp_label(card.enclosure_temp_c) %></td>
+        </tr>
+        <tr>
+          <th class="text-secondary fw-normal">Ambient</th>
+          <td class="num text-end"><%= dashboard_temp_label(card.ambient_temp_c) %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="text-13 text-secondary d-flex justify-content-center gap-3">
+    <span><i class="bi bi-disc me-1"></i><%= card.material_label %></span>
+    <span><i class="bi bi-caret-down-fill me-1"></i><%= card.nozzle_label %></span>
   </div>
 </div>

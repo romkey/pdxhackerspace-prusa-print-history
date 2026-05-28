@@ -1,28 +1,29 @@
-<div class="container py-4">
-  <div class="d-flex align-items-end justify-content-between mb-3">
-    <div>
-      <h1 class="h-page-title mb-0">Overview</h1>
-      <div class="text-13 text-secondary mt-1">
-        <span class="text-body"><%= @presenter.printer_count %></span> printers &middot;
-        <span class="text-body"><%= @presenter.active_job_count %></span> active jobs
-      </div>
+<div class="container py-4 dashboard-page">
+  <div class="text-center mb-4">
+    <h1 class="h-page-title mb-1"><%= dashboard_heading %></h1>
+    <div class="text-13 text-secondary"
+         data-controller="clock"
+         data-clock-initial-value="<%= l(Time.current, format: :dashboard_clock) %>">
+      <time data-clock-target="display"><%= l(Time.current, format: :dashboard_clock) %></time>
     </div>
     <% if admin? %>
-      <%= link_to 'Manage printers', printers_path, class: 'btn btn-outline-secondary btn-sm' %>
+      <div class="mt-2">
+        <%= link_to 'Manage printers', printers_path, class: 'btn btn-outline-secondary btn-sm' %>
+      </div>
     <% end %>
   </div>
 
   <% if @presenter.cards.any? %>
     <div class="row g-3 mb-3">
       <% @presenter.cards.each do |card| %>
-        <div class="col-lg-6">
+        <div class="col-6 col-lg-3">
           <%= render 'dashboard/printer_card', card: card %>
         </div>
       <% end %>
     </div>
   <% else %>
     <div class="card mb-3">
-      <div class="card-body text-13 text-secondary">
+      <div class="card-body text-13 text-secondary text-center">
         No printers configured yet.
         <% if admin? %>
           <%= link_to 'Add one', new_printer_path %>.
@@ -30,28 +31,4 @@
       </div>
     </div>
   <% end %>
-
-  <div class="card">
-    <div class="card-body">
-      <div class="h-section-label">Recent events</div>
-      <% if @presenter.recent_events.any? %>
-        <ul class="list-unstyled mb-0">
-          <% @presenter.recent_events.each do |event| %>
-            <li class="d-flex justify-content-between border-bottom py-2 text-13">
-              <div>
-                <%= link_to event.job.printer.name, printer_path(event.job.printer), class: 'fw-medium' %>
-                <span class="text-secondary">&middot;</span>
-                <%= link_to event.event_type.humanize, job_path(event.job), class: 'text-decoration-none text-secondary' %>
-              </div>
-              <div class="text-secondary" title="<%= l(event.occurred_at, format: :precise) %>">
-                <%= time_ago_in_words(event.occurred_at) %> ago
-              </div>
-            </li>
-          <% end %>
-        </ul>
-      <% else %>
-        <p class="text-13 text-secondary mb-0">No events yet.</p>
-      <% end %>
-    </div>
-  </div>
 </div>

@@ -1,6 +1,10 @@
 class Setting < ApplicationRecord
   KEYS = %w[
     default_ambient_sensor
+    dashboard_heading
+    footer_text
+    footer_link_label
+    footer_link_url
     ha_last_polled_at
     ha_last_error
     ha_last_status
@@ -28,6 +32,38 @@ class Setting < ApplicationRecord
 
   def self.default_ambient_sensor=(value)
     set(:default_ambient_sensor, value.presence)
+  end
+
+  def self.dashboard_heading
+    fetch(:dashboard_heading)
+  end
+
+  def self.dashboard_heading=(value)
+    set(:dashboard_heading, value.presence)
+  end
+
+  def self.footer_text
+    fetch(:footer_text)
+  end
+
+  def self.footer_text=(value)
+    set(:footer_text, value.presence)
+  end
+
+  def self.footer_link_label
+    fetch(:footer_link_label)
+  end
+
+  def self.footer_link_label=(value)
+    set(:footer_link_label, value.presence)
+  end
+
+  def self.footer_link_url
+    fetch(:footer_link_url)
+  end
+
+  def self.footer_link_url=(value)
+    set(:footer_link_url, value.presence)
   end
 
   def self.home_assistant_health

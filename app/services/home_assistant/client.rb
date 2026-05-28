@@ -23,13 +23,14 @@ module HomeAssistant
       @base_url.present? && @token.present?
     end
 
-    def state(entity_id)
+    def entity(entity_id)
       return nil if entity_id.blank? || !configured?
 
-      response = get("/api/states/#{entity_id}")
-      return nil if response.nil?
+      get("/api/states/#{entity_id}")
+    end
 
-      response['state']
+    def state(entity_id)
+      entity(entity_id)&.fetch('state', nil)
     end
 
     def numeric_state(entity_id)
@@ -37,6 +38,20 @@ module HomeAssistant
       return nil if raw.nil? || %w[unknown unavailable].include?(raw)
 
       Float(raw)
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def temperature_celsius(entity_id)
+      data = entity(entity_id)
+      return nil if data.nil?
+
+      raw = data['state']
+      return nil if raw.nil? || %w[unknown unavailable].include?(raw)
+
+      value = Float(raw)
+      unit = data.dig('attributes', 'unit_of_measurement')
+      Temperature.to_celsius(value, unit)
     rescue ArgumentError, TypeError
       nil
     end

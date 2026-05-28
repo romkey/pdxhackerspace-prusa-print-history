@@ -210,6 +210,21 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert @printer.prusalink_reachable
   end
 
+  test 'converts fahrenheit ambient temperature from Home Assistant to celsius' do
+    ambient_sensor = Setting.default_ambient_sensor
+    payloads = {
+      status: { 'printer' => { 'state' => 'READY' } },
+      job: nil
+    }
+    ha = stub_home_assistant(temperatures: { ambient_sensor => { value: '70', unit: '°F' } })
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: ha).poll!
+
+    @printer.reload
+
+    assert_in_delta 21.11, @printer.ambient_temp.to_f, 0.01
+  end
+
   test 'marks PrusaLink unreachable when polling fails' do
     PrusaLink::Client.new(@printer)
 
@@ -413,7 +428,22 @@ class PrinterPollerTest < ActiveJob::TestCase
   def stub_home_assistant(temperatures: {})
     obj = Object.new
     obj.define_singleton_method(:configured?) { true }
-    obj.define_singleton_method(:numeric_state) { |entity_id| temperatures[entity_id] }
+    obj.define_singleton_method(:numeric_state) do |entity_id|
+      entry = temperatures[entity_id]
+      entry.is_a?(Hash) ? entry[:value] || entry['value'] : entry
+    end
+    obj.define_singleton_method(:temperature_celsius) do |entity_id|
+      entry = temperatures[entity_id]
+      case entry
+      when Hash
+        HomeAssistant::Temperature.to_celsius(
+          entry[:value] || entry['value'],
+          entry[:unit] || entry['unit_of_measurement']
+        )
+      when String, Numeric
+        entry.to_f
+      end
+    end
     obj
   end
 end

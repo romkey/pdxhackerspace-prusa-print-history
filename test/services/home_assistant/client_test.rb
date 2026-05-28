@@ -20,6 +20,34 @@ module HomeAssistant
       end
     end
 
+    test 'temperature_celsius converts fahrenheit entities to celsius' do
+      body = {
+        'state' => '70',
+        'attributes' => { 'unit_of_measurement' => '°F' }
+      }.to_json
+
+      stub_http(StubResponse.ok(body)) do
+        assert_in_delta 21.111, @client.temperature_celsius('sensor.ambient_temperature'), 0.001
+      end
+    end
+
+    test 'temperature_celsius leaves celsius entities unchanged' do
+      body = {
+        'state' => '21.5',
+        'attributes' => { 'unit_of_measurement' => '°C' }
+      }.to_json
+
+      stub_http(StubResponse.ok(body)) do
+        assert_in_delta 21.5, @client.temperature_celsius('sensor.ambient_temperature'), 0.0001
+      end
+    end
+
+    test 'temperature_celsius returns nil for unavailable entities' do
+      stub_http(StubResponse.ok({ 'state' => 'unavailable', 'attributes' => {} }.to_json)) do
+        assert_nil @client.temperature_celsius('sensor.ambient_temperature')
+      end
+    end
+
     test 'numeric_state parses floats and treats unknown/unavailable as nil' do
       stub_http(StubResponse.ok({ 'state' => '22.3' }.to_json)) do
         assert_in_delta 22.3, @client.numeric_state('sensor.foo'), 0.0001

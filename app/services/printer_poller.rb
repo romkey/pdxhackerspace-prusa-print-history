@@ -225,9 +225,9 @@ class PrinterPoller
 
     @printer.update!(
       operational_state: operational_state,
-      ambient_temp: sensor_value(Setting.default_ambient_sensor),
-      enclosure_temp: sensor_value(@printer.enclosure_temp_sensor),
-      enclosure_humidity: sensor_value(@printer.humidity_sensor),
+      ambient_temp: temperature_sensor_value(Setting.default_ambient_sensor),
+      enclosure_temp: temperature_sensor_value(@printer.enclosure_temp_sensor),
+      enclosure_humidity: humidity_sensor_value(@printer.humidity_sensor),
       environment_updated_at: Time.current
     )
   end
@@ -283,9 +283,9 @@ class PrinterPoller
       recorded_at: Time.current,
       tool_temps: extract_tool_temps(status_payload),
       bed_temp: bed_temp(status_payload),
-      enclosure_temp: sensor_value(@printer.enclosure_temp_sensor),
-      ambient_temp: sensor_value(Setting.default_ambient_sensor),
-      enclosure_humidity: sensor_value(@printer.humidity_sensor)
+      enclosure_temp: temperature_sensor_value(@printer.enclosure_temp_sensor),
+      ambient_temp: temperature_sensor_value(Setting.default_ambient_sensor),
+      enclosure_humidity: humidity_sensor_value(@printer.humidity_sensor)
     )
   end
 
@@ -303,7 +303,13 @@ class PrinterPoller
     end
   end
 
-  def sensor_value(entity_id)
+  def temperature_sensor_value(entity_id)
+    return nil if entity_id.blank?
+
+    @home_assistant.temperature_celsius(entity_id)
+  end
+
+  def humidity_sensor_value(entity_id)
     return nil if entity_id.blank?
 
     @home_assistant.numeric_state(entity_id)

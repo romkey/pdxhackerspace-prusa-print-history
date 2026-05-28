@@ -16,8 +16,14 @@
         <% if job.owner.present? %>
           <div class="mb-2">
             <div class="form-check">
-              <%= check_box_tag :notify_email, '1', false, class: 'form-check-input', id: 'notify_email' %>
-              <%= label_tag :notify_email, "Email #{job.owner.email}", class: 'form-check-label text-13' %>
+              <%= check_box_tag :notify_email, '1', false, class: 'form-check-input', id: 'notify_email',
+                                disabled: !MailConfig.configured? %>
+              <%= label_tag :notify_email, class: 'form-check-label text-13' do %>
+                Email <%= job.owner.email %>
+                <% unless MailConfig.configured? %>
+                  <span class="text-secondary">(set SMTP env vars to enable)</span>
+                <% end %>
+              <% end %>
             </div>
             <div class="form-check">
               <%= check_box_tag :notify_slack, '1', false, class: 'form-check-input', id: 'notify_slack',

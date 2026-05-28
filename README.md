@@ -63,6 +63,14 @@ for the full list; the values you must set on a fresh install are:
   (no Authentik required). Useful for single-user or offline setups.
 - `TIMEZONE` — IANA timezone name (e.g. `America/Los_Angeles`) used
   for displaying job timestamps and relative times. Defaults to `UTC`.
+- `SMTP_ADDRESS`, `MAIL_FROM`, and related `SMTP_*` vars — required for
+  email notifications when printing job labels. Without `SMTP_ADDRESS`,
+  the email checkbox on the print-label form is disabled. See
+  [.env.example](.env.example) for the full list (`SMTP_PORT` defaults to
+  587). In development without SMTP, outgoing mail is written to
+  `tmp/mail/` instead.
+- `SLACK_API_TOKEN` — bot token with `chat:write`; used to DM claimants
+  when printing a label with Slack notification enabled.
 
 ## Local development
 

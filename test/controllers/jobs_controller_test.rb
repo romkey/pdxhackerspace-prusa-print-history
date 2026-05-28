@@ -168,6 +168,16 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'input[type=submit][value=?]', 'Print label'
   end
 
+  test 'show disables email notification when SMTP is not configured' do
+    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('MAIL_HOST')
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'input#notify_email[disabled]'
+    assert_match(/SMTP env vars/i, response.body)
+  end
+
   test 'admin can update owner slack handle from job page' do
     login_as(users(:admin))
     patch user_path(users(:viewer)), params: { user: { slack_handle: 'makerbot' } }

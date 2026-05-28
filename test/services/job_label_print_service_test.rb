@@ -26,12 +26,27 @@ class JobLabelPrintServiceTest < ActiveSupport::TestCase
   end
 
   test 'sends email notification when requested' do
+    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+
     CupsService.stub(:print_data, 'job-99') do
       assert_emails 1 do
         result = JobLabelPrintService.call(job: @job, label_printer: @printer, notify_email: true)
 
         assert result.email_sent
       end
+    end
+  ensure
+    ENV.delete('SMTP_ADDRESS')
+  end
+
+  test 'records email error when SMTP is not configured' do
+    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('MAIL_HOST')
+    CupsService.stub(:print_data, 'job-99') do
+      result = JobLabelPrintService.call(job: @job, label_printer: @printer, notify_email: true)
+
+      assert_not result.email_sent
+      assert_includes result.notification_errors.join, 'SMTP is not configured'
     end
   end
 

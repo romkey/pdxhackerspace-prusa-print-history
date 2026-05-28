@@ -66,6 +66,7 @@ class JobLabelPrintService
   end
 
   def send_email_notification
+    return [false, 'Email: SMTP is not configured'] unless MailConfig.configured?
     return [false, nil] if @job.owner.email.blank?
 
     JobLabelMailer.print_ready(@job).deliver_now

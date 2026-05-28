@@ -35,6 +35,30 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select 'a[href=?]', edit_printer_path(@printer)
   end
 
+  test 'show hides integrations from anonymous viewers' do
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Integrations', count: 0
+  end
+
+  test 'show hides integrations from non-admin users' do
+    login_as(users(:viewer))
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Integrations', count: 0
+  end
+
+  test 'show shows integrations to admins' do
+    login_as(users(:admin))
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Integrations'
+    assert_match(/PrusaLink/, response.body)
+  end
+
   test 'show always displays ambient temperature when available' do
     @printer.update!(ambient_temp: 21.5, environment_updated_at: 2.minutes.ago)
 

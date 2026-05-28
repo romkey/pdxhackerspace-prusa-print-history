@@ -78,6 +78,64 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'img[src="/images/placeholder-preview.svg"]', minimum: 1
   end
 
+  test 'idle dashboard card shows last job filename, status, and completion time' do
+    printer = printers(:prusa_mini)
+    Job.create!(
+      printer: printer,
+      filename: 'cube.gcode',
+      status: 'finished',
+      started_at: 2.hours.ago,
+      ended_at: 1.hour.ago
+    )
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card', text: /cube\.gcode/
+    assert_match(/finished/, response.body)
+    assert_match(/ago/, response.body)
+  end
+
+  test 'idle dashboard card shows last job preview when attached' do
+    printer = printers(:prusa_mini)
+    job = Job.create!(
+      printer: printer,
+      filename: 'cube.gcode',
+      status: 'finished',
+      started_at: 2.hours.ago,
+      ended_at: 1.hour.ago
+    )
+    job.preview_image.attach(
+      io: StringIO.new('preview-bytes'),
+      filename: 'cube.png',
+      content_type: 'image/png'
+    )
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card img.dashboard-image[alt=?]', 'Preview of cube.gcode'
+  end
+
+  test 'anonymous navbar shows only dashboard brand and sign in' do
+    get root_path
+
+    assert_response :success
+    assert_select 'a.nav-link', text: 'Sign in'
+    assert_select 'a.nav-link', text: 'Jobs', count: 0
+    assert_select 'a.nav-link', text: 'Printers', count: 0
+  end
+
+  test 'logged-in navbar shows full navigation' do
+    login_as(users(:viewer))
+    get root_path
+
+    assert_response :success
+    assert_select 'a.nav-link', text: 'Jobs'
+    assert_select 'a.nav-link', text: 'My prints'
+    assert_select 'a.nav-link', text: 'Printers'
+  end
+
   test 'layout footer shows configured text and link' do
     Setting.footer_text = 'PDX Hackerspace 3D Printing'
     Setting.footer_link_label = 'FAQ'

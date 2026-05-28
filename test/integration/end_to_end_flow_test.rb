@@ -21,6 +21,7 @@ class EndToEndFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select 'a[href=?]', edit_printer_path(@printer), count: 0
     assert_select 'a[href=?]', new_printer_path,            count: 0
+    assert_select '.h-section-label', text: 'Integrations', count: 0
 
     get jobs_path
 

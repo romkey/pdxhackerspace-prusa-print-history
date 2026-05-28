@@ -16,6 +16,7 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     presenter = DashboardPresenter.new(
       printers: [printer],
       active_jobs_by_printer: { printer.id => job },
+      last_jobs_by_printer: {},
       recent_events: []
     )
 
@@ -23,6 +24,7 @@ class DashboardPresenterTest < ActiveSupport::TestCase
 
     assert_equal printer, card.printer
     assert_equal job, card.current_job
+    assert_nil card.last_job
     assert card.printing?
     assert_equal 'PLA', card.material_label
     assert_equal '0.4mm', card.nozzle_label
@@ -32,6 +34,27 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_in_delta 21.0, card.ambient_temp_c
   end
 
+  test 'idle cards use the last job for preview and metadata' do
+    printer = printers(:prusa_xl)
+    last_job = jobs(:active_xl)
+    last_job.update!(status: 'finished', ended_at: 5.minutes.ago)
+
+    presenter = DashboardPresenter.new(
+      printers: [printer],
+      active_jobs_by_printer: {},
+      last_jobs_by_printer: { printer.id => last_job },
+      recent_events: []
+    )
+
+    card = presenter.cards.first
+
+    assert card.idle?
+    assert_equal last_job, card.last_job
+    assert_equal last_job, card.preview_job
+    assert_equal 'dragon.gcode', card.last_job.filename
+    assert_equal 'finished', card.last_job.status
+  end
+
   test 'availability reflects PrusaLink connection status' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: true)
@@ -39,6 +62,7 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     card = DashboardPresenter.new(
       printers: [printer],
       active_jobs_by_printer: {},
+      last_jobs_by_printer: {},
       recent_events: []
     ).cards.first
 
@@ -50,6 +74,7 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     card = DashboardPresenter.new(
       printers: [printer.reload],
       active_jobs_by_printer: {},
+      last_jobs_by_printer: {},
       recent_events: []
     ).cards.first
 

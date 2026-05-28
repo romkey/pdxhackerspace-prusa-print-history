@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-28
+
+### Added
+- Idle dashboard cards show the last job preview, filename, completion time, and status.
+
+### Changed
+- Anonymous visitors see only the printer dashboard and sign-in link in the navbar.
+- Printer detail integrations section is visible to admins only.
+
 ## [0.2.0] - 2026-05-28
 
 ### Added

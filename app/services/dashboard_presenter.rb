@@ -1,11 +1,19 @@
 class DashboardPresenter
-  Card = Struct.new(:printer, :current_job, :heads, :snapshot, :latest_reading, keyword_init: true) do
+  Card = Struct.new(:printer, :current_job, :last_job, :heads, :snapshot, :latest_reading, keyword_init: true) do
+    def idle?
+      current_job.nil?
+    end
+
     def printing?
       current_job&.active?
     end
 
+    def preview_job
+      current_job || last_job
+    end
+
     def preview_attached?
-      current_job&.preview_image&.attached?
+      preview_job&.preview_image&.attached?
     end
 
     def snapshot_attached?
@@ -57,9 +65,10 @@ class DashboardPresenter
 
   attr_reader :recent_events
 
-  def initialize(printers:, active_jobs_by_printer:, recent_events:)
+  def initialize(printers:, active_jobs_by_printer:, last_jobs_by_printer:, recent_events:)
     @printers = printers
     @active_jobs_by_printer = active_jobs_by_printer
+    @last_jobs_by_printer = last_jobs_by_printer
     @recent_events = recent_events
   end
 
@@ -82,6 +91,7 @@ class DashboardPresenter
     Card.new(
       printer: printer,
       current_job: job,
+      last_job: job ? nil : @last_jobs_by_printer[printer.id],
       heads: printer.printer_heads.sort_by(&:tool_index),
       snapshot: latest_snapshot(printer, job),
       latest_reading: latest_reading(job)

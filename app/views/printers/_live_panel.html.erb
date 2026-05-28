@@ -199,24 +199,26 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-body">
-        <div class="h-section-label">Integrations</div>
-        <ul class="list-unstyled mb-0 text-13">
-          <li>
-            <span class="status-dot <%= printer.prusalink? ? 'status-success' : 'status-muted' %> me-2"></span>
-            PrusaLink <%= printer.prusalink? ? 'configured' : 'not configured' %>
-          </li>
-          <li>
-            <span class="status-dot <%= printer.home_assistant? ? 'status-success' : 'status-muted' %> me-2"></span>
-            Home Assistant sensor: <%= printer.ha_base_sensor.presence || '—' %>
-          </li>
-          <li>
-            <span class="status-dot <%= printer.camera_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
-            Camera: <%= printer.camera? ? printer.camera_url : (printer.prusalink? ? 'PrusaLink' : 'none') %>
-          </li>
-        </ul>
+    <% if respond_to?(:admin?) && admin? %>
+      <div class="card">
+        <div class="card-body">
+          <div class="h-section-label">Integrations</div>
+          <ul class="list-unstyled mb-0 text-13">
+            <li>
+              <span class="status-dot <%= printer.prusalink? ? 'status-success' : 'status-muted' %> me-2"></span>
+              PrusaLink <%= printer.prusalink? ? 'configured' : 'not configured' %>
+            </li>
+            <li>
+              <span class="status-dot <%= printer.home_assistant? ? 'status-success' : 'status-muted' %> me-2"></span>
+              Home Assistant sensor: <%= printer.ha_base_sensor.presence || '—' %>
+            </li>
+            <li>
+              <span class="status-dot <%= printer.camera_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
+              Camera: <%= printer.camera? ? printer.camera_url : (printer.prusalink? ? 'PrusaLink' : 'none') %>
+            </li>
+          </ul>
+        </div>
       </div>
-    </div>
+    <% end %>
   </div>
 </div>

@@ -6,7 +6,9 @@
 #
 # Usage:
 #   docker compose -f docker-compose.server.yml --env-file .env.production up -d
-#   docker compose -f docker-compose.server.yml --profile tools run --rm migrate
+#
+# Pending migrations run automatically when web or sidekiq containers start
+# (see bin/docker-entrypoint). Set SKIP_DB_MIGRATE=true to opt out.
 name: prusa-print-history
 
 x-app-base: &app-base
@@ -79,12 +81,6 @@ services:
     depends_on:
       - redis
     command: bundle exec sidekiq
-
-  migrate:
-    <<: *app-base
-    container_name: prusa-print-history-migrate
-    profiles: ['tools']
-    command: bin/rails db:prepare
 
 volumes:
   prusa-print-history-redisdata:

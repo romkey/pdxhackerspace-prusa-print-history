@@ -78,6 +78,58 @@ class UserTest < ActiveSupport::TestCase
     assert_predicate user, :admin?
   end
 
+  test 'find_or_create_from_auth stores slack fields from OIDC raw_info' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'slack-uid',
+      info: { email: 'slack@example.com', name: 'Slack User' },
+      extra: { raw_info: { 'slack_user_id' => 'UOIDC123', 'slack_handle' => '@makerbot' } }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
+    assert_equal 'UOIDC123', user.slack_id
+    assert_equal 'makerbot', user.slack_handle
+  end
+
+  test 'find_or_create_from_auth updates slack fields on each login' do
+    user = User.create!(
+      email: 'sync@example.com',
+      provider: 'authentik',
+      uid: 'sync-uid',
+      slack_id: 'UOLD',
+      slack_handle: 'oldhandle'
+    )
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'sync-uid',
+      info: { email: 'sync@example.com', name: 'Sync User' },
+      extra: { raw_info: { slack_user_id: 'UNEW', slack_handle: 'newhandle' } }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    user.reload
+
+    assert_equal 'UNEW', user.slack_id
+    assert_equal 'newhandle', user.slack_handle
+  end
+
+  test 'find_or_create_from_auth leaves slack fields unchanged when claims are absent' do
+    user = users(:viewer)
+
+    auth = OmniAuth::AuthHash.new(
+      provider: user.provider,
+      uid: user.uid,
+      info: { email: user.email, name: user.name }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_equal 'UVIEWER123', user.reload.slack_id
+  end
+
   test 'normalizes slack_handle by stripping @ prefix' do
     user = users(:viewer)
     user.slack_handle = '@makerbot'

@@ -16,9 +16,34 @@ class User < ApplicationRecord
     user.email = auth.info.email
     user.name  = auth.info.name.presence || auth.info.email
     user.admin = true if AdminEmails.include?(user.email)
+    apply_slack_from_auth(user, auth)
     user.save!
     user
   end
+
+  def self.apply_slack_from_auth(user, auth)
+    claims = auth_claims(auth)
+
+    if claims.key?('slack_user_id') || claims.key?('slack_id')
+      user.slack_id = claims['slack_user_id'].presence || claims['slack_id'].presence
+    end
+
+    user.slack_handle = claims['slack_handle'].presence if claims.key?('slack_handle')
+  end
+
+  def self.auth_claims(auth)
+    sources = [auth.info, auth.extra&.raw_info].compact
+    sources.each_with_object({}) do |source, claims|
+      next unless source.respond_to?(:[])
+
+      source.each do |key, value|
+        next if value.blank?
+
+        claims[key.to_s] = value
+      end
+    end
+  end
+  private_class_method :apply_slack_from_auth, :auth_claims
 
   def display_name
     name.presence || email

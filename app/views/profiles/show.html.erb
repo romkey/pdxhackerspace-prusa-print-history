@@ -12,6 +12,12 @@
         <% end %>
 
         <div class="h-section-label">Slack</div>
+        <% if @user.slack_handle.present? %>
+          <div class="text-13 mb-2">
+            Handle <span class="text-body">@<%= @user.slack_handle %></span>
+            <span class="text-secondary">· synced from sign-in when available</span>
+          </div>
+        <% end %>
         <div class="mb-3">
           <%= f.label :slack_id, 'Slack user ID', class: 'form-label text-13' %>
           <%= f.text_field :slack_id, class: 'form-control form-control-sm', placeholder: 'U0123456789' %>

@@ -156,11 +156,12 @@ every `v*` tag. To run it behind your own reverse proxy:
 ```bash
 # .env.production has SECRET_KEY_BASE, DATABASE_URL, IMAGE, WEB_PORT, etc.
 docker compose -f docker-compose.server.yml --env-file .env.production up -d
-
-# Run database migrations against the external database
-docker compose -f docker-compose.server.yml --env-file .env.production \
-  --profile tools run --rm migrate
 ```
+
+Pending database migrations run automatically when the `web` or `sidekiq`
+container starts (via `bin/docker-entrypoint`, which calls `db:prepare`).
+You do not need a separate migrate step on staging or production. Set
+`SKIP_DB_MIGRATE=true` on a one-off container if you need to bypass that.
 
 The `web` service exposes Rails on `WEB_PORT` (default 3000); point your
 reverse proxy at that.

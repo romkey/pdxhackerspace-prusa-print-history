@@ -1,10 +1,19 @@
 #!/bin/bash -e
 
-# db:prepare must run before the web server starts. Production CMD uses thrust:
-#   ./bin/thrust ./bin/rails server
-if { [ "${1}" = './bin/rails' ] && [ "${2}" = 'server' ]; } || \
-   { [ "${1}" = './bin/thrust' ] && [ "${2}" = './bin/rails' ] && [ "${3}" = 'server' ]; }; then
+# Apply pending migrations before long-running app processes start.
+# Skipped when SKIP_DB_MIGRATE=true (e.g. one-off console/shell containers).
+prepare_database() {
+  if [ "${SKIP_DB_MIGRATE:-}" = "true" ]; then
+    return
+  fi
+
   ./bin/rails db:prepare
+}
+
+if { [ "${1}" = './bin/rails' ] && [ "${2}" = 'server' ]; } || \
+   { [ "${1}" = './bin/thrust' ] && [ "${2}" = './bin/rails' ] && [ "${3}" = 'server' ]; } || \
+   { [ "${1}" = 'bundle' ] && [ "${2}" = 'exec' ] && [ "${3}" = 'sidekiq' ]; }; then
+  prepare_database
 fi
 
 exec "${@}"

@@ -79,4 +79,27 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test 'auth failure endpoint uses query param message' do
+    get '/auth/failure', params: { message: 'csrf_detected', strategy: 'authentik' }
+
+    assert_redirected_to login_path
+    assert_match(/session expired/i, flash[:alert].to_s)
+  end
+
+  test 'callback reports validation errors when user cannot be saved' do
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'developer',
+      uid: '',
+      info: { email: '', name: '' }
+    )
+
+    assert_no_difference -> { User.count } do
+      post '/auth/developer/callback'
+    end
+
+    assert_redirected_to login_path
+    assert_match(/Sign-in failed:/, flash[:alert].to_s)
+  end
 end

@@ -6,9 +6,21 @@ class SessionsController < ApplicationController
   end
 
   def create
-    user = User.find_or_create_from_auth(auth_hash)
-    session[:user_id] = user.id
-    redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
+    sign_in_user(User.find_or_create_from_auth(auth_hash))
+  rescue KeyError => e
+    handle_sign_in_error(
+      e,
+      context: 'callback missing auth payload',
+      message: 'Authentik did not return account information.'
+    )
+  rescue ActiveRecord::RecordInvalid => e
+    handle_sign_in_error(
+      e,
+      context: 'callback user save',
+      message: e.record.errors.full_messages.to_sentence
+    )
+  rescue StandardError => e
+    handle_sign_in_error(e, context: 'callback')
   end
 
   def create_local
@@ -32,10 +44,22 @@ class SessionsController < ApplicationController
   end
 
   def failure
-    redirect_to login_path, alert: "Sign-in failed: #{params[:message] || 'unknown error'}"
+    report = OmniauthFailureReporter.report(request)
+    redirect_to login_path, alert: report.user_message
   end
 
   private
+
+  def sign_in_user(user)
+    session[:user_id] = user.id
+    redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
+  end
+
+  def handle_sign_in_error(error, context:, message: nil)
+    OmniauthFailureReporter.log_sign_in_error(request, error, context: context)
+    detail = message || OmniauthFailureReporter.safe_error_message(error)
+    redirect_to login_path, alert: "Sign-in failed: #{detail}."
+  end
 
   def auth_hash
     request.env.fetch('omniauth.auth')

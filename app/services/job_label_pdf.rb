@@ -27,10 +27,7 @@ class JobLabelPdf
   delegate :render, to: :document
 
   def cups_media_options
-    {
-      'media' => "Custom.#{@thermal_width_mm}x#{page_height_mm}mm",
-      'fit-to-page' => 'false'
-    }
+    {}
   end
 
   private
@@ -44,7 +41,8 @@ class JobLabelPdf
   end
 
   def compute_page_height_pt
-    THERMAL_MARGIN_TOP + content_height_pt + tail_padding_pt + THERMAL_MARGIN
+    content = THERMAL_MARGIN_TOP + content_height_pt + tail_padding_pt + THERMAL_MARGIN
+    [content, @thermal_width_pt].max
   end
 
   def content_height_pt

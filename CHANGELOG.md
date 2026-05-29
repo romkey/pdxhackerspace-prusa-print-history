@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.17] - 2026-05-29
+
+### Added
+- Admin **Unclear print** action to reset a cleared print so it can be cleared again.
+
 ## [0.3.16] - 2026-05-29
 
 ### Changed

@@ -1,7 +1,7 @@
 class JobsController < ApplicationController
   before_action :require_login, only: %i[claim unclaim]
-  before_action :require_admin, only: %i[update clear_print reprint_label]
-  before_action :set_job, only: %i[show update claim unclaim clear_print reprint_label]
+  before_action :require_admin, only: %i[update clear_print unclear_print reprint_label]
+  before_action :set_job, only: %i[show update claim unclaim clear_print unclear_print reprint_label]
 
   def index
     scope = base_scope.includes(:printer, :owner).recent
@@ -61,6 +61,22 @@ class JobsController < ApplicationController
     redirect_to @job, notice: "Label reprinted (job #{cups_job_id})."
   rescue JobLabelPrintService::Error, CupsService::PrintError => e
     redirect_to @job, alert: "Reprint failed: #{e.message}"
+  end
+
+  def unclear_print
+    unless @job.cleared?
+      redirect_to @job, alert: 'This print is not cleared.'
+      return
+    end
+
+    @job.update!(
+      cleared_at: nil,
+      cleared_by: nil,
+      clear_outcome: nil,
+      clear_failure_reason: nil,
+      clear_failure_detail: nil
+    )
+    redirect_to @job, notice: 'Print unclear.'
   end
 
   def clear_print

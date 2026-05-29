@@ -76,24 +76,28 @@
         <% end %>
       </div>
 
-      <% if job.label_reprintable? %>
-        <% printers = local_assigns.fetch(:label_printers, LabelPrinter.ordered) %>
-        <% if printers.any? %>
-          <%= form_with url: reprint_label_job_path(job), method: :post, local: true, class: 'mt-3' do %>
-            <% if printers.many? %>
-              <div class="mb-2">
-                <%= label_tag :label_printer_id, 'Label printer', class: 'form-label text-13' %>
-                <%= select_tag :label_printer_id,
-                               options_from_collection_for_select(printers, :id, :name, local_assigns[:default_label_printer]&.id),
-                               class: 'form-select form-select-sm' %>
-              </div>
+      <div class="mt-3 d-flex flex-wrap gap-2">
+        <% if job.label_reprintable? %>
+          <% printers = local_assigns.fetch(:label_printers, LabelPrinter.ordered) %>
+          <% if printers.any? %>
+            <%= form_with url: reprint_label_job_path(job), method: :post, local: true, class: 'd-inline' do %>
+              <% if printers.many? %>
+                <div class="mb-2">
+                  <%= label_tag :label_printer_id, 'Label printer', class: 'form-label text-13' %>
+                  <%= select_tag :label_printer_id,
+                                 options_from_collection_for_select(printers, :id, :name, local_assigns[:default_label_printer]&.id),
+                                 class: 'form-select form-select-sm' %>
+                </div>
+              <% end %>
+              <%= submit_tag 'Reprint label', class: 'btn btn-outline-secondary btn-sm' %>
             <% end %>
-            <%= submit_tag 'Reprint label', class: 'btn btn-outline-secondary btn-sm' %>
+          <% else %>
+            <p class="text-13 text-secondary mb-0">Configure a label printer to reprint pickup labels.</p>
           <% end %>
-        <% else %>
-          <p class="text-13 text-secondary mt-3 mb-0">Configure a label printer to reprint pickup labels.</p>
         <% end %>
-      <% end %>
+
+        <%= button_to 'Unclear print', unclear_print_job_path(job), method: :post, class: 'btn btn-outline-secondary btn-sm' %>
+      </div>
     </div>
   </div>
 <% end %>

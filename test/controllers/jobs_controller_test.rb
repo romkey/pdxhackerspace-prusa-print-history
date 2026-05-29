@@ -259,6 +259,69 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/cannot be reprinted/i, flash[:alert])
   end
 
+  test 'unclear_print is admin-only' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'success',
+      cleared_by: users(:admin)
+    )
+
+    post unclear_print_job_path(@job)
+
+    assert_redirected_to login_path
+
+    login_as(users(:viewer))
+    post unclear_print_job_path(@job)
+
+    assert_response :forbidden
+  end
+
+  test 'admin can unclear a cleared print' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'failed',
+      clear_failure_reason: 'spaghetti',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+
+    post unclear_print_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_match(/unclear/i, flash[:notice])
+    @job.reload
+
+    assert_nil @job.cleared_at
+    assert_nil @job.cleared_by_id
+    assert_nil @job.clear_outcome
+    assert_nil @job.clear_failure_reason
+    assert @job.clearable?
+  end
+
+  test 'show renders unclear print for cleared job' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'success',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'button[type=submit]', text: 'Unclear print'
+  end
+
+  test 'unclear_print rejected for uncleared job' do
+    login_as(users(:admin))
+
+    post unclear_print_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_match(/not cleared/i, flash[:alert])
+  end
+
   test 'admin can update owner slack id from job page' do
     login_as(users(:admin))
     patch user_path(users(:viewer)), params: { user: { slack_id: 'UMAKERBOT' } }

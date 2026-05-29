@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.12] - 2026-05-29
+
+### Added
+- Dashboard printer images use green, blue, or red outlines for idle/available, printing, and attention states.
+- Authentik OIDC sign-in syncs `is_admin`, `has_slack`, and `slack` claims on every login.
+- Optional `AUTHENTIK_DEBUG` logging for Authentik OIDC authorize params and HTTP JSON bodies.
+
+### Changed
+- SMTP host configuration env var renamed from `SMTP_ADDRESS` to `SMTP_SERVER`.
+
 ## [0.2.1] - 2026-05-28
 
 ### Added

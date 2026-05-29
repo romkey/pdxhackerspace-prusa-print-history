@@ -22,7 +22,7 @@ gem 'pagy', '~> 9.0'
 
 gem 'omniauth', '~> 2.1'
 gem 'omniauth_openid_connect', '~> 0.8'
-gem 'omniauth-rails_csrf_protection', '~> 1.0'
+gem 'omniauth-rails_csrf_protection', '~> 2.0'
 
 gem 'chartkick', '~> 5.1'
 

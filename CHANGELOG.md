@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.19] - 2026-05-29
+
+### Fixed
+- Rails 8.1 deprecation warning for `ActiveSupport::Configurable` from OmniAuth CSRF protection (upgraded `omniauth-rails_csrf_protection` to 2.x).
+
+## [0.3.18] - 2026-05-29
+
+### Fixed
+- Cleared-print thermal labels print landscape with full filename and compact start/finish line.
+
 ## [0.3.17] - 2026-05-29
 
 ### Added

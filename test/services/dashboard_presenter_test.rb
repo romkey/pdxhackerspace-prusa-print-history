@@ -81,4 +81,57 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_equal 'unavailable', card.availability_label
     assert card.availability_muted?
   end
+
+  test 'image outline status reflects printer state and availability' do
+    printer = printers(:prusa_mini)
+    printer.update!(prusalink_key: 'secret', operational_state: 'idle', prusalink_reachable: true)
+
+    card = build_card(printer)
+
+    assert_equal 'ready', card.image_outline_status
+
+    printer.update!(operational_state: 'printing')
+    job = Job.create!(
+      printer: printer,
+      filename: 'cube.gcode',
+      status: 'printing',
+      started_at: 5.minutes.ago
+    )
+    card = build_card(printer, active_jobs: { printer.id => job })
+
+    assert_equal 'printing', card.image_outline_status
+
+    printer.update!(operational_state: 'paused')
+    job.update!(status: 'paused')
+    card = build_card(printer, active_jobs: { printer.id => job })
+
+    assert_equal 'attention', card.image_outline_status
+
+    job.update!(status: 'finished', ended_at: Time.current)
+    printer.update!(operational_state: 'unknown', prusalink_reachable: true)
+    card = build_card(printer)
+
+    assert_equal 'ready', card.image_outline_status
+
+    printer.update!(prusalink_reachable: false, operational_state: 'idle')
+    card = build_card(printer)
+
+    assert_equal 'ready', card.image_outline_status
+
+    printer.update!(operational_state: 'attention')
+    card = build_card(printer)
+
+    assert_equal 'attention', card.image_outline_status
+  end
+
+  private
+
+  def build_card(printer, active_jobs: {}, last_jobs: {})
+    DashboardPresenter.new(
+      printers: [printer],
+      active_jobs_by_printer: active_jobs,
+      last_jobs_by_printer: last_jobs,
+      recent_events: []
+    ).cards.first
+  end
 end

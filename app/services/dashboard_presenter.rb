@@ -1,4 +1,6 @@
 class DashboardPresenter
+  ATTENTION_OUTLINE_STATUSES = %w[paused attention error].freeze
+
   Card = Struct.new(:printer, :current_job, :last_job, :heads, :snapshot, :latest_reading, keyword_init: true) do
     def idle?
       current_job.nil?
@@ -60,6 +62,16 @@ class DashboardPresenter
 
     def availability_muted?
       printer.prusalink_connection_status != :reachable
+    end
+
+    def image_outline_status
+      status = printer.display_status
+      return 'printing' if status == 'printing'
+      return 'ready' if status == 'idle'
+      return 'ready' if printer.prusalink_connection_status == :reachable &&
+                        DashboardPresenter::ATTENTION_OUTLINE_STATUSES.exclude?(status)
+
+      'attention'
     end
   end
 

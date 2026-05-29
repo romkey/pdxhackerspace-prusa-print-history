@@ -37,6 +37,28 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card', minimum: 1
     assert_match(/idle/, response.body)
     assert_match(/available/, response.body)
+    assert_select '.dashboard-image-wrap--ready', minimum: 2
+  end
+
+  test 'dashboard printer images use printing outline while active' do
+    printer = printers(:prusa_xl)
+    printer.update!(operational_state: 'printing')
+    jobs(:active_xl).update!(status: 'printing')
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .dashboard-image-wrap--printing', minimum: 2
+  end
+
+  test 'dashboard printer images use attention outline for problem states' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', operational_state: 'attention', prusalink_reachable: false)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .dashboard-image-wrap--attention', minimum: 2
   end
 
   test 'dashboard shows unavailable when PrusaLink is unreachable' do

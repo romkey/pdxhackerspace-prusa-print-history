@@ -90,7 +90,19 @@ body {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border: 2px solid var(--bs-danger);
+  border: 2px solid var(--bs-border-color);
+}
+
+.dashboard-image-wrap--ready .dashboard-image {
+  border-color: var(--bs-success);
+}
+
+.dashboard-image-wrap--printing .dashboard-image {
+  border-color: var(--bs-primary);
+}
+
+.dashboard-image-wrap--attention .dashboard-image {
+  border-color: var(--bs-danger);
 }
 
 .dashboard-image-placeholder {

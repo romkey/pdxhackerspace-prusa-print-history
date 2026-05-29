@@ -8,7 +8,7 @@
   </h2>
 
   <div class="dashboard-images mb-2">
-    <div class="dashboard-image-wrap mb-2">
+    <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %> mb-2">
       <% if card.snapshot_attached? %>
         <%= link_to printer_path(printer) do %>
           <%= image_tag storage_blob_path(card.snapshot.image),
@@ -22,7 +22,7 @@
       <% end %>
     </div>
 
-    <div class="dashboard-image-wrap">
+    <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %>">
       <% if card.preview_attached? %>
         <%= link_to job_path(card.preview_job) do %>
           <%= image_tag storage_blob_path(card.preview_job.preview_image),

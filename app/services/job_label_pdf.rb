@@ -4,6 +4,7 @@ class JobLabelPdf
   THERMAL_MARGIN = 10
   THERMAL_MARGIN_TOP = THERMAL_MARGIN / 2
   THERMAL_INITIAL_HEIGHT = 800
+  TRIM_TAIL_LINES = 4
 
   def self.mm_to_pt(width_mm)
     width_mm.to_f * 72.0 / 25.4
@@ -97,9 +98,20 @@ class JobLabelPdf
   end
 
   def trim_page
-    used_height = THERMAL_INITIAL_HEIGHT - document.cursor + THERMAL_MARGIN
-    w = @thermal_width_pt
-    document.page.dictionary.data[:MediaBox] = [0, 0, w, used_height]
-    document.page.dictionary.data[:CropBox] = [0, 0, w, used_height]
+    t = theme
+    document.move_down tail_padding(t[:body], TRIM_TAIL_LINES)
+
+    bottom = document.cursor
+    top = document.bounds.absolute_top
+    box = [0, bottom, @thermal_width_pt, top]
+
+    document.page.dictionary.data[:MediaBox] = box
+    document.page.dictionary.data[:CropBox] = box
+  end
+
+  def tail_padding(font_size, lines)
+    document.font_size(font_size) do
+      document.height_of('X') * lines
+    end
   end
 end

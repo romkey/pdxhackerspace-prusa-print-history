@@ -33,6 +33,21 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_equal 14, theme[:body]
   end
 
+  test 'trims page to content plus four blank lines' do
+    job = jobs(:active_xl)
+    pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
+    doc = pdf.document
+    media_box = doc.page.dictionary.data[:MediaBox]
+
+    bottom, top = media_box.values_at(1, 3)
+    height = top - bottom
+
+    assert_operator height, :<, JobLabelPdf::THERMAL_INITIAL_HEIGHT / 2
+    assert_operator height, :>, 100
+    assert_equal doc.cursor, bottom
+    assert_equal doc.bounds.absolute_top, top
+  end
+
   test 'does not include organization header or field labels' do
     job = jobs(:active_xl)
     pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)

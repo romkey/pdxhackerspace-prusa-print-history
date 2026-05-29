@@ -1,9 +1,8 @@
 require 'prawn'
 
 class JobLabelPdf
-  THERMAL_MARGIN = 10
-  THERMAL_MARGIN_TOP = THERMAL_MARGIN / 2
-  TRIM_TAIL_LINES = 4
+  MARGIN_LINES = 1
+  HORIZONTAL_MARGIN = 4
 
   def self.mm_to_pt(width_mm)
     width_mm.to_f * 72.0 / 25.4
@@ -14,35 +13,23 @@ class JobLabelPdf
     @thermal_width_mm = thermal_width_mm.to_i
     @thermal_width_pt = self.class.mm_to_pt(@thermal_width_mm)
     @theme = theme
+    @margin_line_height_pt = compute_margin_line_height_pt
     @page_height_pt = compute_page_height_pt
     @document = Prawn::Document.new(
       page_size: [@thermal_width_pt, @page_height_pt],
-      margin: margins
+      margin: [0, HORIZONTAL_MARGIN, 0, HORIZONTAL_MARGIN]
     )
     generate
   end
 
-  attr_reader :document, :page_height_pt
+  attr_reader :document, :page_height_pt, :margin_line_height_pt
 
   delegate :render, to: :document
 
-  def cups_media_options
-    {}
-  end
-
   private
 
-  def margins
-    [THERMAL_MARGIN_TOP, THERMAL_MARGIN, THERMAL_MARGIN, THERMAL_MARGIN]
-  end
-
-  def page_height_mm
-    (@page_height_pt * 25.4 / 72.0).ceil
-  end
-
   def compute_page_height_pt
-    content = THERMAL_MARGIN_TOP + content_height_pt + tail_padding_pt + THERMAL_MARGIN
-    [content, @thermal_width_pt].max
+    (@margin_line_height_pt * MARGIN_LINES * 2) + content_height_pt
   end
 
   def content_height_pt
@@ -61,13 +48,17 @@ class JobLabelPdf
     ]
   end
 
-  def tail_padding_pt
-    measure { |doc| tail_padding(doc, @theme[:body], TRIM_TAIL_LINES) }
+  def compute_margin_line_height_pt
+    measure { |doc| line_height(doc, @theme[:body]) }
   end
 
   def measure
-    doc = Prawn::Document.new(page_size: [@thermal_width_pt, 100], margin: margins)
+    doc = Prawn::Document.new(page_size: [@thermal_width_pt, 100], margin: [0, HORIZONTAL_MARGIN, 0, HORIZONTAL_MARGIN])
     yield doc
+  end
+
+  def line_height(doc, size)
+    doc.font_size(size) { doc.height_of('X') }
   end
 
   def text_block_height(doc, size, text, bold: false)
@@ -95,6 +86,7 @@ class JobLabelPdf
 
   def generate
     t = @theme
+    document.move_down @margin_line_height_pt
     render_owner(t)
     document.move_down t[:gap]
     render_filename(t)
@@ -102,7 +94,6 @@ class JobLabelPdf
     render_line(t[:body], printer_material_line)
     render_line(t[:body], @job.status.humanize)
     render_line(t[:body], print_time_label)
-    document.move_down tail_padding(document, t[:body], TRIM_TAIL_LINES)
   end
 
   def render_filename(theme_values)
@@ -146,11 +137,5 @@ class JobLabelPdf
 
   def truncate_filename(name)
     name.to_s.length > 40 ? "#{name[0, 37]}..." : name
-  end
-
-  def tail_padding(doc, font_size, lines)
-    doc.font_size(font_size) do
-      doc.height_of('X') * lines
-    end
   end
 end

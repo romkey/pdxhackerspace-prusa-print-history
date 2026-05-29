@@ -21,4 +21,9 @@ class LabelPrinterTest < ActiveSupport::TestCase
     assert label_printers(:front_desk).thermal_receipt_printer?
     assert_not LabelPrinter.new(name: 'Office', cups_printer_name: 'HP').thermal_receipt_printer?
   end
+
+  test 'cups_options requests portrait orientation for thermal printers' do
+    assert_equal '3', label_printers(:front_desk).cups_options['orientation-requested']
+    assert_equal 'none', label_printers(:front_desk).cups_options['print-scaling']
+  end
 end

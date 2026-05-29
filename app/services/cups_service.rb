@@ -6,8 +6,11 @@ class CupsService
   HealthResult = Data.define(:ok, :message)
 
   THERMAL_PDF_OPTIONS = {
-    'print-scaling' => 'none'
+    'print-scaling' => 'none',
+    'orientation-requested' => '3'
   }.freeze
+
+  ESC_POS_FULL_CUT = "\x1D\x56\x00".b.freeze
 
   def self.available_printers
     output = run_command('lpstat', '-p', '-d')
@@ -47,6 +50,26 @@ class CupsService
       tmp.write(data)
       tmp.flush
       print_file(tmp.path, cups_printer_name, cups_printer_server: cups_printer_server, options: options)
+    end
+  end
+
+  def self.print_cut(cups_printer_name, cups_printer_server: nil)
+    Tempfile.create(['cups_cut_', '.bin']) do |tmp|
+      tmp.binmode
+      tmp.write(ESC_POS_FULL_CUT)
+      tmp.flush
+      args = print_command_args(cups_printer_name, cups_printer_server: cups_printer_server)
+      args.push('-o', 'raw')
+      args.push(tmp.path.to_s)
+
+      output = run_command(*args)
+      job_id = output[/request id is (\S+)/, 1]
+      raise PrintError, "Unexpected lp output: #{output}" unless job_id
+
+      Rails.logger.info(
+        "CupsService: Sent cut command to #{cups_destination(cups_printer_name, cups_printer_server)} (job #{job_id})"
+      )
+      job_id
     end
   end
 

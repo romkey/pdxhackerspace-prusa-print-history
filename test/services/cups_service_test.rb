@@ -37,6 +37,23 @@ class CupsServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'print_cut sends esc pos cut command as raw job' do
+    captured_args = nil
+    Open3.stub(:capture3, lambda { |*args|
+      captured_args = args
+      ['request id is cut-9 (1 file(s))', '', SuccessStatus.new(true, 0)]
+    }) do
+      job_id = CupsService.print_cut('ReceiptPrinter', cups_printer_server: 'print.example.org')
+
+      assert_equal 'cut-9', job_id
+      assert_equal 'lp', captured_args.first
+      assert_includes captured_args, '-o'
+      assert_includes captured_args, 'raw'
+      assert_includes captured_args, '-h'
+      assert_includes captured_args, 'print.example.org'
+    end
+  end
+
   test 'printer_health detects disabled printer' do
     Open3.stub(:capture3, lambda { |*_args|
       ['printer DYMO is disabled.', '', SuccessStatus.new(true, 0)]

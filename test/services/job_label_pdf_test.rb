@@ -33,25 +33,17 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_equal 14, theme[:body]
   end
 
-  test 'uses portrait page with height at least roll width' do
+  test 'uses exact page height with one blank line top and bottom' do
     job = jobs(:active_xl)
     pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
     doc = pdf.document
     media_box = doc.page.dictionary.data[:MediaBox]
-    width_pt = JobLabelPdf.mm_to_pt(80)
+    expected_height = (pdf.margin_line_height_pt * 2) + pdf.send(:content_height_pt)
 
     assert_equal [0, 0], media_box.values_at(0, 1)
+    assert_in_delta expected_height, pdf.page_height_pt, 0.5
     assert_in_delta pdf.page_height_pt, media_box[3], 0.5
-    assert_in_delta width_pt, media_box[2], 0.5
-    assert_operator pdf.page_height_pt, :>=, width_pt
-    assert_operator pdf.page_height_pt, :<, 400
-  end
-
-  test 'does not pass custom cups media size' do
-    job = jobs(:active_xl)
-    pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
-
-    assert_empty pdf.cups_media_options
+    assert_operator pdf.page_height_pt, :<, JobLabelPdf.mm_to_pt(80)
   end
 
   test 'does not include organization header or field labels' do

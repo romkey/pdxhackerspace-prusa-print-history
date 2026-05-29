@@ -38,54 +38,45 @@ class JobLabelPdf
   def theme
     s = thermal_font_scale
     {
-      org: (8 * s).round,
-      title: (14 * s).round,
+      filename: (20 * s).round,
+      owner: (15 * s).round,
       body: (9 * s).round,
-      field: (8 * s).round,
       gap: 4
     }
   end
 
   def generate
-    render_header
-    render_metadata
+    t = theme
+    render_filename(t)
+    document.move_down t[:gap]
+    render_owner(t)
+    document.move_down t[:gap]
+    render_line(t[:body], printer_material_line)
+    render_line(t[:body], @job.status.humanize)
+    render_line(t[:body], print_time_label)
   end
 
-  def render_header
-    theme_values = theme
-    draw_org_line(theme_values)
-    draw_filename_title(theme_values)
-    document.stroke_horizontal_rule
-    document.move_down theme_values[:gap]
-  end
-
-  def draw_org_line(theme_values)
-    org = ENV.fetch('ORGANIZATION_NAME', 'Prusa Print History')
-    document.font_size(theme_values[:org]) { document.text org, align: :center, color: '444444' }
-    document.move_down theme_values[:gap]
-  end
-
-  def draw_filename_title(theme_values)
-    document.font_size(theme_values[:title]) do
+  def render_filename(theme_values)
+    document.font_size(theme_values[:filename]) do
       document.text truncate_filename(@job.filename), align: :center, style: :bold
     end
-    document.move_down theme_values[:gap]
   end
 
-  def render_metadata
-    field('Owner', @job.owner&.display_name || 'Unclaimed')
-    field('Printer', @job.printer.name)
-    field('Material', material_summary)
-    field('Print time', print_time_label)
-    field('Status', @job.status.humanize)
+  def render_owner(theme_values)
+    document.font_size(theme_values[:owner]) do
+      document.text @job.owner&.display_name || 'Unclaimed', align: :center, style: :bold
+    end
   end
 
-  def field(label, value)
-    t = theme
-    document.font_size(t[:field]) do
-      document.text "<b>#{label}:</b> #{value}", inline_format: true
+  def render_line(size, text)
+    document.font_size(size) do
+      document.text text, align: :center
     end
     document.move_down 2
+  end
+
+  def printer_material_line
+    "#{@job.printer.name} / #{material_summary}"
   end
 
   def material_summary

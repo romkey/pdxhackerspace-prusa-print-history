@@ -69,6 +69,17 @@ class JobTest < ActiveSupport::TestCase
     assert_not jobs(:active_xl).reload.label_printable?
   end
 
+  test 'label_reprintable? is true only for successful cleared prints' do
+    job = jobs(:finished)
+    job.update!(cleared_at: Time.current, clear_outcome: 'success', cleared_by: users(:admin))
+
+    assert job.label_reprintable?
+
+    job.update!(clear_outcome: 'failed', clear_failure_reason: 'spaghetti')
+
+    assert_not job.reload.label_reprintable?
+  end
+
   test 'clearable? requires uncleared active or finished job' do
     assert jobs(:active_xl).clearable?
     jobs(:active_xl).update!(cleared_at: Time.current, clear_outcome: 'success')

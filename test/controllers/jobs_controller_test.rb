@@ -186,6 +186,79 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'input[type=submit][value=?]', 'Failed'
   end
 
+  test 'show renders reprint label for cleared successful print' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'success',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'input[type=submit][value=?]', 'Reprint label'
+  end
+
+  test 'show omits reprint label for cleared failed print' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'failed',
+      clear_failure_reason: 'spaghetti',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'input[type=submit][value=?]', 'Reprint label', count: 0
+  end
+
+  test 'reprint_label is admin-only' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'success',
+      cleared_by: users(:admin)
+    )
+
+    post reprint_label_job_path(@job)
+
+    assert_redirected_to login_path
+  end
+
+  test 'admin can reprint label for cleared successful print' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'success',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+
+    JobLabelPrintService.stub(:call, 'DYMO-2') do
+      post reprint_label_job_path(@job)
+    end
+
+    assert_redirected_to job_path(@job)
+    assert_match(/DYMO-2/, flash[:notice])
+  end
+
+  test 'reprint_label rejected for failed clear' do
+    @job.update!(
+      status: 'finished',
+      cleared_at: 1.hour.ago,
+      clear_outcome: 'failed',
+      clear_failure_reason: 'spaghetti',
+      cleared_by: users(:admin)
+    )
+    login_as(users(:admin))
+
+    post reprint_label_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_match(/cannot be reprinted/i, flash[:alert])
+  end
+
   test 'admin can update owner slack id from job page' do
     login_as(users(:admin))
     patch user_path(users(:viewer)), params: { user: { slack_id: 'UMAKERBOT' } }

@@ -10,7 +10,7 @@ class JobClearPrintServiceTest < ActiveSupport::TestCase
   end
 
   test 'clears successful print and sends label' do
-    CupsService.stub(:print_data, 'job-99') do
+    JobLabelPrintService.stub(:call, 'job-99') do
       JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
                                                            email_sent: false, slack_sent: false, errors: []
                                                          )) do

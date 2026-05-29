@@ -37,19 +37,20 @@ class JobLabelPdf
 
   def theme
     s = thermal_font_scale
+    title_size = (20 * s).round
     {
-      filename: (20 * s).round,
-      owner: (15 * s).round,
-      body: (9 * s).round,
+      owner: (title_size * 1.5).round,
+      filename: title_size,
+      body: (9 * s * 1.5).round,
       gap: 4
     }
   end
 
   def generate
     t = theme
-    render_filename(t)
-    document.move_down t[:gap]
     render_owner(t)
+    document.move_down t[:gap]
+    render_filename(t)
     document.move_down t[:gap]
     render_line(t[:body], printer_material_line)
     render_line(t[:body], @job.status.humanize)

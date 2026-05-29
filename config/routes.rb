@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       patch  :claim
       delete :claim, action: :unclaim
       post   :clear_print
+      post   :reprint_label
     end
   end
 

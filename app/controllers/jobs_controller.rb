@@ -1,7 +1,7 @@
 class JobsController < ApplicationController
   before_action :require_login, only: %i[claim unclaim]
-  before_action :require_admin, only: %i[update clear_print]
-  before_action :set_job, only: %i[show update claim unclaim clear_print]
+  before_action :require_admin, only: %i[update clear_print reprint_label]
+  before_action :set_job, only: %i[show update claim unclaim clear_print reprint_label]
 
   def index
     scope = base_scope.includes(:printer, :owner).recent
@@ -44,6 +44,23 @@ class JobsController < ApplicationController
     else
       render :show, status: :unprocessable_content
     end
+  end
+
+  def reprint_label
+    unless @job.label_reprintable?
+      redirect_to @job, alert: 'This label cannot be reprinted.'
+      return
+    end
+
+    if LabelPrinter.default.nil?
+      redirect_to @job, alert: 'No label printer configured.'
+      return
+    end
+
+    cups_job_id = JobLabelPrintService.call(job: @job, label_printer: label_printer_for_clear)
+    redirect_to @job, notice: "Label reprinted (job #{cups_job_id})."
+  rescue JobLabelPrintService::Error, CupsService::PrintError => e
+    redirect_to @job, alert: "Reprint failed: #{e.message}"
   end
 
   def clear_print

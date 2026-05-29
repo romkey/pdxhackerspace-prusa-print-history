@@ -11,7 +11,7 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_operator output.bytesize, :>, 100
   end
 
-  test 'includes filename owner printer material status and print time' do
+  test 'includes owner before filename and other job details' do
     job = jobs(:active_xl)
     pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
 
@@ -20,6 +20,17 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_includes pdf_text, 'Prusa XL / PLA'
     assert_includes pdf_text, job.status.humanize
     assert_includes pdf_text, I18n.l(job.started_at, format: :short)
+    assert_operator pdf_text.index(job.owner.display_name), :<, pdf_text.index(job.filename)
+  end
+
+  test 'uses larger owner title and body sizes than before' do
+    job = jobs(:active_xl)
+    pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
+    theme = pdf.send(:theme)
+
+    assert_equal 30, theme[:owner]
+    assert_equal 20, theme[:filename]
+    assert_equal 14, theme[:body]
   end
 
   test 'does not include organization header or field labels' do

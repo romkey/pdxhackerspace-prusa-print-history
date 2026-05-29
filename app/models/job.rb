@@ -43,6 +43,10 @@ class Job < ApplicationRecord
     clearable?
   end
 
+  def label_reprintable?
+    cleared? && clear_outcome == 'success'
+  end
+
   def clearable?
     (active? || status == 'finished') && cleared_at.nil?
   end

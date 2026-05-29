@@ -2,19 +2,19 @@ issuer = ENV.fetch('AUTHENTIK_ISSUER', nil)
 
 require Rails.root.join('lib/omniauth/strategies/authentik')
 
-# OIDC claims parameter (JSON) — ask Authentik for admin and Slack linkage on each sign-in.
+# OIDC claims parameter (JSON) — ask Authentik for admin status on each sign-in.
 AUTHENTIK_CLAIMS = {
   userinfo: {
-    is_admin: nil,
-    has_slack: nil,
-    slack: nil
+    is_admin: nil
   }
 }.freeze
+
+AUTHENTIK_SCOPES = %i[openid email profile has_slack].freeze
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   if issuer.present?
     provider :authentik,
-             scope: %i[openid email profile],
+             scope: AUTHENTIK_SCOPES,
              response_type: :code,
              discovery: true,
              issuer: issuer,

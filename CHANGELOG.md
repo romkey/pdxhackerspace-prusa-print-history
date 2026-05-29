@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.14] - 2026-05-29
+
+### Changed
+- Authentik OIDC requests `has_slack` as a scope; only `is_admin` is requested as a claim.
+
 ## [0.3.13] - 2026-05-29
 
 ### Fixed

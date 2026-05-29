@@ -6,7 +6,9 @@ class SessionsController < ApplicationController
   end
 
   def create
-    sign_in_user(User.find_or_create_from_auth(auth_hash))
+    auth = auth_hash
+    AuthentikDebug.log_auth_hash(auth)
+    sign_in_user(User.find_or_create_from_auth(auth))
   rescue KeyError => e
     handle_sign_in_error(
       e,

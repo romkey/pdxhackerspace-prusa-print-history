@@ -15,20 +15,54 @@ class User < ApplicationRecord
     user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)
     user.email = auth.info.email
     user.name  = auth.info.name.presence || auth.info.email
-    user.admin = true if AdminEmails.include?(user.email)
-    apply_slack_from_auth(user, auth)
+    claims = auth_claims(auth)
+    apply_admin_from_auth(user, claims)
+    apply_slack_from_auth(user, claims)
     user.save!
     user
   end
 
-  def self.apply_slack_from_auth(user, auth)
-    claims = auth_claims(auth)
-
-    if claims.key?('slack_user_id') || claims.key?('slack_id')
-      user.slack_id = claims['slack_user_id'].presence || claims['slack_id'].presence
+  def self.apply_admin_from_auth(user, claims)
+    if claims.key?('is_admin')
+      user.admin = truthy?(claims['is_admin'])
+    elsif AdminEmails.include?(user.email)
+      user.admin = true
     end
+  end
 
-    user.slack_handle = claims['slack_handle'].presence if claims.key?('slack_handle')
+  def self.apply_slack_from_auth(user, claims)
+    if claims.key?('slack')
+      apply_slack_hash(user, claims['slack'])
+    elsif claims.key?('has_slack') && !truthy?(claims['has_slack'])
+      clear_slack!(user)
+    end
+  end
+
+  def self.apply_slack_hash(user, slack)
+    return clear_slack!(user) unless slack.is_a?(Hash)
+
+    slack_id = claim_value(slack, 'uid')
+    if slack_id.blank?
+      clear_slack!(user)
+    else
+      user.slack_id = slack_id
+      user.slack_handle = claim_value(slack, 'name')
+    end
+  end
+
+  def self.clear_slack!(user)
+    user.slack_id = nil
+    user.slack_handle = nil
+    user.notify_via_slack = false if user.notify_via_slack?
+  end
+
+  def self.claim_value(source, key)
+    value = source[key] || source[key.to_sym]
+    value.to_s.strip.presence
+  end
+
+  def self.truthy?(value)
+    ActiveModel::Type::Boolean.new.cast(value)
   end
 
   def self.auth_claims(auth)
@@ -37,13 +71,18 @@ class User < ApplicationRecord
       next unless source.respond_to?(:[])
 
       source.each do |key, value|
-        next if value.blank?
-
-        claims[key.to_s] = value
+        claims[key.to_s] = value if claim_value_present?(value)
       end
     end
   end
-  private_class_method :apply_slack_from_auth, :auth_claims
+
+  def self.claim_value_present?(value)
+    return true if value.is_a?(TrueClass) || value.is_a?(FalseClass)
+
+    value.present?
+  end
+  private_class_method :apply_admin_from_auth, :apply_slack_from_auth, :apply_slack_hash, :clear_slack!,
+                       :claim_value, :claim_value_present?, :truthy?, :auth_claims
 
   def display_name
     name.presence || email

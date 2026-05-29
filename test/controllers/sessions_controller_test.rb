@@ -26,6 +26,44 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Signed in as Fresh User/, flash[:notice].to_s)
   end
 
+  test 'callback logs auth hash when AUTHENTIK_DEBUG is enabled' do
+    ENV['AUTHENTIK_DEBUG'] = 'true'
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'developer',
+      uid: 'debug-user@example.com',
+      info: { email: 'debug-user@example.com', name: 'Debug User' },
+      extra: { raw_info: { is_admin: false } },
+      credentials: { token: 'secret-token' }
+    )
+
+    logs = capture_authentik_logs do
+      post '/auth/developer/callback'
+    end
+
+    assert_match(/\[Authentik JSON\] ← omniauth.auth/, logs)
+    assert_match(/"email": "debug-user@example.com"/, logs)
+    assert_includes logs, AuthentikDebug::REDACTED
+    assert_no_match(/secret-token/, logs)
+  ensure
+    ENV.delete('AUTHENTIK_DEBUG')
+  end
+
+  test 'callback does not log auth hash when AUTHENTIK_DEBUG is disabled' do
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'developer',
+      uid: 'quiet-user@example.com',
+      info: { email: 'quiet-user@example.com', name: 'Quiet User' }
+    )
+
+    logs = capture_authentik_logs do
+      post '/auth/developer/callback'
+    end
+
+    assert_no_match(/\[Authentik JSON\]/, logs)
+  end
+
   test 'logout clears the session' do
     login_as(users(:admin))
 
@@ -101,5 +139,17 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_path
     assert_match(/Sign-in failed:/, flash[:alert].to_s)
+  end
+
+  private
+
+  def capture_authentik_logs
+    io = StringIO.new
+    old_logger = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = old_logger
   end
 end

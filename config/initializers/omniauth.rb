@@ -1,13 +1,24 @@
 issuer = ENV.fetch('AUTHENTIK_ISSUER', nil)
 
+require Rails.root.join('lib/omniauth/strategies/authentik')
+
+# OIDC claims parameter (JSON) — ask Authentik for admin and Slack linkage on each sign-in.
+AUTHENTIK_CLAIMS = {
+  userinfo: {
+    is_admin: nil,
+    has_slack: nil,
+    slack: nil
+  }
+}.freeze
+
 Rails.application.config.middleware.use OmniAuth::Builder do
   if issuer.present?
-    provider :openid_connect,
-             name: :authentik,
+    provider :authentik,
              scope: %i[openid email profile],
              response_type: :code,
              discovery: true,
              issuer: issuer,
+             extra_authorize_params: { claims: AUTHENTIK_CLAIMS.to_json },
              client_options: {
                identifier: ENV.fetch('AUTHENTIK_CLIENT_ID', nil),
                secret: ENV.fetch('AUTHENTIK_CLIENT_SECRET', nil),

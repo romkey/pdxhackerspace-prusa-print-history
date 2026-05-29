@@ -64,7 +64,46 @@ class UserTest < ActiveSupport::TestCase
     AdminEmails.reset!
   end
 
-  test 'find_or_create_from_auth updates existing user without demoting admin' do
+  test 'find_or_create_from_auth syncs admin from is_admin claim' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'admin-claim-uid',
+      info: { email: 'admin-claim@example.com', name: 'Admin Claim' },
+      extra: { raw_info: { is_admin: true } }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
+    assert_predicate user, :admin?
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'admin-claim-uid',
+      info: { email: 'admin-claim@example.com', name: 'Admin Claim' },
+      extra: { raw_info: { is_admin: false } }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_not user.reload.admin?
+  end
+
+  test 'find_or_create_from_auth demotes admin when is_admin claim is false' do
+    auth = OmniAuth::AuthHash.new(
+      provider: @admin.provider,
+      uid: @admin.uid,
+      info: { email: @admin.email, name: 'Renamed Admin' },
+      extra: { raw_info: { is_admin: false } }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
+    assert_equal @admin.id, user.id
+    assert_equal 'Renamed Admin', user.name
+    assert_not user.admin?
+  end
+
+  test 'find_or_create_from_auth leaves admin unchanged when is_admin claim is absent' do
     auth = OmniAuth::AuthHash.new(
       provider: @admin.provider,
       uid: @admin.uid,
@@ -78,12 +117,12 @@ class UserTest < ActiveSupport::TestCase
     assert_predicate user, :admin?
   end
 
-  test 'find_or_create_from_auth stores slack fields from OIDC raw_info' do
+  test 'find_or_create_from_auth stores slack fields from slack claim' do
     auth = OmniAuth::AuthHash.new(
       provider: 'authentik',
       uid: 'slack-uid',
       info: { email: 'slack@example.com', name: 'Slack User' },
-      extra: { raw_info: { 'slack_user_id' => 'UOIDC123', 'slack_handle' => '@makerbot' } }
+      extra: { raw_info: { slack: { uid: 'UOIDC123', name: '@makerbot' } } }
     )
 
     user = User.find_or_create_from_auth(auth)
@@ -105,7 +144,7 @@ class UserTest < ActiveSupport::TestCase
       provider: 'authentik',
       uid: 'sync-uid',
       info: { email: 'sync@example.com', name: 'Sync User' },
-      extra: { raw_info: { slack_user_id: 'UNEW', slack_handle: 'newhandle' } }
+      extra: { raw_info: { slack: { uid: 'UNEW', name: 'newhandle' } } }
     )
 
     User.find_or_create_from_auth(auth)
@@ -114,6 +153,32 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal 'UNEW', user.slack_id
     assert_equal 'newhandle', user.slack_handle
+  end
+
+  test 'find_or_create_from_auth clears slack fields when has_slack is false' do
+    user = User.create!(
+      email: 'noslack@example.com',
+      provider: 'authentik',
+      uid: 'noslack-uid',
+      slack_id: 'UOLD',
+      slack_handle: 'oldhandle',
+      notify_via_slack: true
+    )
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'noslack-uid',
+      info: { email: 'noslack@example.com', name: 'No Slack User' },
+      extra: { raw_info: { has_slack: false } }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    user.reload
+
+    assert_nil user.slack_id
+    assert_nil user.slack_handle
+    assert_not user.notify_via_slack?
   end
 
   test 'find_or_create_from_auth leaves slack fields unchanged when claims are absent' do

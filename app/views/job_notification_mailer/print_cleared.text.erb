@@ -1,0 +1,13 @@
+<%= @presenter.email_intro %>
+
+File: <%= @job.filename %>
+Printer: <%= @job.printer.name %>
+Material: <%= @presenter.material_summary %>
+Duration: <%= @presenter.duration_label %>
+<% if @job.clear_outcome == 'failed' %>
+Issue: <%= @presenter.failure_label %>
+<% end %>
+
+View details: <%= job_url(@job) %>
+
+A photo is attached when available.

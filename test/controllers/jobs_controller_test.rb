@@ -127,62 +127,70 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:other_viewer).id, @job.reload.owner_id
   end
 
-  test 'print_label is admin-only' do
-    post print_label_job_path(@job)
+  test 'clear_print is admin-only' do
+    post clear_print_job_path(@job), params: { outcome: 'success' }
 
     assert_redirected_to login_path
 
     login_as(users(:viewer))
-    post print_label_job_path(@job)
+    post clear_print_job_path(@job), params: { outcome: 'success' }
 
     assert_response :forbidden
   end
 
-  test 'admin can print label for active job' do
+  test 'admin can clear print successfully' do
     login_as(users(:admin))
-    JobLabelPrintService.stub(:call, JobLabelPrintService::Result.new(
-                                       job_id: 'DYMO-1', email_sent: false, slack_sent: false, notification_errors: []
-                                     )) do
-      post print_label_job_path(@job)
+    result = JobClearPrintService::Result.new(
+      cups_job_id: 'DYMO-1',
+      notification: JobNotificationService::Result.new(email_sent: false, slack_sent: false, errors: [])
+    )
+    JobClearPrintService.stub(:call, result) do
+      post clear_print_job_path(@job), params: { outcome: 'success' }
     end
 
     assert_redirected_to job_path(@job)
     assert_match(/DYMO-1/, flash[:notice])
   end
 
-  test 'print_label rejected for pending job' do
+  test 'admin can mark print failed' do
+    login_as(users(:admin))
+    JobClearPrintService.stub(:call, lambda { |**_kwargs|
+      JobClearPrintService::Result.new(
+        cups_job_id: nil,
+        notification: JobNotificationService::Result.new(email_sent: false, slack_sent: false, errors: [])
+      )
+    }) do
+      post clear_print_job_path(@job), params: { outcome: 'failed', failure_reason: 'spaghetti' }
+    end
+
+    assert_redirected_to job_path(@job)
+    assert_match(/failed/i, flash[:notice])
+  end
+
+  test 'clear_print rejected for pending job' do
     job = jobs(:finished)
-    job.update!(status: 'pending', ended_at: nil)
+    job.update!(status: 'pending', ended_at: nil, cleared_at: nil)
     login_as(users(:admin))
 
-    post print_label_job_path(job)
+    post clear_print_job_path(job), params: { outcome: 'success' }
 
     assert_redirected_to job_path(job)
-    assert_match(/in-progress or finished/i, flash[:alert])
+    assert_match(/cannot be cleared/i, flash[:alert])
   end
 
-  test 'show renders print label form for admin on printable job' do
+  test 'show renders clear print form for admin on clearable job' do
     login_as(users(:admin))
     get job_path(@job)
 
-    assert_select 'input[type=submit][value=?]', 'Print label'
+    assert_select 'input[type=submit][value=?]', 'Successful, print label'
+    assert_select 'input[type=submit][value=?]', 'Failed'
   end
 
-  test 'show disables email notification when SMTP is not configured' do
-    ENV.delete('SMTP_ADDRESS')
-    ENV.delete('MAIL_HOST')
+  test 'admin can update owner slack id from job page' do
     login_as(users(:admin))
-    get job_path(@job)
+    patch user_path(users(:viewer)), params: { user: { slack_id: 'UMAKERBOT' } }
 
-    assert_select 'input#notify_email[disabled]'
-    assert_match(/SMTP env vars/i, response.body)
-  end
-
-  test 'admin can update owner slack handle from job page' do
-    login_as(users(:admin))
-    patch user_path(users(:viewer)), params: { user: { slack_handle: 'makerbot' } }
-
-    assert_equal 'makerbot', users(:viewer).reload.slack_handle
+    assert_equal 'UMAKERBOT', users(:viewer).reload.slack_id
   end
 
   private

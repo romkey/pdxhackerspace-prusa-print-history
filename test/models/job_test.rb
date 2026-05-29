@@ -60,9 +60,19 @@ class JobTest < ActiveSupport::TestCase
     assert nil_two.save
   end
 
-  test 'label_printable? is true for active and finished jobs' do
+  test 'label_printable? is true for active and finished jobs that are not cleared' do
     assert jobs(:active_xl).label_printable?
     assert jobs(:finished).label_printable?
     assert_not Job.new(status: 'pending').label_printable?
+    jobs(:active_xl).update!(cleared_at: Time.current)
+
+    assert_not jobs(:active_xl).reload.label_printable?
+  end
+
+  test 'clearable? requires uncleared active or finished job' do
+    assert jobs(:active_xl).clearable?
+    jobs(:active_xl).update!(cleared_at: Time.current, clear_outcome: 'success')
+
+    assert_not jobs(:active_xl).reload.clearable?
   end
 end

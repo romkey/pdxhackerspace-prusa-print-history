@@ -1,7 +1,7 @@
 class JobsController < ApplicationController
   before_action :require_login, only: %i[claim unclaim]
-  before_action :require_admin, only: %i[update print_label]
-  before_action :set_job,       only: %i[show update claim unclaim print_label]
+  before_action :require_admin, only: %i[update clear_print]
+  before_action :set_job, only: %i[show update claim unclaim clear_print]
 
   def index
     scope = base_scope.includes(:printer, :owner).recent
@@ -46,33 +46,44 @@ class JobsController < ApplicationController
     end
   end
 
-  def print_label
-    unless @job.label_printable?
-      redirect_to @job, alert: 'Labels can only be printed for in-progress or finished jobs.'
+  def clear_print
+    unless @job.clearable?
+      redirect_to @job, alert: 'This print cannot be cleared.'
       return
     end
 
-    label_printer = label_printer_for_print
-    if label_printer.nil?
+    outcome = params[:outcome].to_s
+    if outcome == 'success' && LabelPrinter.default.nil?
       redirect_to @job, alert: 'No label printer configured.'
       return
     end
 
-    result = JobLabelPrintService.call(
+    result = JobClearPrintService.call(
       job: @job,
-      label_printer:,
-      notify_email: ActiveModel::Type::Boolean.new.cast(params[:notify_email]),
-      notify_slack: ActiveModel::Type::Boolean.new.cast(params[:notify_slack])
+      cleared_by: current_user,
+      outcome:,
+      label_printer: label_printer_for_clear,
+      failure_reason: params[:failure_reason],
+      failure_detail: params[:failure_detail]
     )
 
-    redirect_to @job, notice: result.flash_notice(label_printer.name)
-  rescue JobLabelPrintService::Error, CupsService::PrintError => e
-    redirect_to @job, alert: "Print failed: #{e.message}"
+    redirect_to @job, notice: clear_notice(result, outcome)
+  rescue JobClearPrintService::Error, CupsService::PrintError => e
+    redirect_to @job, alert: "Clear print failed: #{e.message}"
   end
 
   private
 
-  def label_printer_for_print
+  def clear_notice(result, outcome)
+    parts = [outcome == 'success' ? 'Print cleared and label sent.' : 'Print marked failed.']
+    parts << "Label job #{result.cups_job_id}." if result.cups_job_id.present?
+    parts << 'Owner notified by email.' if result.notification.email_sent
+    parts << 'Owner notified on Slack.' if result.notification.slack_sent
+    parts << "Notifications: #{result.notification.errors.join('; ')}." if result.notification.errors.any?
+    parts.join(' ')
+  end
+
+  def label_printer_for_clear
     printer_id = params[:label_printer_id].presence
     return LabelPrinter.find_by(id: printer_id) if printer_id
 

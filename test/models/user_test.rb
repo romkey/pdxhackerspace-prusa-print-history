@@ -85,4 +85,32 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal 'makerbot', user.slack_handle
   end
+
+  test 'wants_email_notifications respects user preference and SMTP config' do
+    user = users(:viewer)
+    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    user.update!(notify_via_email: true)
+
+    assert user.wants_email_notifications?
+
+    user.update!(notify_via_email: false)
+
+    assert_not user.wants_email_notifications?
+  ensure
+    ENV.delete('SMTP_ADDRESS')
+  end
+
+  test 'wants_slack_notifications requires slack id and token' do
+    user = users(:viewer)
+    ENV['SLACK_API_TOKEN'] = 'xoxb-test'
+    user.update!(notify_via_slack: true, slack_id: 'U123')
+
+    assert user.wants_slack_notifications?
+
+    user.update!(notify_via_slack: false, slack_id: nil)
+
+    assert_not user.wants_slack_notifications?
+  ensure
+    ENV.delete('SLACK_API_TOKEN')
+  end
 end

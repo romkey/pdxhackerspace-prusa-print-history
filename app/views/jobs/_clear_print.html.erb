@@ -1,0 +1,80 @@
+<% if admin? && job.clearable? %>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="h-section-label">Clear print</div>
+
+      <% if local_assigns.fetch(:label_printers, LabelPrinter.ordered).any? %>
+        <%= form_with url: clear_print_job_path(job), method: :post, local: true, class: 'mb-3' do %>
+          <%= hidden_field_tag :outcome, 'success' %>
+          <% printers = local_assigns.fetch(:label_printers) %>
+          <% if printers.many? %>
+            <div class="mb-2">
+              <%= label_tag :label_printer_id, 'Label printer', class: 'form-label text-13' %>
+              <%= select_tag :label_printer_id,
+                             options_from_collection_for_select(printers, :id, :name, local_assigns[:default_label_printer]&.id),
+                             class: 'form-select form-select-sm' %>
+            </div>
+          <% end %>
+          <%= submit_tag 'Successful, print label', class: 'btn btn-outline-secondary btn-sm' %>
+        <% end %>
+      <% else %>
+        <p class="text-13 text-secondary mb-3">Configure a label printer to print pickup labels on success.</p>
+      <% end %>
+
+      <%= form_with url: clear_print_job_path(job), method: :post, local: true do %>
+        <%= hidden_field_tag :outcome, 'failed' %>
+        <div class="mb-2">
+          <%= label_tag :failure_reason, 'Failure reason', class: 'form-label text-13' %>
+          <%= select_tag :failure_reason,
+                         options_for_select(Job::CLEAR_FAILURE_REASONS.map { |key, label| [label, key] }),
+                         class: 'form-select form-select-sm',
+                         required: true,
+                         id: 'failure_reason' %>
+        </div>
+        <div class="mb-2" id="failure_detail_wrap" hidden>
+          <%= label_tag :failure_detail, 'Details', class: 'form-label text-13' %>
+          <%= text_field_tag :failure_detail, nil, class: 'form-control form-control-sm', id: 'failure_detail' %>
+        </div>
+        <%= submit_tag 'Failed', class: 'btn btn-outline-secondary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      function initClearPrintForm() {
+        var reason = document.getElementById('failure_reason');
+        var detailWrap = document.getElementById('failure_detail_wrap');
+        var detail = document.getElementById('failure_detail');
+        if (!reason || !detailWrap) return;
+
+        function syncDetail() {
+          var show = reason.value === 'other';
+          detailWrap.hidden = !show;
+          detail.required = show;
+          if (!show) detail.value = '';
+        }
+
+        reason.addEventListener('change', syncDetail);
+        syncDetail();
+      }
+
+      document.addEventListener('DOMContentLoaded', initClearPrintForm);
+      document.addEventListener('turbo:load', initClearPrintForm);
+    })();
+  </script>
+<% elsif admin? && job.cleared? %>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="h-section-label">Clear print</div>
+      <div class="text-13">
+        Cleared <%= time_ago_in_words(job.cleared_at) %> ago
+        <% if job.clear_outcome == 'success' %>
+          · successful
+        <% else %>
+          · failed (<%= job.class::CLEAR_FAILURE_REASONS[job.clear_failure_reason] || job.clear_failure_reason %>)
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

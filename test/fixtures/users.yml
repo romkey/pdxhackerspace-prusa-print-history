@@ -11,6 +11,9 @@ viewer:
   provider: authentik
   uid: viewer-uid-2
   admin: false
+  slack_id: UVIEWER123
+  notify_via_email: true
+  notify_via_slack: false
 
 other_viewer:
   email: other@example.com

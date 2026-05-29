@@ -1,0 +1,12 @@
+Your print has finished.
+
+<%= @presenter.email_intro %>
+
+File: <%= @job.filename %>
+Printer: <%= @job.printer.name %>
+Material: <%= @presenter.material_summary %>
+Duration: <%= @presenter.duration_label %>
+
+View details: <%= job_url(@job) %>
+
+A photo is attached when available.

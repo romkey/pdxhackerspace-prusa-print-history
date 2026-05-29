@@ -217,6 +217,7 @@ class PrinterPoller
         to_status: status,
         occurred_at: Time.current
       )
+      enqueue_finished_notification(job)
     end
   end
 
@@ -348,6 +349,14 @@ class PrinterPoller
       estimated_finish_at: nil,
       time_printing_seconds: nil
     )
+    enqueue_finished_notification(job)
+  end
+
+  def enqueue_finished_notification(job)
+    return if job.owner_id.blank?
+    return if job.finished_notified_at.present?
+
+    JobFinishedNotificationJob.perform_later(job.id)
   end
 
   def sync_job_progress!(job, job_payload, status_payload)

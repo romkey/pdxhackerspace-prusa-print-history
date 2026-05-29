@@ -103,7 +103,8 @@ class PrinterPollerTest < ActiveJob::TestCase
 
   test 'finalizes job on finished status' do
     job = @printer.jobs.create!(filename: 'thing.gcode', status: 'printing',
-                                prusalink_job_id: 'pl-555', started_at: 1.hour.ago)
+                                prusalink_job_id: 'pl-555', started_at: 1.hour.ago,
+                                owner: users(:viewer))
     job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 1.hour.ago)
 
     payloads = {
@@ -112,7 +113,9 @@ class PrinterPollerTest < ActiveJob::TestCase
     }
     prusalink = stub_prusalink(payloads)
 
-    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+    assert_enqueued_with(job: JobFinishedNotificationJob, args: [job.id]) do
+      PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+    end
 
     job.reload
 

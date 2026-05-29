@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_28_140001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,10 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
   end
 
   create_table "jobs", force: :cascade do |t|
+    t.text "clear_failure_detail"
+    t.string "clear_failure_reason"
+    t.string "clear_outcome"
+    t.datetime "cleared_at"
+    t.bigint "cleared_by_id"
     t.datetime "created_at", null: false
     t.datetime "ended_at"
     t.datetime "estimated_finish_at"
     t.string "filename", null: false
+    t.datetime "finished_notified_at"
     t.bigint "owner_id"
     t.bigint "printer_id", null: false
     t.decimal "progress_percent", precision: 5, scale: 2
@@ -70,6 +76,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
     t.integer "total_duration_seconds"
     t.decimal "total_filament_grams", precision: 10, scale: 2
     t.datetime "updated_at", null: false
+    t.index ["cleared_by_id"], name: "index_jobs_on_cleared_by_id"
     t.index ["owner_id"], name: "index_jobs_on_owner_id"
     t.index ["printer_id", "prusalink_job_id"], name: "idx_jobs_on_printer_and_prusalink_job_id", unique: true, where: "(prusalink_job_id IS NOT NULL)"
     t.index ["printer_id"], name: "index_jobs_on_printer_id"
@@ -179,8 +186,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "name"
+    t.boolean "notify_via_email", default: true, null: false
+    t.boolean "notify_via_slack", default: false, null: false
     t.string "provider", null: false
     t.string "slack_handle"
+    t.string "slack_id"
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -191,6 +201,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120001) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "job_events", "jobs"
   add_foreign_key "jobs", "printers"
+  add_foreign_key "jobs", "users", column: "cleared_by_id"
   add_foreign_key "jobs", "users", column: "owner_id"
   add_foreign_key "photo_captures", "job_events"
   add_foreign_key "photo_captures", "jobs"

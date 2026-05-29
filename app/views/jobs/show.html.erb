@@ -26,8 +26,8 @@
   <%= render 'jobs/preview', job: @job, wrapper_class: 'mb-3' %>
   <%= render 'jobs/photo_gallery', job: @job, photos: @photos, wrapper_class: 'mb-3' %>
 
-  <% if admin? && @job.label_printable? && @label_printers.any? %>
-    <%= render 'jobs/print_label', job: @job, label_printers: @label_printers, default_label_printer: @default_label_printer %>
+  <% if admin? && (@job.clearable? || @job.cleared?) %>
+    <%= render 'jobs/clear_print', job: @job, label_printers: @label_printers, default_label_printer: @default_label_printer %>
   <% end %>
 
   <div class="row g-3">
@@ -44,8 +44,8 @@
           <% if @job.owner %>
             <div class="fw-medium"><%= @job.owner.display_name %></div>
             <div class="text-secondary text-13"><%= @job.owner.email %></div>
-            <% if @job.owner.slack_handle.present? %>
-              <div class="text-secondary text-13">Slack @<%= @job.owner.slack_handle %></div>
+            <% if @job.owner.slack_id.present? %>
+              <div class="text-secondary text-13">Slack <%= @job.owner.slack_id %></div>
             <% end %>
           <% else %>
             <div class="text-secondary">No owner.</div>
@@ -56,9 +56,8 @@
               <%= form_with model: @job.owner, url: user_path(@job.owner), method: :patch, local: true,
                             class: 'd-flex gap-2 align-items-end' do |f| %>
                 <div class="flex-grow-1">
-                  <%= f.label :slack_handle, 'Slack handle', class: 'form-label text-13' %>
-                  <%= f.text_field :slack_handle, class: 'form-control form-control-sm',
-                                   placeholder: 'username (without @)' %>
+                  <%= f.label :slack_id, 'Slack user ID', class: 'form-label text-13' %>
+                  <%= f.text_field :slack_id, class: 'form-control form-control-sm', placeholder: 'U0123456789' %>
                 </div>
                 <%= f.submit 'Save', class: 'btn btn-outline-secondary btn-sm' %>
               <% end %>

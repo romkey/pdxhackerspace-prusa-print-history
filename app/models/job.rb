@@ -2,9 +2,18 @@ class Job < ApplicationRecord
   STATUSES = %w[pending printing paused attention error finished cancelled].freeze
   ACTIVE_STATUSES   = %w[printing paused attention error].freeze
   TERMINAL_STATUSES = %w[finished cancelled].freeze
+  CLEAR_OUTCOMES = %w[success failed].freeze
+  CLEAR_FAILURE_REASONS = {
+    'spaghetti' => 'Spaghetti',
+    'printer_jammed' => 'Printer jammed',
+    'filament_issue' => 'Filament issue',
+    'blobbed' => 'Blobbed',
+    'other' => 'Other'
+  }.freeze
 
   belongs_to :printer
   belongs_to :owner, class_name: 'User', optional: true
+  belongs_to :cleared_by, class_name: 'User', optional: true
 
   has_many :tools,              -> { order(:tool_index) },  dependent: :destroy, inverse_of: :job
   has_many :telemetry_readings, -> { order(:recorded_at) }, dependent: :destroy, inverse_of: :job
@@ -31,7 +40,15 @@ class Job < ApplicationRecord
   end
 
   def label_printable?
-    active? || status == 'finished'
+    clearable?
+  end
+
+  def clearable?
+    (active? || status == 'finished') && cleared_at.nil?
+  end
+
+  def cleared?
+    cleared_at.present?
   end
 
   def duration_seconds

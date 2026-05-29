@@ -6,7 +6,7 @@ class EndToEndFlowTest < ActionDispatch::IntegrationTest
     @job     = jobs(:active_xl)
   end
 
-  test 'anonymous viewer can browse status pages but sees no admin affordances' do
+  test 'anonymous viewer on the internal network can browse status pages but sees no admin affordances' do
     get root_path
 
     assert_response :success
@@ -30,7 +30,7 @@ class EndToEndFlowTest < ActionDispatch::IntegrationTest
     get job_path(@job)
 
     assert_response :success
-    assert_select 'a', text: /Sign in to claim/, count: 0
+    assert_select 'input[type=submit][value=?]', 'Claim', count: 0
   end
 
   test 'non-admin user can claim a job, see My prints, but not access settings' do

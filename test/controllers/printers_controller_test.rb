@@ -5,7 +5,13 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     @printer = printers(:prusa_xl)
   end
 
-  test 'index is accessible to everyone' do
+  test 'index requires sign-in from outside the internal network' do
+    get printers_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+  end
+
+  test 'index is accessible on the internal network' do
     get printers_path
 
     assert_response :success
@@ -16,7 +22,7 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test 'show is accessible to everyone' do
+  test 'show is accessible on the internal network' do
     get printer_path(@printer)
 
     assert_response :success

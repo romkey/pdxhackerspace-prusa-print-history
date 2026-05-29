@@ -1,12 +1,18 @@
 require 'test_helper'
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
-  test 'anonymous visitors can view the dashboard' do
+  test 'anonymous visitors on the internal network can view the dashboard' do
     get root_path
 
     assert_response :success
     assert_select 'h1', text: /Prusa Print History/
     assert_select '[data-controller="clock"] time'
+  end
+
+  test 'anonymous visitors off the internal network are redirected to sign in' do
+    get root_path, headers: external_request_headers
+
+    assert_redirected_to login_path
   end
 
   test 'dashboard uses configured heading' do
@@ -139,13 +145,19 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card img.dashboard-image[alt=?]', 'Preview of cube.gcode'
   end
 
-  test 'anonymous navbar shows only dashboard brand and sign in' do
+  test 'anonymous navbar off the internal network is redirected to sign in' do
+    get root_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+  end
+
+  test 'anonymous navbar on the internal network shows jobs and printers' do
     get root_path
 
     assert_response :success
-    assert_select 'a.nav-link', text: 'Sign in'
-    assert_select 'a.nav-link', text: 'Jobs', count: 0
-    assert_select 'a.nav-link', text: 'Printers', count: 0
+    assert_select 'a.nav-link', text: 'Jobs'
+    assert_select 'a.nav-link', text: 'Printers'
+    assert_select 'a.nav-link', text: 'My prints', count: 0
   end
 
   test 'logged-in navbar shows full navigation' do

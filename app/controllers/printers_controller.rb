@@ -1,4 +1,5 @@
 class PrintersController < ApplicationController
+  before_action :require_login_or_internal, only: %i[index show camera]
   before_action :require_admin, only: %i[new create edit update destroy]
   before_action :set_printer, only: %i[show edit update destroy camera]
 

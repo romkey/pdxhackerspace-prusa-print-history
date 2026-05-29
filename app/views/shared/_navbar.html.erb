@@ -11,7 +11,7 @@
     </button>
 
     <div class="collapse navbar-collapse" id="mainNav">
-      <% if logged_in? %>
+      <% if logged_in? || internal_network? %>
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button"
@@ -36,10 +36,12 @@
             <%= link_to 'Jobs', jobs_path, class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] != 'me'}" %>
           </li>
 
-          <li class="nav-item">
-            <%= link_to 'My prints', jobs_path(owner: 'me'),
-                        class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] == 'me'}" %>
-          </li>
+          <% if logged_in? %>
+            <li class="nav-item">
+              <%= link_to 'My prints', jobs_path(owner: 'me'),
+                          class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] == 'me'}" %>
+            </li>
+          <% end %>
 
           <% if admin? %>
             <li class="nav-item dropdown">

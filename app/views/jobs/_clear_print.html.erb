@@ -1,4 +1,4 @@
-<% if admin? && job.clearable? %>
+<% if can_clear_prints? && job.clearable? %>
   <div class="card mb-3">
     <div class="card-body">
       <div class="h-section-label">Clear print</div>
@@ -63,7 +63,7 @@
       document.addEventListener('turbo:load', initClearPrintForm);
     })();
   </script>
-<% elsif admin? && job.cleared? %>
+<% elsif can_clear_prints? && job.cleared? %>
   <div class="card mb-3">
     <div class="card-body">
       <div class="h-section-label">Clear print</div>
@@ -77,7 +77,7 @@
       </div>
 
       <div class="mt-3 d-flex flex-wrap gap-2">
-        <% if job.label_reprintable? %>
+        <% if admin? && job.label_reprintable? %>
           <% printers = local_assigns.fetch(:label_printers, LabelPrinter.ordered) %>
           <% if printers.any? %>
             <%= form_with url: reprint_label_job_path(job), method: :post, local: true, class: 'd-inline' do %>

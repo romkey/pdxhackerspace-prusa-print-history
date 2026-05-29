@@ -6,7 +6,7 @@ class ApplicationController < ActionController::Base
 
   stale_when_importmap_changes
 
-  helper_method :current_user, :logged_in?, :admin?
+  helper_method :current_user, :logged_in?, :admin?, :internal_network?, :can_clear_prints?
 
   private
 
@@ -24,6 +24,14 @@ class ApplicationController < ActionController::Base
     current_user&.admin?
   end
 
+  def internal_network?
+    InternalNetworks.include?(request.remote_ip)
+  end
+
+  def can_clear_prints?
+    admin? || internal_network?
+  end
+
   def require_login
     return if logged_in?
 
@@ -39,5 +47,17 @@ class ApplicationController < ActionController::Base
     else
       require_login
     end
+  end
+
+  def require_login_or_internal
+    return if logged_in? || internal_network?
+
+    require_login
+  end
+
+  def require_admin_or_internal
+    return if admin? || internal_network?
+
+    require_admin
   end
 end

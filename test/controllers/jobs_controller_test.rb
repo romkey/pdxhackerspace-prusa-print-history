@@ -5,13 +5,19 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     @job = jobs(:active_xl)
   end
 
-  test 'index is accessible to everyone' do
+  test 'index requires sign-in from outside the internal network' do
+    get jobs_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+  end
+
+  test 'index is accessible on the internal network' do
     get jobs_path
 
     assert_response :success
   end
 
-  test 'show is accessible to everyone' do
+  test 'show is accessible on the internal network' do
     get job_path(@job)
 
     assert_response :success
@@ -80,7 +86,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'anonymous users cannot claim a job' do
-    patch claim_job_path(@job)
+    patch claim_job_path(@job), headers: external_request_headers
 
     assert_redirected_to login_path
   end
@@ -138,13 +144,13 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:other_viewer).id, @job.reload.owner_id
   end
 
-  test 'clear_print is admin-only' do
-    post clear_print_job_path(@job), params: { outcome: 'success' }
+  test 'clear_print requires sign-in or admin off the internal network' do
+    post clear_print_job_path(@job), params: { outcome: 'success' }, headers: external_request_headers
 
     assert_redirected_to login_path
 
     login_as(users(:viewer))
-    post clear_print_job_path(@job), params: { outcome: 'success' }
+    post clear_print_job_path(@job), params: { outcome: 'success' }, headers: external_request_headers
 
     assert_response :forbidden
   end
@@ -232,7 +238,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
       cleared_by: users(:admin)
     )
 
-    post reprint_label_job_path(@job)
+    post reprint_label_job_path(@job), headers: external_request_headers
 
     assert_redirected_to login_path
   end
@@ -270,7 +276,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/cannot be reprinted/i, flash[:alert])
   end
 
-  test 'unclear_print is admin-only' do
+  test 'unclear_print requires sign-in or admin off the internal network' do
     @job.update!(
       status: 'finished',
       cleared_at: 1.hour.ago,
@@ -278,12 +284,12 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
       cleared_by: users(:admin)
     )
 
-    post unclear_print_job_path(@job)
+    post unclear_print_job_path(@job), headers: external_request_headers
 
     assert_redirected_to login_path
 
     login_as(users(:viewer))
-    post unclear_print_job_path(@job)
+    post unclear_print_job_path(@job), headers: external_request_headers
 
     assert_response :forbidden
   end

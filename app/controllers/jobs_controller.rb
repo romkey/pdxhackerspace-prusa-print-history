@@ -1,6 +1,8 @@
 class JobsController < ApplicationController
+  before_action :require_login_or_internal, only: %i[index show]
   before_action :require_login, only: %i[claim unclaim]
-  before_action :require_admin, only: %i[update clear_print unclear_print reprint_label]
+  before_action :require_admin_or_internal, only: %i[clear_print unclear_print]
+  before_action :require_admin, only: %i[update reprint_label]
   before_action :set_job, only: %i[show update claim unclaim clear_print unclear_print reprint_label]
 
   def index

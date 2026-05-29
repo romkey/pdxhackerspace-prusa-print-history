@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-29
+
+### Added
+- `INTERNAL_NETWORKS` env var: comma-separated IPv4 CIDR blocks (e.g. `192.168.0.0/24`) for a relaxed LAN posture. Visitors from those networks can view the dashboard, jobs, and printers, and clear or unclear prints without signing in. Client IP is taken from `X-Forwarded-For` through trusted reverse proxies.
+
+### Changed
+- Anonymous access from the public internet now requires sign-in for status pages. Claiming prints and all settings remain login- or admin-gated everywhere.
+
 ## [0.3.20] - 2026-05-29
 
 ### Added

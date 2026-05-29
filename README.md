@@ -8,7 +8,8 @@ viewer-aware UI:
 
 | Tier                    | Access                                                                 |
 |-------------------------|------------------------------------------------------------------------|
-| Anonymous (no login)    | Read-only on all status pages.                                         |
+| Anonymous (off internal networks) | Sign-in required for status pages.                             |
+| Anonymous (on `INTERNAL_NETWORKS`) | Read-only dashboard, jobs, and printers; can clear prints.   |
 | Logged-in non-admin     | All of the above, plus claim/release a job and a "My prints" filter.   |
 | Admin                   | All of the above, plus add/edit/delete printers, app settings, Sidekiq.|
 

@@ -43,6 +43,31 @@ class MailConfigTest < ActiveSupport::TestCase
     assert_not MailConfig.starttls_enabled?
   end
 
+  test 'ssl_enabled? respects SMTP_SSL' do
+    ENV['SMTP_SSL'] = 'false'
+
+    assert_not MailConfig.ssl_enabled?
+  end
+
+  test 'starttls_enabled? is false when SMTP_SSL is false' do
+    ENV['SMTP_SSL'] = 'false'
+    ENV['SMTP_ENABLE_STARTTLS_AUTO'] = 'true'
+
+    assert_not MailConfig.starttls_enabled?
+  end
+
+  test 'smtp_settings disables ssl for plain text mail servers' do
+    ENV['SMTP_SERVER'] = 'mailpit'
+    ENV['SMTP_PORT'] = '1025'
+    ENV['SMTP_SSL'] = 'false'
+
+    settings = MailConfig.smtp_settings
+
+    assert_not settings[:ssl]
+    assert_not settings[:enable_starttls_auto]
+    assert_equal 1025, settings[:port]
+  end
+
   test 'apply! configures smtp delivery when configured' do
     ENV['SMTP_SERVER'] = 'smtp.example.com'
     mailer = ActiveSupport::OrderedOptions.new

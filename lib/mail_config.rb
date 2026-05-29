@@ -29,7 +29,13 @@ module MailConfig
     ENV.fetch('SMTP_AUTHENTICATION', 'plain')
   end
 
+  def ssl_enabled?
+    ENV.fetch('SMTP_SSL', 'true') == 'true'
+  end
+
   def starttls_enabled?
+    return false unless ssl_enabled?
+
     ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'true') == 'true'
   end
 
@@ -38,7 +44,7 @@ module MailConfig
   end
 
   def smtp_settings
-    {
+    settings = {
       address: smtp_server,
       port: smtp_port,
       domain: smtp_domain,
@@ -46,7 +52,10 @@ module MailConfig
       password: smtp_password,
       authentication: smtp_authentication,
       enable_starttls_auto: starttls_enabled?
-    }.compact
+    }
+    settings[:ssl] = false unless ssl_enabled?
+
+    settings.compact
   end
 
   def apply!(config)

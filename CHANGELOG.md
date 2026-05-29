@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.15] - 2026-05-29
+
+### Added
+- `SMTP_SSL=false` for plain-text SMTP to local mail servers without TLS/SSL.
+
 ## [0.3.14] - 2026-05-29
 
 ### Changed

@@ -11,7 +11,8 @@ module PrusaPrintHistory
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
-    config.autoload_lib(ignore: %w[assets tasks])
+    # OmniAuth strategies under lib/omniauth/ use the gem's module naming (OmniAuth, not Omniauth).
+    config.autoload_lib(ignore: %w[assets tasks omniauth])
 
     config.active_job.queue_adapter = :sidekiq
 

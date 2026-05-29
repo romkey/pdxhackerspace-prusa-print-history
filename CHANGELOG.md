@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.13] - 2026-05-29
+
+### Fixed
+- Authentik OmniAuth strategy no longer conflicts with Zeitwerk autoloading in CI.
+
 ## [0.3.12] - 2026-05-29
 
 ### Added

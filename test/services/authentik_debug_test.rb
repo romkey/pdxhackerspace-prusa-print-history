@@ -86,7 +86,7 @@ class AuthentikDebugTest < ActiveSupport::TestCase
   test 'log_authorize_uri parses claims JSON from redirect query' do
     ENV['AUTHENTIK_DEBUG'] = 'true'
     claims = { userinfo: { is_admin: nil } }.to_json
-    uri = "https://authentik.example.com/application/o/authorize/?client_id=abc&scope=openid+email+profile+has_slack&claims=#{CGI.escape(claims)}"
+    uri = "https://authentik.example.com/application/o/authorize/?client_id=abc&scope=openid+email+profile+slack&claims=#{CGI.escape(claims)}"
 
     logs = capture_authentik_logs do
       AuthentikDebug.log_authorize_uri(uri)
@@ -95,7 +95,7 @@ class AuthentikDebugTest < ActiveSupport::TestCase
     assert_match(%r{\[Authentik JSON\] → GET https://authentik.example.com/application/o/authorize/}, logs)
     assert_match(/"is_admin": null/, logs)
     assert_no_match(/"slack":/, logs)
-    assert_match(/"scope": "openid email profile has_slack"/, logs)
+    assert_match(/"scope": "openid email profile slack"/, logs)
   end
 
   test 'log_auth_hash includes provider info and redacted credentials' do

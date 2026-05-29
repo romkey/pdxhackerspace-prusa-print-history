@@ -9,7 +9,7 @@ AUTHENTIK_CLAIMS = {
   }
 }.freeze
 
-AUTHENTIK_SCOPES = %i[openid email profile has_slack].freeze
+AUTHENTIK_SCOPES = %i[openid email profile slack].freeze
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   if issuer.present?

@@ -31,11 +31,9 @@ class User < ApplicationRecord
   end
 
   def self.apply_slack_from_auth(user, claims)
-    if claims.key?('slack')
-      apply_slack_hash(user, claims['slack'])
-    elsif claims.key?('has_slack') && !truthy?(claims['has_slack'])
-      clear_slack!(user)
-    end
+    return unless claims.key?('slack')
+
+    apply_slack_hash(user, claims['slack'])
   end
 
   def self.apply_slack_hash(user, slack)
@@ -77,7 +75,7 @@ class User < ApplicationRecord
   end
 
   def self.claim_value_present?(value)
-    return true if value.is_a?(TrueClass) || value.is_a?(FalseClass)
+    return true if value.is_a?(TrueClass) || value.is_a?(FalseClass) || value.is_a?(Hash)
 
     value.present?
   end

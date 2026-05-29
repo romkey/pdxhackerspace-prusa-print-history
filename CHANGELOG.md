@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.16] - 2026-05-29
+
+### Changed
+- Authentik OIDC requests the `slack` scope and syncs Slack linkage only from the `slack` claim.
+
 ## [0.3.15] - 2026-05-29
 
 ### Added

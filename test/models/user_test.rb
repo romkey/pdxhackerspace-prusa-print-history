@@ -155,7 +155,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'newhandle', user.slack_handle
   end
 
-  test 'find_or_create_from_auth clears slack fields when has_slack is false' do
+  test 'find_or_create_from_auth clears slack fields when slack claim is empty' do
     user = User.create!(
       email: 'noslack@example.com',
       provider: 'authentik',
@@ -169,7 +169,7 @@ class UserTest < ActiveSupport::TestCase
       provider: 'authentik',
       uid: 'noslack-uid',
       info: { email: 'noslack@example.com', name: 'No Slack User' },
-      extra: { raw_info: { has_slack: false } }
+      extra: { raw_info: { slack: {} } }
     )
 
     User.find_or_create_from_auth(auth)

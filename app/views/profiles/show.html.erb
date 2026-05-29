@@ -11,22 +11,7 @@
           <div class="alert alert-danger text-13"><%= @user.errors.full_messages.to_sentence %></div>
         <% end %>
 
-        <div class="h-section-label">Slack</div>
-        <% if @user.slack_handle.present? %>
-          <div class="text-13 mb-2">
-            Handle <span class="text-body">@<%= @user.slack_handle %></span>
-            <span class="text-secondary">· synced from sign-in when available</span>
-          </div>
-        <% end %>
-        <div class="mb-3">
-          <%= f.label :slack_id, 'Slack user ID', class: 'form-label text-13' %>
-          <%= f.text_field :slack_id, class: 'form-control form-control-sm', placeholder: 'U0123456789' %>
-          <div class="form-text text-13">
-            Required for Slack notifications. Find it in Slack profile details or ask an admin.
-          </div>
-        </div>
-
-        <div class="h-section-label mt-4">Where to notify you</div>
+        <div class="h-section-label">Where to notify you</div>
         <p class="text-13 text-secondary">Used when your print finishes and when staff clear it from the printer.</p>
 
         <% if @user.email_notifications_available? %>
@@ -38,13 +23,21 @@
           <p class="text-13 text-secondary mb-2">Email notifications are not available (SMTP is not configured).</p>
         <% end %>
 
-        <% if SlackConfig.configured? %>
-          <div class="form-check mb-3">
-            <%= f.check_box :notify_via_slack, class: 'form-check-input' %>
-            <%= f.label :notify_via_slack, 'Slack direct message', class: 'form-check-label text-13' %>
-          </div>
-        <% else %>
-          <p class="text-13 text-secondary mb-3">Slack notifications are not available (Slack is not configured).</p>
+        <% if @user.slack_id.present? %>
+          <% if @user.slack_handle.present? %>
+            <div class="text-13 mb-2">
+              Slack <span class="text-body">@<%= @user.slack_handle %></span>
+            </div>
+          <% end %>
+
+          <% if SlackConfig.configured? %>
+            <div class="form-check mb-3">
+              <%= f.check_box :notify_via_slack, class: 'form-check-input' %>
+              <%= f.label :notify_via_slack, 'Slack direct message', class: 'form-check-label text-13' %>
+            </div>
+          <% else %>
+            <p class="text-13 text-secondary mb-3">Slack notifications are not available (Slack is not configured).</p>
+          <% end %>
         <% end %>
 
         <%= f.submit 'Save', class: 'btn btn-primary btn-sm' %>

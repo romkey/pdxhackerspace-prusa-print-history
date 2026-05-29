@@ -12,6 +12,7 @@ viewer:
   uid: viewer-uid-2
   admin: false
   slack_id: UVIEWER123
+  slack_handle: vieweruser
   notify_via_email: true
   notify_via_slack: false
 

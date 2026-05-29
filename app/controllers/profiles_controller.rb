@@ -17,7 +17,7 @@ class ProfilesController < ApplicationController
   private
 
   def profile_params
-    permitted = params.expect(user: %i[notify_via_email notify_via_slack slack_id])
+    permitted = params.expect(user: %i[notify_via_email notify_via_slack])
     permitted[:notify_via_email] = ActiveModel::Type::Boolean.new.cast(permitted[:notify_via_email])
     permitted[:notify_via_slack] = ActiveModel::Type::Boolean.new.cast(permitted[:notify_via_slack])
     permitted

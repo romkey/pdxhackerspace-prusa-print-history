@@ -23,7 +23,7 @@ class LabelPrinterTest < ActiveSupport::TestCase
   end
 
   test 'cups_options requests portrait orientation for thermal printers' do
-    assert_equal '3', label_printers(:front_desk).cups_options['orientation-requested']
+    assert_equal '4', label_printers(:front_desk).cups_options['orientation-requested']
     assert_equal 'none', label_printers(:front_desk).cups_options['print-scaling']
   end
 end

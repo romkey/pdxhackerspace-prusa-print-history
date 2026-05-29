@@ -1,8 +1,9 @@
 require 'prawn'
 
 class JobLabelPdf
-  MARGIN_LINES = 1
-  HORIZONTAL_MARGIN = 4
+  SIDE_MARGIN = 4
+  LINE_GAP = 2
+  SECTION_GAP = 4
 
   def self.mm_to_pt(width_mm)
     width_mm.to_f * 72.0 / 25.4
@@ -11,62 +12,67 @@ class JobLabelPdf
   def initialize(job, thermal_width_mm: 80)
     @job = job
     @thermal_width_mm = thermal_width_mm.to_i
-    @thermal_width_pt = self.class.mm_to_pt(@thermal_width_mm)
     @theme = theme
-    @margin_line_height_pt = compute_margin_line_height_pt
-    @page_height_pt = compute_page_height_pt
+    @lines = build_lines
+    @content_width_pt = compute_content_width_pt
+    @content_height_pt = compute_content_height_pt
+    @page_width_pt = @content_width_pt + (SIDE_MARGIN * 2)
+    @page_height_pt = @content_height_pt
+
     @document = Prawn::Document.new(
-      page_size: [@thermal_width_pt, @page_height_pt],
-      margin: [0, HORIZONTAL_MARGIN, 0, HORIZONTAL_MARGIN]
+      page_size: [@page_width_pt, @page_height_pt],
+      margin: [0, SIDE_MARGIN, 0, SIDE_MARGIN]
     )
     generate
   end
 
-  attr_reader :document, :page_height_pt, :margin_line_height_pt
+  attr_reader :document, :page_width_pt, :page_height_pt, :content_height_pt
 
   delegate :render, to: :document
 
   private
 
-  def compute_page_height_pt
-    (@margin_line_height_pt * MARGIN_LINES * 2) + content_height_pt
-  end
-
-  def content_height_pt
-    measure { |doc| content_line_heights(doc, @theme).sum }
-  end
-
-  def content_line_heights(doc, theme_values)
+  def build_lines
+    t = @theme
     [
-      text_block_height(doc, theme_values[:owner], owner_text, bold: true),
-      theme_values[:gap],
-      text_block_height(doc, theme_values[:filename], truncate_filename(@job.filename), bold: true),
-      theme_values[:gap],
-      text_block_height(doc, theme_values[:body], printer_material_line) + 2,
-      text_block_height(doc, theme_values[:body], @job.status.humanize) + 2,
-      text_block_height(doc, theme_values[:body], print_time_label) + 2
+      { size: t[:owner], text: owner_text, bold: true },
+      { size: t[:filename], text: @job.filename.to_s, bold: true, gap_before: SECTION_GAP },
+      { size: t[:body], text: printer_material_line, gap_before: SECTION_GAP },
+      { size: t[:body], text: @job.status.humanize },
+      { size: t[:body], text: print_time_label }
     ]
   end
 
-  def compute_margin_line_height_pt
-    measure { |doc| line_height(doc, @theme[:body]) }
+  def compute_content_width_pt
+    measure { |doc| @lines.map { |line| text_width(doc, line) }.max }
+  end
+
+  def compute_content_height_pt
+    measure do |doc|
+      @lines.each_with_index.sum do |line, index|
+        height = line_height(doc, line)
+        height += line[:gap_before] if line[:gap_before]
+        height += LINE_GAP unless index == @lines.length - 1
+        height
+      end
+    end
   end
 
   def measure
-    doc = Prawn::Document.new(page_size: [@thermal_width_pt, 100], margin: [0, HORIZONTAL_MARGIN, 0, HORIZONTAL_MARGIN])
+    doc = Prawn::Document.new(page_size: [1000, 1000], margin: [0, SIDE_MARGIN, 0, SIDE_MARGIN])
     yield doc
   end
 
-  def line_height(doc, size)
-    doc.font_size(size) { doc.height_of('X') }
+  def text_width(doc, line)
+    doc.font_size(line[:size])
+    options = line[:bold] ? { style: :bold } : {}
+    doc.width_of(line[:text], **options)
   end
 
-  def text_block_height(doc, size, text, bold: false)
-    doc.font_size(size) do
-      options = { align: :center }
-      options[:style] = :bold if bold
-      doc.height_of(text, **options)
-    end
+  def line_height(doc, line)
+    doc.font_size(line[:size])
+    options = line[:bold] ? { style: :bold } : {}
+    doc.height_of(line[:text], **options)
   end
 
   def thermal_font_scale
@@ -79,44 +85,40 @@ class JobLabelPdf
     {
       owner: (title_size * 1.5).round,
       filename: title_size,
-      body: (9 * s * 1.5).round,
-      gap: 4
+      body: (9 * s * 1.5).round
     }
   end
 
   def generate
-    t = @theme
-    document.move_down @margin_line_height_pt
-    render_owner(t)
-    document.move_down t[:gap]
-    render_filename(t)
-    document.move_down t[:gap]
-    render_line(t[:body], printer_material_line)
-    render_line(t[:body], @job.status.humanize)
-    render_line(t[:body], print_time_label)
-  end
+    y = @page_height_pt
 
-  def render_filename(theme_values)
-    document.font_size(theme_values[:filename]) do
-      document.text truncate_filename(@job.filename), align: :center, style: :bold
+    @lines.each_with_index do |line, index|
+      y -= line[:gap_before] if line[:gap_before]
+      line_height = line_height_for(line)
+      y -= line_height
+
+      document.font_size(line[:size]) do
+        options = {
+          at: [0, y + line_height],
+          width: @content_width_pt,
+          height: line_height,
+          align: :center,
+          valign: :top
+        }
+        options[:style] = :bold if line[:bold]
+        document.text_box line[:text], **options
+      end
+
+      y -= LINE_GAP unless index == @lines.length - 1
     end
   end
 
-  def render_owner(theme_values)
-    document.font_size(theme_values[:owner]) do
-      document.text owner_text, align: :center, style: :bold
-    end
+  def line_height_for(line)
+    measure { |doc| line_height(doc, line) }
   end
 
   def owner_text
     @job.owner&.display_name || 'Unclaimed'
-  end
-
-  def render_line(size, text)
-    document.font_size(size) do
-      document.text text, align: :center
-    end
-    document.move_down 2
   end
 
   def printer_material_line
@@ -131,11 +133,33 @@ class JobLabelPdf
   end
 
   def print_time_label
-    time = @job.started_at || @job.created_at
-    I18n.l(time, format: :short)
+    start_time = @job.started_at || @job.created_at
+    return '—' unless start_time
+
+    if @job.ended_at
+      format_time_range(start_time, @job.ended_at)
+    else
+      format_time_with_day(start_time)
+    end
   end
 
-  def truncate_filename(name)
-    name.to_s.length > 40 ? "#{name[0, 37]}..." : name
+  def format_time_range(start_time, end_time)
+    if same_day?(start_time, end_time)
+      "#{format_time_with_day(start_time)} - #{format_time_only(end_time)}"
+    else
+      "#{format_time_with_day(start_time)} - #{format_time_with_day(end_time)}"
+    end
+  end
+
+  def format_time_with_day(time)
+    time.in_time_zone.strftime('%a %b %-d, %H:%M')
+  end
+
+  def format_time_only(time)
+    time.in_time_zone.strftime('%H:%M')
+  end
+
+  def same_day?(first, second)
+    first.in_time_zone.to_date == second.in_time_zone.to_date
   end
 end

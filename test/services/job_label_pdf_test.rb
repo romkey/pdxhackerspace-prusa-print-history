@@ -19,7 +19,6 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_includes pdf_text, job.owner.display_name
     assert_includes pdf_text, 'Prusa XL / PLA'
     assert_includes pdf_text, job.status.humanize
-    assert_includes pdf_text, I18n.l(job.started_at, format: :short)
     assert_operator pdf_text.index(job.owner.display_name), :<, pdf_text.index(job.filename)
   end
 
@@ -33,17 +32,56 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_equal 14, theme[:body]
   end
 
-  test 'uses exact page height with one blank line top and bottom' do
+  test 'uses horizontal page layout sized to content without extra margins' do
     job = jobs(:active_xl)
     pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
     doc = pdf.document
     media_box = doc.page.dictionary.data[:MediaBox]
-    expected_height = (pdf.margin_line_height_pt * 2) + pdf.send(:content_height_pt)
 
     assert_equal [0, 0], media_box.values_at(0, 1)
-    assert_in_delta expected_height, pdf.page_height_pt, 0.5
+    assert_operator pdf.page_width_pt, :>, pdf.page_height_pt
+    assert_in_delta pdf.content_height_pt, pdf.page_height_pt, 0.5
+    assert_in_delta pdf.page_width_pt, media_box[2], 0.5
     assert_in_delta pdf.page_height_pt, media_box[3], 0.5
-    assert_operator pdf.page_height_pt, :<, JobLabelPdf.mm_to_pt(80)
+  end
+
+  test 'includes full filename without truncation' do
+    job = jobs(:active_xl)
+    job.filename = 'very_long_part_name_that_would_have_been_truncated_before.gcode'
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+
+    assert_includes pdf_text, job.filename
+    assert_not_includes pdf_text, '...'
+  end
+
+  test 'shows start and finish time on one line with day of week when same day' do
+    job = jobs(:finished)
+    start_time = job.started_at.in_time_zone
+    end_time = job.ended_at.in_time_zone
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+    expected = "#{start_time.strftime('%a %b %-d, %H:%M')} - #{end_time.strftime('%H:%M')}"
+
+    assert_includes pdf_text, expected
+  end
+
+  test 'repeats day of week when finish is on a different day' do
+    job = jobs(:finished)
+    start_time = Time.zone.parse('2026-05-28 22:00')
+    end_time = Time.zone.parse('2026-05-29 02:00')
+    job.update!(started_at: start_time, ended_at: end_time)
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+    expected = "#{start_time.strftime('%a %b %-d, %H:%M')} - #{end_time.strftime('%a %b %-d, %H:%M')}"
+
+    assert_includes pdf_text, expected
+  end
+
+  test 'shows start time with day of week when print has not ended' do
+    job = jobs(:active_xl)
+    start_time = job.started_at.in_time_zone
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+
+    assert_includes pdf_text, start_time.strftime('%a %b %-d, %H:%M')
+    assert_not_includes pdf_text, ' - '
   end
 
   test 'does not include organization header or field labels' do

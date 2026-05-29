@@ -7,7 +7,7 @@ class CupsService
 
   THERMAL_PDF_OPTIONS = {
     'print-scaling' => 'none',
-    'orientation-requested' => '3'
+    'orientation-requested' => '4'
   }.freeze
 
   ESC_POS_FULL_CUT = "\x1D\x56\x00".b.freeze

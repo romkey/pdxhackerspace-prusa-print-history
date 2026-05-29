@@ -1,7 +1,12 @@
 <div class="container py-4" style="max-width: 640px;">
   <div class="mb-3">
     <h1 class="h-page-title mb-0">Your notifications</h1>
-    <div class="text-13 text-secondary mt-1"><%= @user.email %></div>
+    <div class="text-13 text-secondary mt-1">
+      <% if @user.username.present? %>
+        <span class="text-body"><%= @user.username %></span> &middot;
+      <% end %>
+      <%= @user.email %>
+    </div>
   </div>
 
   <div class="card">

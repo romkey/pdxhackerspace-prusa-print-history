@@ -13,7 +13,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
       provider: 'developer',
       uid: 'fresh-user@example.com',
-      info: { email: 'fresh-user@example.com', name: 'Fresh User' }
+      info: { email: 'fresh-user@example.com', name: 'Fresh User', nickname: 'freshuser' }
     )
 
     assert_difference -> { User.count } => 1 do
@@ -23,7 +23,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_response :success
-    assert_match(/Signed in as Fresh User/, flash[:notice].to_s)
+    assert_match(/Signed in as freshuser/, flash[:notice].to_s)
   end
 
   test 'callback logs auth hash when AUTHENTIK_DEBUG is enabled' do
@@ -87,7 +87,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     assert_response :success
-    assert_match(/Signed in as Local Admin/, flash[:notice].to_s)
+    assert_match(/Signed in as local-admin/, flash[:notice].to_s)
 
     get settings_path
 

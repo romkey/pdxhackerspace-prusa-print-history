@@ -29,6 +29,7 @@ module LocalAdmin
     user = User.find_or_initialize_by(provider: 'local', uid: email.downcase)
     user.email = email.downcase
     user.name  = name
+    user.username = email.split('@').first
     user.admin = true
     user.save!
     user

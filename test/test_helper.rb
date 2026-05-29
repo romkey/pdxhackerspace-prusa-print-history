@@ -24,7 +24,7 @@ module ActionDispatch
       OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
         provider: user.provider,
         uid: user.uid,
-        info: { email: user.email, name: user.name }
+        info: { email: user.email, name: user.name, nickname: user.username }
       )
       post '/auth/developer/callback'
       follow_redirect! while response.redirect?

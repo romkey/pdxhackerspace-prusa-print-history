@@ -24,7 +24,6 @@ Rails.application.routes.draw do
 
   resource :profile, only: %i[show update]
 
-  resources :users, only: %i[update]
   resources :label_printers, path: 'settings/label_printers' do
     member do
       post :test_print

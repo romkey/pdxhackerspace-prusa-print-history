@@ -25,6 +25,14 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     ENV.delete('SLACK_API_TOKEN')
   end
 
+  test 'profile shows username' do
+    login_as(users(:viewer))
+
+    get profile_path
+
+    assert_match(/vieweruser/, response.body)
+  end
+
   test 'profile does not expose slack id field' do
     login_as(users(:viewer))
 

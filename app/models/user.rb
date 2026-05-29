@@ -8,6 +8,7 @@ class User < ApplicationRecord
   validate :slack_id_required_for_slack_notifications
 
   normalizes :email, with: ->(value) { value.to_s.downcase.strip }
+  normalizes :username, with: ->(value) { value.to_s.strip.presence }
   normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
   normalizes :slack_id, with: ->(value) { value.to_s.strip.presence }
 
@@ -16,10 +17,27 @@ class User < ApplicationRecord
     user.email = auth.info.email
     user.name  = auth.info.name.presence || auth.info.email
     claims = auth_claims(auth)
+    apply_username_from_auth(user, auth, claims)
     apply_admin_from_auth(user, claims)
     apply_slack_from_auth(user, claims)
     user.save!
     user
+  end
+
+  def self.apply_username_from_auth(user, auth, claims)
+    nickname = nickname_from_auth(auth, claims)
+    user.username = nickname if nickname.present?
+  end
+
+  def self.nickname_from_auth(auth, claims)
+    if auth.info.respond_to?(:[])
+      nickname = claim_value(auth.info, 'nickname')
+      return nickname if nickname.present?
+    end
+
+    return unless claims.key?('nickname')
+
+    claim_value(claims, 'nickname')
   end
 
   def self.apply_admin_from_auth(user, claims)
@@ -79,11 +97,11 @@ class User < ApplicationRecord
 
     value.present?
   end
-  private_class_method :apply_admin_from_auth, :apply_slack_from_auth, :apply_slack_hash, :clear_slack!,
-                       :claim_value, :claim_value_present?, :truthy?, :auth_claims
+  private_class_method :apply_admin_from_auth, :apply_slack_from_auth, :apply_slack_hash, :apply_username_from_auth,
+                       :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :truthy?, :auth_claims
 
   def display_name
-    name.presence || email
+    username.presence || email
   end
 
   def email_notifications_available?

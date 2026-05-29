@@ -36,12 +36,63 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'new@example.com', user.email
   end
 
-  test 'display_name falls back to email' do
-    assert_equal @admin.name, @admin.display_name
+  test 'display_name uses username and falls back to email' do
+    assert_equal @admin.username, @admin.display_name
 
     nameless = User.create!(email: 'nameless@example.com', provider: 'authentik', uid: 'nameless-uid')
 
     assert_equal 'nameless@example.com', nameless.display_name
+  end
+
+  test 'find_or_create_from_auth stores username from nickname' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'nick-uid',
+      info: { email: 'nick@example.com', name: 'Nick Name', nickname: 'nickuser' }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
+    assert_equal 'nickuser', user.username
+    assert_equal 'Nick Name', user.name
+  end
+
+  test 'find_or_create_from_auth updates username on each login' do
+    user = User.create!(
+      email: 'sync@example.com',
+      provider: 'authentik',
+      uid: 'sync-nick-uid',
+      username: 'oldnick'
+    )
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'sync-nick-uid',
+      info: { email: 'sync@example.com', name: 'Sync User', nickname: 'newnick' }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_equal 'newnick', user.reload.username
+  end
+
+  test 'find_or_create_from_auth leaves username unchanged when nickname is absent' do
+    user = User.create!(
+      email: 'nonick@example.com',
+      provider: 'authentik',
+      uid: 'nonick-uid',
+      username: 'keepme'
+    )
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'nonick-uid',
+      info: { email: 'nonick@example.com', name: 'No Nick User' }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_equal 'keepme', user.reload.username
   end
 
   test 'find_or_create_from_auth promotes admin emails from ADMIN_EMAILS' do

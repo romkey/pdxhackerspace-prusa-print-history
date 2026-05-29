@@ -1,6 +1,7 @@
 admin:
   email: admin@example.com
   name: Admin User
+  username: adminuser
   provider: authentik
   uid: admin-uid-1
   admin: true
@@ -8,6 +9,7 @@ admin:
 viewer:
   email: viewer@example.com
   name: Viewer User
+  username: vieweruser
   provider: authentik
   uid: viewer-uid-2
   admin: false
@@ -19,6 +21,7 @@ viewer:
 other_viewer:
   email: other@example.com
   name: Other Viewer
+  username: otherviewer
   provider: authentik
   uid: viewer-uid-3
   admin: false

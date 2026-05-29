@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.20] - 2026-05-29
+
+### Added
+- Usernames synced from Authentik `nickname` on sign-in; shown in the UI instead of full names.
+
+### Changed
+- Print job owner section shows username only — Slack details remain on your profile page.
+
 ## [0.3.19] - 2026-05-29
 
 ### Fixed

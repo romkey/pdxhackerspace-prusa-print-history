@@ -37,6 +37,7 @@ class LocalAdminTest < ActiveSupport::TestCase
     assert user.admin?
     assert_equal 'admin@localhost', user.email
     assert_equal 'Dev Admin', user.name
+    assert_equal 'admin', user.username
     assert_equal 'local', user.provider
   end
 

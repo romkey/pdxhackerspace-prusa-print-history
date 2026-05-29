@@ -17,6 +17,17 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'show owner section shows username only' do
+    @job.update!(owner: users(:viewer))
+    get job_path(@job)
+
+    assert_select '.h-section-label', text: 'Owner'
+    assert_match(/vieweruser/, response.body)
+    assert_no_match(/viewer@example.com/, response.body)
+    assert_no_match(/UVIEWER123/, response.body)
+    assert_no_match(/Slack user ID/i, response.body)
+  end
+
   test 'show renders temperature chart when telemetry exists' do
     get job_path(@job)
 
@@ -320,13 +331,6 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to job_path(@job)
     assert_match(/not cleared/i, flash[:alert])
-  end
-
-  test 'admin can update owner slack id from job page' do
-    login_as(users(:admin))
-    patch user_path(users(:viewer)), params: { user: { slack_id: 'UMAKERBOT' } }
-
-    assert_equal 'UMAKERBOT', users(:viewer).reload.slack_id
   end
 
   private

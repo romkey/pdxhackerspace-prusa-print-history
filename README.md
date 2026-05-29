@@ -63,9 +63,9 @@ for the full list; the values you must set on a fresh install are:
   (no Authentik required). Useful for single-user or offline setups.
 - `TIMEZONE` — IANA timezone name (e.g. `America/Los_Angeles`) used
   for displaying job timestamps and relative times. Defaults to `UTC`.
-- `SMTP_ADDRESS`, `MAIL_FROM`, and related `SMTP_*` vars — required for
+- `SMTP_SERVER`, `MAIL_FROM`, and related `SMTP_*` vars — required for
   email notifications. Each user chooses email vs Slack under
-  **Notifications** in the account menu. Without `SMTP_ADDRESS`, email is
+  **Notifications** in the account menu. Without `SMTP_SERVER`, email is
   not offered. In development without SMTP, outgoing mail is written to
   `tmp/mail/` instead.
 - `SLACK_API_TOKEN` — bot token with `chat:write` and `files:write`;

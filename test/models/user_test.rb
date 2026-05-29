@@ -140,7 +140,7 @@ class UserTest < ActiveSupport::TestCase
 
   test 'wants_email_notifications respects user preference and SMTP config' do
     user = users(:viewer)
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
     user.update!(notify_via_email: true)
 
     assert user.wants_email_notifications?
@@ -149,7 +149,7 @@ class UserTest < ActiveSupport::TestCase
 
     assert_not user.wants_email_notifications?
   ensure
-    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('SMTP_SERVER')
   end
 
   test 'wants_slack_notifications requires slack id and token' do

@@ -2,11 +2,11 @@ module MailConfig
   module_function
 
   def configured?
-    smtp_address.present?
+    smtp_server.present?
   end
 
-  def smtp_address
-    ENV['SMTP_ADDRESS'].presence || ENV['MAIL_HOST'].presence
+  def smtp_server
+    ENV['SMTP_SERVER'].presence
   end
 
   def smtp_port
@@ -39,7 +39,7 @@ module MailConfig
 
   def smtp_settings
     {
-      address: smtp_address,
+      address: smtp_server,
       port: smtp_port,
       domain: smtp_domain,
       user_name: smtp_username,

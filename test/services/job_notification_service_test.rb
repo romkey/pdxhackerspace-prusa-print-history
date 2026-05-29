@@ -9,7 +9,7 @@ class JobNotificationServiceTest < ActiveSupport::TestCase
   end
 
   test 'sends finished email when user prefers email and SMTP configured' do
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
 
     assert_emails 1 do
       result = JobNotificationService.notify_print_finished(@job)
@@ -17,7 +17,7 @@ class JobNotificationServiceTest < ActiveSupport::TestCase
       assert result.email_sent
     end
   ensure
-    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('SMTP_SERVER')
   end
 
   test 'sends cleared slack when user prefers slack and slack id present' do

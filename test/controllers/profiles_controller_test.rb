@@ -9,7 +9,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
 
   test 'user can update notification preferences' do
     login_as(users(:viewer))
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
     ENV['SLACK_API_TOKEN'] = 'xoxb-test'
 
     patch profile_path, params: { user: { notify_via_email: '1', notify_via_slack: '1' } }
@@ -21,7 +21,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert user.notify_via_slack?
     assert_equal 'UVIEWER123', user.slack_id
   ensure
-    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('SMTP_SERVER')
     ENV.delete('SLACK_API_TOKEN')
   end
 
@@ -66,8 +66,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'profile hides email option when SMTP is not configured' do
-    ENV.delete('SMTP_ADDRESS')
-    ENV.delete('MAIL_HOST')
+    ENV.delete('SMTP_SERVER')
     login_as(users(:viewer))
 
     get profile_path
@@ -78,13 +77,13 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
 
   test 'profile update cannot change slack id' do
     login_as(users(:viewer))
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
 
     patch profile_path, params: { user: { notify_via_email: '0', notify_via_slack: '0', slack_id: 'UHACKED' } }
 
     assert_redirected_to profile_path
     assert_equal 'UVIEWER123', users(:viewer).reload.slack_id
   ensure
-    ENV.delete('SMTP_ADDRESS')
+    ENV.delete('SMTP_SERVER')
   end
 end

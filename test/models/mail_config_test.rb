@@ -9,21 +9,20 @@ class MailConfigTest < ActiveSupport::TestCase
     ENV.replace(@env)
   end
 
-  test 'configured? is false without SMTP_ADDRESS or MAIL_HOST' do
-    ENV.delete('SMTP_ADDRESS')
-    ENV.delete('MAIL_HOST')
+  test 'configured? is false without SMTP_SERVER' do
+    ENV.delete('SMTP_SERVER')
 
     assert_not MailConfig.configured?
   end
 
-  test 'configured? is true when SMTP_ADDRESS is set' do
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+  test 'configured? is true when SMTP_SERVER is set' do
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
 
     assert MailConfig.configured?
   end
 
   test 'smtp_settings includes credentials when provided' do
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
     ENV['SMTP_USERNAME'] = 'user'
     ENV['SMTP_PASSWORD'] = 'secret'
     ENV['SMTP_PORT'] = '465'
@@ -38,13 +37,6 @@ class MailConfigTest < ActiveSupport::TestCase
     assert_equal 'example.com', settings[:domain]
   end
 
-  test 'configured? is true when MAIL_HOST is set' do
-    ENV.delete('SMTP_ADDRESS')
-    ENV['MAIL_HOST'] = 'smtp.example.com'
-
-    assert MailConfig.configured?
-  end
-
   test 'starttls_enabled? respects SMTP_ENABLE_STARTTLS_AUTO' do
     ENV['SMTP_ENABLE_STARTTLS_AUTO'] = 'false'
 
@@ -52,7 +44,7 @@ class MailConfigTest < ActiveSupport::TestCase
   end
 
   test 'apply! configures smtp delivery when configured' do
-    ENV['SMTP_ADDRESS'] = 'smtp.example.com'
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
     mailer = ActiveSupport::OrderedOptions.new
     config = ActiveSupport::OrderedOptions.new
     config.action_mailer = mailer

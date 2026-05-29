@@ -11,7 +11,7 @@ class JobLabelPrintService
       printer.cups_printer_name,
       cups_printer_server: printer.cups_printer_server,
       filename: "job_label_#{job.id}.pdf",
-      options: printer.cups_options
+      options: printer.cups_options.merge(pdf.cups_media_options)
     )
   end
 end

@@ -33,19 +33,24 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_equal 14, theme[:body]
   end
 
-  test 'trims page to content plus four blank lines' do
+  test 'uses exact page height anchored at origin' do
     job = jobs(:active_xl)
     pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
     doc = pdf.document
     media_box = doc.page.dictionary.data[:MediaBox]
 
-    bottom, top = media_box.values_at(1, 3)
-    height = top - bottom
+    assert_equal [0, 0], media_box.values_at(0, 1)
+    assert_in_delta pdf.page_height_pt, media_box[3], 0.5
+    assert_operator pdf.page_height_pt, :<, 250
+    assert_operator pdf.page_height_pt, :>, 100
+  end
 
-    assert_operator height, :<, JobLabelPdf::THERMAL_INITIAL_HEIGHT / 2
-    assert_operator height, :>, 100
-    assert_equal doc.cursor, bottom
-    assert_equal doc.bounds.absolute_top, top
+  test 'includes custom media size for cups' do
+    job = jobs(:active_xl)
+    pdf = JobLabelPdf.new(job, thermal_width_mm: 80)
+
+    assert_match(/\ACustom\.80x\d+mm\z/, pdf.cups_media_options.fetch('media'))
+    assert_equal 'false', pdf.cups_media_options.fetch('fit-to-page')
   end
 
   test 'does not include organization header or field labels' do

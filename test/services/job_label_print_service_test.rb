@@ -6,11 +6,18 @@ class JobLabelPrintServiceTest < ActiveSupport::TestCase
     @printer = label_printers(:front_desk)
   end
 
-  test 'prints label pdf to configured printer' do
-    CupsService.stub(:print_data, 'job-42') do
+  test 'prints label pdf to configured printer with media options' do
+    captured = {}
+    CupsService.stub(:print_data, lambda { |_data, _name, **kwargs|
+      captured[:options] = kwargs[:options]
+      'job-42'
+    }) do
       job_id = JobLabelPrintService.call(job: @job, label_printer: @printer)
 
       assert_equal 'job-42', job_id
+      assert_match(/\ACustom\.\d+x\d+mm\z/, captured[:options]['media'])
+      assert_equal 'false', captured[:options]['fit-to-page']
+      assert_equal 'none', captured[:options]['print-scaling']
     end
   end
 

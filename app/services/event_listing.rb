@@ -11,7 +11,8 @@ class EventListing
   Row = Data.define(:source_type, :source_id, :occurred_at, :record)
 
   def initialize(filters:)
-    @filters = Array(filters).map(&:to_s) & FILTER_EVENT_TYPES.keys
+    selected = Array(filters).map(&:to_s) & FILTER_EVENT_TYPES.keys
+    @filters = selected.empty? ? [] : [selected.first]
   end
 
   attr_reader :filters

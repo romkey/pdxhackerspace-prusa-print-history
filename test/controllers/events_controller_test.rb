@@ -63,6 +63,20 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Started/i, response.body)
   end
 
+  test 'filter chip links replace the active filter instead of stacking' do
+    get events_path, params: { filter: 'start' }
+
+    assert_select 'a.filter-chip.active[href=?]', events_path
+    assert_select 'a.filter-chip[href=?]', events_path(filter: 'filament_change')
+    assert_no_match %r{filter\[\]=}, response.body
+  end
+
+  test 'active filter chip clears the filter when clicked again' do
+    get events_path, params: { filter: 'attention' }
+
+    assert_select 'a.filter-chip.active[href=?]', events_path
+  end
+
   test 'navbar includes events link' do
     get root_path
 

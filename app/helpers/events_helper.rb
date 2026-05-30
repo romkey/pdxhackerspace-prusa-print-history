@@ -7,9 +7,8 @@ module EventsHelper
   }.freeze
 
   def events_filter_href(filter_name)
-    current = Array(params[:filter]).map(&:to_s)
-    updated = current.include?(filter_name) ? current - [filter_name] : current + [filter_name]
-    events_path(filter: updated.presence)
+    active = Array(params[:filter]).map(&:to_s).first
+    events_path(filter: active == filter_name ? nil : filter_name)
   end
 
   def events_filter_chip_class(filter_name)

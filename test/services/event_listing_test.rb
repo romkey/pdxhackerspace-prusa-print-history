@@ -35,12 +35,10 @@ class EventListingTest < ActiveSupport::TestCase
     assert_equal 'filament_change', events.first.record.event_type
   end
 
-  test 'combines multiple filters with union semantics' do
+  test 'uses only the first filter when multiple are passed' do
     events = EventListing.new(filters: %w[start filament_change]).results
-    types = events.map { |event| event.record.is_a?(JobEvent) ? event.record.event_type : 'filament_change' }
 
-    assert_includes types, 'started'
-    assert_includes types, 'filament_change'
+    assert(events.all? { |event| event.record.is_a?(JobEvent) && event.record.event_type == 'started' })
   end
 
   test 'paginates twenty events per page' do

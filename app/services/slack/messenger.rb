@@ -6,7 +6,8 @@ module Slack
     class Error < StandardError; end
 
     POST_MESSAGE_URL = 'https://slack.com/api/chat.postMessage'.freeze
-    FILES_UPLOAD_URL = 'https://slack.com/api/files.upload'.freeze
+    GET_UPLOAD_URL = 'https://slack.com/api/files.getUploadURLExternal'.freeze
+    COMPLETE_UPLOAD_URL = 'https://slack.com/api/files.completeUploadExternal'.freeze
 
     def self.dm(user_id:, text:)
       new.dm(user_id:, text:)
@@ -43,32 +44,37 @@ module Slack
     def upload_file(user_id:, text:, attachment:)
       raise Error, 'Slack API token is missing' if @token.blank?
 
-      boundary = "----RubyMultipartPost#{SecureRandom.hex(16)}"
-      body = build_multipart_body(boundary, user_id:, text:, attachment:)
-      response = post_multipart(FILES_UPLOAD_URL, body, boundary)
+      file_data = attachment.download
+      filename = attachment_filename(attachment)
+      upload_info = post(GET_UPLOAD_URL, { filename:, length: file_data.bytesize })
+      raise Error, upload_info['error'] || 'Unknown Slack error' unless upload_info['ok']
+
+      post_file_to_upload_url(upload_info.fetch('upload_url'), file_data, content_type: attachment.content_type)
+      response = post(
+        COMPLETE_UPLOAD_URL,
+        channel_id: user_id,
+        initial_comment: text,
+        files: [{ id: upload_info.fetch('file_id'), title: filename }]
+      )
       raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
 
       response
     end
 
-    def build_multipart_body(boundary, user_id:, text:, attachment:)
-      parts = []
-      parts << multipart_field(boundary, 'channels', user_id)
-      parts << multipart_field(boundary, 'initial_comment', text)
-      parts << multipart_file(boundary, 'file', attachment)
-      parts << "--#{boundary}--\r\n"
-      parts.join
+    def attachment_filename(attachment)
+      attachment.filename.to_s.presence || 'print-photo.jpg'
     end
 
-    def multipart_field(boundary, name, value)
-      "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\"\r\n\r\n#{value}\r\n"
-    end
+    def post_file_to_upload_url(upload_url, file_data, content_type:)
+      uri = URI(upload_url)
+      request = Net::HTTP::Post.new(uri)
+      request.body = file_data
+      request['Content-Type'] = content_type.presence || 'application/octet-stream'
 
-    def multipart_file(boundary, name, attachment)
-      filename = attachment.filename.to_s
-      content_type = attachment.content_type || 'application/octet-stream'
-      "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\"; filename=\"#{filename}\"\r\n" \
-        "Content-Type: #{content_type}\r\n\r\n#{attachment.download}\r\n"
+      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http| http.request(request) }
+      return if response.is_a?(Net::HTTPSuccess)
+
+      raise Error, "Slack file upload failed (HTTP #{response.code})"
     end
 
     def post(url, payload)
@@ -77,16 +83,6 @@ module Slack
       request['Authorization'] = "Bearer #{@token}"
       request['Content-Type'] = 'application/json; charset=utf-8'
       request.body = payload.to_json
-
-      execute(request, uri)
-    end
-
-    def post_multipart(url, body, boundary)
-      uri = URI(url)
-      request = Net::HTTP::Post.new(uri)
-      request['Authorization'] = "Bearer #{@token}"
-      request['Content-Type'] = "multipart/form-data; boundary=#{boundary}"
-      request.body = body
 
       execute(request, uri)
     end

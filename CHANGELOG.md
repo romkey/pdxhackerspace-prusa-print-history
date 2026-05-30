@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-05-30
+
+### Fixed
+- Docker production image build: load `AppTlsConfig` before `production.rb` runs so `assets:precompile` succeeds.
+
 ## [0.4.7] - 2026-05-30
 
 ### Fixed

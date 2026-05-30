@@ -8,6 +8,44 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'h1', text: /Sign in/
   end
 
+  test 'login page highlights Authentik above local accounts when both are configured' do
+    ENV['AUTHENTIK_ISSUER'] = 'https://authentik.example.com/application/o/app/'
+    ENV['LOCAL_ADMIN_EMAIL'] = 'admin@localhost'
+    ENV['LOCAL_ADMIN_PASSWORD'] = 'local-secret'
+
+    get login_path
+
+    assert_response :success
+    assert_select 'form[action=?][method=?]', '/auth/authentik', 'post' do
+      assert_select 'button.btn-primary', text: /Sign in with Authentik/
+    end
+    assert_select '.h-section-label', text: 'Local accounts'
+    assert_select 'form[action=?]', local_login_path do
+      assert_select 'input[type=submit].btn-outline-secondary[value=?]', 'Sign in'
+    end
+  ensure
+    ENV.delete('AUTHENTIK_ISSUER')
+    ENV.delete('LOCAL_ADMIN_EMAIL')
+    ENV.delete('LOCAL_ADMIN_PASSWORD')
+  end
+
+  test 'login page uses primary local sign-in when Authentik is not configured' do
+    ENV.delete('AUTHENTIK_ISSUER')
+    ENV['LOCAL_ADMIN_EMAIL'] = 'admin@localhost'
+    ENV['LOCAL_ADMIN_PASSWORD'] = 'local-secret'
+
+    get login_path
+
+    assert_response :success
+    assert_select '.h-section-label', text: 'Local accounts', count: 0
+    assert_select 'form[action=?]', local_login_path do
+      assert_select 'input[type=submit].btn-primary[value=?]', 'Sign in'
+    end
+  ensure
+    ENV.delete('LOCAL_ADMIN_EMAIL')
+    ENV.delete('LOCAL_ADMIN_PASSWORD')
+  end
+
   test 'developer omniauth flow creates a user and logs them in' do
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(

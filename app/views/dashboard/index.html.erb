@@ -1,6 +1,7 @@
 <div class="container py-4 dashboard-page">
   <div class="text-center mb-4">
-    <div class="dashboard-clock text-body"
+    <div class="dashboard-title mb-1"><%= dashboard_heading %></div>
+    <div class="dashboard-clock text-secondary"
          data-controller="clock"
          data-clock-initial-value="<%= l(Time.current, format: :dashboard_clock) %>">
       <time data-clock-target="display"><%= l(Time.current, format: :dashboard_clock) %></time>

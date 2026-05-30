@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.9] - 2026-05-30
+
+### Changed
+- Dashboard shows **PDX Hackerspace** above a smaller live clock (still overridable via app settings).
+- Sign-in page puts highlighted Authentik first; email/password login is labeled **Local accounts**.
+- Email and Slack notification preferences both default to on for new users.
+
 ## [0.4.8] - 2026-05-30
 
 ### Fixed

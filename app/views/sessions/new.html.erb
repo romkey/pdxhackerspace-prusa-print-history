@@ -4,32 +4,38 @@
       <h1 class="h-page-title mb-1">Sign in</h1>
       <p class="text-13 text-secondary mb-4">
         Sign in to claim prints and access admin features.
-        Anonymous visitors can still view all printer and job pages.
+        Anonymous visitors can still view the public printer dashboard.
       </p>
 
-      <% if LocalAdmin.configured? %>
-        <%= form_tag local_login_path, method: :post, class: 'text-start mb-4', data: { turbo: false } do %>
-          <div class="mb-3">
-            <%= label_tag :email, 'Email', class: 'form-label' %>
-            <%= email_field_tag :email, LocalAdmin.email, class: 'form-control', required: true, autocomplete: 'username' %>
-          </div>
-          <div class="mb-3">
-            <%= label_tag :password, 'Password', class: 'form-label' %>
-            <%= password_field_tag :password, nil, class: 'form-control', required: true, autocomplete: 'current-password' %>
-          </div>
-          <%= submit_tag 'Sign in', class: 'btn btn-primary w-100' %>
+      <% authentik_configured = ENV['AUTHENTIK_ISSUER'].present? %>
+      <% local_configured = LocalAdmin.configured? %>
+
+      <% if authentik_configured %>
+        <%= button_to '/auth/authentik', method: :post, class: 'btn btn-primary w-100', data: { turbo: false } do %>
+          <i class="bi bi-shield-lock me-2"></i> Sign in with Authentik
         <% end %>
       <% end %>
 
-      <% if ENV['AUTHENTIK_ISSUER'].present? %>
-        <% if LocalAdmin.configured? %>
-          <p class="text-13 text-secondary mb-2">Or sign in with Authentik</p>
-        <% end %>
-        <%= button_to '/auth/authentik', method: :post, class: 'btn btn-outline-secondary w-100', data: { turbo: false } do %>
-          <i class="bi bi-shield-lock me-2"></i> Sign in with Authentik
-        <% end %>
-      <% elsif !LocalAdmin.configured? %>
-        <p class="text-warning text-13 mb-3">No sign-in method is configured on this server.</p>
+      <% if local_configured %>
+        <div class="<%= authentik_configured ? 'mt-4 text-start' : 'text-start' %>">
+          <% if authentik_configured %>
+            <div class="h-section-label mb-2">Local accounts</div>
+          <% end %>
+
+          <%= form_tag local_login_path, method: :post, data: { turbo: false } do %>
+            <div class="mb-3">
+              <%= label_tag :email, 'Email', class: 'form-label' %>
+              <%= email_field_tag :email, LocalAdmin.email, class: 'form-control', required: true, autocomplete: 'username' %>
+            </div>
+            <div class="mb-3">
+              <%= label_tag :password, 'Password', class: 'form-label' %>
+              <%= password_field_tag :password, nil, class: 'form-control', required: true, autocomplete: 'current-password' %>
+            </div>
+            <%= submit_tag 'Sign in', class: "btn #{authentik_configured ? 'btn-outline-secondary' : 'btn-primary'} w-100" %>
+          <% end %>
+        </div>
+      <% elsif !authentik_configured %>
+        <p class="text-warning text-13 mb-0">No sign-in method is configured on this server.</p>
       <% end %>
 
       <% if Rails.env.local? %>

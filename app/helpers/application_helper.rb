@@ -53,7 +53,7 @@ module ApplicationHelper
   end
 
   def dashboard_heading
-    Setting.dashboard_heading.presence || APP_NAME
+    Setting.dashboard_heading.presence || 'PDX Hackerspace'
   end
 
   def footer_text

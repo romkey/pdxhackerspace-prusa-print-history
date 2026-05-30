@@ -5,12 +5,14 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: { case_sensitive: false }
   validates :provider, presence: true
   validates :uid, presence: true, uniqueness: { scope: :provider }
-  validate :slack_id_required_for_slack_notifications
 
   normalizes :email, with: ->(value) { value.to_s.downcase.strip }
   normalizes :username, with: ->(value) { value.to_s.strip.presence }
   normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
   normalizes :slack_id, with: ->(value) { value.to_s.strip.presence }
+
+  attribute :notify_via_email, :boolean, default: true
+  attribute :notify_via_slack, :boolean, default: true
 
   def self.find_or_create_from_auth(auth)
     user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)
@@ -152,14 +154,5 @@ class User < ApplicationRecord
 
   def wants_slack_notifications?
     notify_via_slack? && slack_notifications_available?
-  end
-
-  private
-
-  def slack_id_required_for_slack_notifications
-    return unless notify_via_slack?
-    return if slack_id.present?
-
-    errors.add(:notify_via_slack, 'requires a Slack user ID')
   end
 end

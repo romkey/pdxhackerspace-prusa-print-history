@@ -5,6 +5,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path, headers: external_request_headers
 
     assert_response :success
+    assert_select '.dashboard-title', text: 'PDX Hackerspace'
     assert_select '.dashboard-clock time'
     assert_select 'h1', count: 0
   end
@@ -13,19 +14,20 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
+    assert_select '.dashboard-title', text: 'PDX Hackerspace'
     assert_select '.dashboard-clock time'
     assert_select 'h1', count: 0
   end
 
-  test 'dashboard ignores configured heading and shows only the clock' do
+  test 'dashboard shows configured heading above the clock' do
     Setting.dashboard_heading = 'PDX Hackerspace 3D Printers'
 
     get root_path
 
     assert_response :success
-    assert_select 'h1', count: 0
-    assert_no_match(/PDX Hackerspace 3D Printers/, response.body)
+    assert_select '.dashboard-title', text: 'PDX Hackerspace 3D Printers'
     assert_select '.dashboard-clock time'
+    assert_select 'h1', count: 0
   ensure
     Setting.dashboard_heading = nil
   end

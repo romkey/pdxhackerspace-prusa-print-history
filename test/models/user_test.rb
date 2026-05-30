@@ -288,6 +288,18 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'makerbot', user.slack_handle
   end
 
+  test 'notification preferences default to enabled' do
+    user = User.new(
+      email: 'new@example.com',
+      name: 'New User',
+      provider: 'authentik',
+      uid: 'new-uid'
+    )
+
+    assert user.notify_via_email?
+    assert user.notify_via_slack?
+  end
+
   test 'wants_email_notifications respects user preference and SMTP config' do
     user = users(:viewer)
     ENV['SMTP_SERVER'] = 'smtp.example.com'

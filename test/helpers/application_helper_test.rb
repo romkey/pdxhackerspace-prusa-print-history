@@ -21,6 +21,12 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_match(/^3D Printer History v/, footer_text)
   end
 
+  test 'dashboard_heading defaults to PDX Hackerspace' do
+    Setting.dashboard_heading = nil
+
+    assert_equal 'PDX Hackerspace', dashboard_heading
+  end
+
   test 'printer_idle_dot_class reflects PrusaLink reachability' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: true)

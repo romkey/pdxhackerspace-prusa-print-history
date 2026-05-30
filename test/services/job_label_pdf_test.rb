@@ -56,8 +56,9 @@ class JobLabelPdfTest < ActiveSupport::TestCase
 
   test 'shows start and finish time on one line with day of week when same day' do
     job = jobs(:finished)
-    start_time = job.started_at.in_time_zone
-    end_time = job.ended_at.in_time_zone
+    start_time = Time.zone.parse('2026-05-28 10:00')
+    end_time = Time.zone.parse('2026-05-28 12:00')
+    job.update!(started_at: start_time, ended_at: end_time)
     pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
     expected = "#{start_time.strftime('%a %b %-d, %H:%M')} - #{end_time.strftime('%H:%M')}"
 

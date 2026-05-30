@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-30
+
+### Fixed
+- Slack print notifications with photos failed with `method_deprecated` after Slack retired `files.upload`; uploads now use Slack's v2 file API.
+
 ## [0.4.0] - 2026-05-29
 
 ### Added

@@ -17,23 +17,37 @@
       <% end %>
 
       <% if local_configured %>
-        <div class="<%= authentik_configured ? 'mt-4 text-start' : 'text-start' %>">
-          <% if authentik_configured %>
-            <div class="h-section-label mb-2">Local accounts</div>
-          <% end %>
+        <% if authentik_configured %>
+          <details class="mt-4 text-start">
+            <summary class="text-13 text-secondary">Local account sign-in</summary>
 
-          <%= form_tag local_login_path, method: :post, data: { turbo: false } do %>
-            <div class="mb-3">
-              <%= label_tag :email, 'Email', class: 'form-label' %>
-              <%= email_field_tag :email, LocalAdmin.email, class: 'form-control', required: true, autocomplete: 'username' %>
-            </div>
-            <div class="mb-3">
-              <%= label_tag :password, 'Password', class: 'form-label' %>
-              <%= password_field_tag :password, nil, class: 'form-control', required: true, autocomplete: 'current-password' %>
-            </div>
-            <%= submit_tag 'Sign in', class: "btn #{authentik_configured ? 'btn-outline-secondary' : 'btn-primary'} w-100" %>
-          <% end %>
-        </div>
+            <%= form_tag local_login_path, method: :post, data: { turbo: false }, class: 'mt-3' do %>
+              <div class="mb-3">
+                <%= label_tag :email, 'Email', class: 'form-label' %>
+                <%= email_field_tag :email, LocalAdmin.email, class: 'form-control', required: true, autocomplete: 'username' %>
+              </div>
+              <div class="mb-3">
+                <%= label_tag :password, 'Password', class: 'form-label' %>
+                <%= password_field_tag :password, nil, class: 'form-control', required: true, autocomplete: 'current-password' %>
+              </div>
+              <%= submit_tag 'Sign in', class: 'btn btn-outline-secondary w-100' %>
+            <% end %>
+          </details>
+        <% else %>
+          <div class="text-start">
+            <%= form_tag local_login_path, method: :post, data: { turbo: false } do %>
+              <div class="mb-3">
+                <%= label_tag :email, 'Email', class: 'form-label' %>
+                <%= email_field_tag :email, LocalAdmin.email, class: 'form-control', required: true, autocomplete: 'username' %>
+              </div>
+              <div class="mb-3">
+                <%= label_tag :password, 'Password', class: 'form-label' %>
+                <%= password_field_tag :password, nil, class: 'form-control', required: true, autocomplete: 'current-password' %>
+              </div>
+              <%= submit_tag 'Sign in', class: 'btn btn-primary w-100' %>
+            <% end %>
+          </div>
+        <% end %>
       <% elsif !authentik_configured %>
         <p class="text-warning text-13 mb-0">No sign-in method is configured on this server.</p>
       <% end %>

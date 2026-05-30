@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-30
+
+### Changed
+- Login page hides the local account form behind a collapsed disclosure when Authentik is configured, so Authentik stays the primary sign-in path.
+
+## [0.5.0] - 2026-05-30
+
+### Added
+- Admin **Users** index with claimed jobs, last login, and Authentik-sourced admin and Prusa training state synced at sign-in.
+
 ## [0.4.13] - 2026-05-30
 
 ### Added

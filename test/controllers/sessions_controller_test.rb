@@ -19,7 +19,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'form[action=?][method=?]', '/auth/authentik', 'post' do
       assert_select 'button.btn-primary', text: /Sign in with Authentik/
     end
-    assert_select '.h-section-label', text: 'Local accounts'
+    assert_select 'details summary', text: 'Local account sign-in'
     assert_select 'form[action=?]', local_login_path do
       assert_select 'input[type=submit].btn-outline-secondary[value=?]', 'Sign in'
     end

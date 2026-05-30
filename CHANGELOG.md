@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-05-30
+
+### Fixed
+- Authentik sign-in no longer shows a stale "session expired / Invalid state" warning after a successful login.
+- OAuth state is less likely to be lost behind HTTPS reverse proxies: when `APP_PROTOCOL=https`, session cookies default to Secure and `RAILS_ASSUME_SSL` defaults to on.
+
 ## [0.4.6] - 2026-05-30
 
 ### Changed

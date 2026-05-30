@@ -29,4 +29,9 @@ class OmniauthTest < ActiveSupport::TestCase
 
     assert_not uses_deprecated_configurable
   end
+
+  test 'omniAuth allows POST for the request phase' do
+    assert_includes OmniAuth.config.allowed_request_methods, :post
+    assert OmniAuth.config.silence_get_warning
+  end
 end

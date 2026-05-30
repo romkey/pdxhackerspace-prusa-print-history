@@ -162,6 +162,37 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/session expired/i, flash[:alert].to_s)
   end
 
+  test 'auth failure redirects logged-in users without showing an error' do
+    login_as(users(:viewer))
+
+    get '/auth/failure', params: { message: 'csrf_detected', strategy: 'authentik' }
+
+    assert_redirected_to root_path
+    assert_match(/Signed in as vieweruser/, flash[:notice].to_s)
+    assert_nil flash[:alert]
+  end
+
+  test 'successful callback clears a stale failure flash' do
+    get '/auth/failure', params: { message: 'csrf_detected', strategy: 'authentik' }
+
+    assert_redirected_to login_path
+    assert_match(/session expired/i, flash[:alert].to_s)
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'developer',
+      uid: 'fresh-user@example.com',
+      info: { email: 'fresh-user@example.com', name: 'Fresh User', nickname: 'freshuser' }
+    )
+
+    post '/auth/developer/callback'
+    follow_redirect!
+
+    assert_response :success
+    assert_match(/Signed in as freshuser/, flash[:notice].to_s)
+    assert_nil flash[:alert]
+  end
+
   test 'callback reports validation errors when user cannot be saved' do
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(

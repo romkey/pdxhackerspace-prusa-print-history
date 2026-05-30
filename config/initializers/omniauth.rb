@@ -32,6 +32,9 @@ end
 
 OmniAuth.config.logger = Rails.logger
 
+OmniAuth.config.allowed_request_methods = %i[post] unless Rails.env.test?
+OmniAuth.config.silence_get_warning = true
+
 OmniAuth.config.on_failure = proc do |env|
   SessionsController.action(:failure).call(env)
 end

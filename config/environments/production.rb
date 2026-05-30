@@ -32,18 +32,19 @@ Rails.application.configure do
   # behind a reverse proxy during development. Enable RAILS_FORCE_SSL when you
   # want to require HTTPS in production.
 
-  config.assume_ssl = ENV.fetch('RAILS_ASSUME_SSL', 'false') == 'true'
+  config.assume_ssl = AppTlsConfig.assume_ssl?
 
   if ENV.fetch('RAILS_FORCE_SSL', 'false') == 'true'
     config.force_ssl = true
     ssl_options = { redirect: { exclude: ->(request) { request.path == '/up' } } }
-    ssl_options[:secure_cookies] = false if ENV.fetch('SESSION_COOKIE_SECURE', 'false') == 'false'
+    ssl_options[:secure_cookies] = false unless AppTlsConfig.secure_session_cookies?
     config.ssl_options = ssl_options
   end
 
   config.session_store :cookie_store,
-                       secure: ENV.fetch('SESSION_COOKIE_SECURE', 'false') == 'true',
-                       same_site: :lax
+                       secure: AppTlsConfig.secure_session_cookies?,
+                       same_site: :lax,
+                       httponly: true
 
   app_host = ENV.fetch('APP_HOST', 'localhost')
   app_protocol = ENV.fetch('APP_PROTOCOL', 'http')

@@ -46,6 +46,11 @@ class SessionsController < ApplicationController
   end
 
   def failure
+    if logged_in?
+      redirect_to stored_return_path, notice: "Signed in as #{current_user.display_name}."
+      return
+    end
+
     report = OmniauthFailureReporter.report(request)
     redirect_to login_path, alert: report.user_message
   end
@@ -53,7 +58,11 @@ class SessionsController < ApplicationController
   private
 
   def sign_in_user(user, auth:)
+    return_to = session[:return_to]
+    reset_session
     session[:user_id] = user.id
+    session[:return_to] = return_to if return_to.present?
+
     flash[:notice] = "Signed in as #{user.display_name}."
     training_notice = PrusaTrainingNotice.for_auth(auth, user: user)
     flash[:warning] = training_notice if training_notice.present?

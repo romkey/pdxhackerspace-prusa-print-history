@@ -46,6 +46,40 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     ENV.delete('LOCAL_ADMIN_PASSWORD')
   end
 
+  test 'authentik callback demotes a former admin without is_admin claim' do
+    @admin = users(:admin)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:authentik] = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: @admin.uid,
+      info: { email: @admin.email, name: @admin.name, nickname: @admin.username }
+    )
+
+    post '/auth/authentik/callback'
+
+    follow_redirect!
+
+    assert_response :success
+    assert_not @admin.reload.admin?
+  end
+
+  test 'authentik callback promotes user when is_admin claim is true' do
+    user = users(:viewer)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:authentik] = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: user.uid,
+      info: { email: user.email, name: user.name, nickname: user.username, is_admin: true }
+    )
+
+    post '/auth/authentik/callback'
+
+    follow_redirect!
+
+    assert_response :success
+    assert_predicate user.reload, :admin?
+  end
+
   test 'developer omniauth flow creates a user and logs them in' do
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(

@@ -32,10 +32,12 @@ module ActionDispatch
 
     def omniauth_login(user)
       OmniAuth.config.test_mode = true
+      info = { email: user.email, name: user.name, nickname: user.username }
+      info[:is_admin] = true if user.provider == 'authentik' && user.admin?
       OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
         provider: user.provider,
         uid: user.uid,
-        info: { email: user.email, name: user.name, nickname: user.username }
+        info: info
       )
       post '/auth/developer/callback'
       follow_redirect! while response.redirect?

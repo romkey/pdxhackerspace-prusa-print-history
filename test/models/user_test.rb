@@ -95,7 +95,7 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'keepme', user.reload.username
   end
 
-  test 'find_or_create_from_auth promotes admin emails from ADMIN_EMAILS' do
+  test 'find_or_create_from_auth ignores ADMIN_EMAILS without is_admin claim' do
     ENV['ADMIN_EMAILS'] = 'promoted@example.com'
     AdminEmails.reset!
 
@@ -108,8 +108,7 @@ class UserTest < ActiveSupport::TestCase
     user = User.find_or_create_from_auth(auth)
 
     assert_predicate user, :persisted?
-    assert_predicate user, :admin?
-    assert_equal 'promoted@example.com', user.email
+    assert_not user.admin?
   ensure
     ENV.delete('ADMIN_EMAILS')
     AdminEmails.reset!
@@ -154,7 +153,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.admin?
   end
 
-  test 'find_or_create_from_auth leaves admin unchanged when is_admin claim is absent' do
+  test 'find_or_create_from_auth demotes admin when is_admin claim is absent' do
     auth = OmniAuth::AuthHash.new(
       provider: @admin.provider,
       uid: @admin.uid,
@@ -165,6 +164,18 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal @admin.id, user.id
     assert_equal 'Renamed Admin', user.name
+    assert_not user.admin?
+  end
+
+  test 'find_or_create_from_auth reads is_admin from userinfo claims' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'info-admin-uid',
+      info: { email: 'info-admin@example.com', name: 'Info Admin', is_admin: true }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
     assert_predicate user, :admin?
   end
 

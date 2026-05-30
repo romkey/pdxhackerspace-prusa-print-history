@@ -43,11 +43,9 @@ class User < ApplicationRecord
   end
 
   def self.apply_admin_from_auth(user, claims)
-    if claims.key?('is_admin')
-      user.admin = truthy?(claims['is_admin'])
-    elsif AdminEmails.include?(user.email)
-      user.admin = true
-    end
+    return unless user.provider == 'authentik'
+
+    user.admin = claims.key?('is_admin') && truthy?(claims['is_admin'])
   end
 
   def self.apply_slack_from_auth(user, claims)

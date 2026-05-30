@@ -53,11 +53,8 @@ for the full list; the values you must set on a fresh install are:
   health card so you can confirm connectivity.
 - `AUTHENTIK_ISSUER`, `AUTHENTIK_CLIENT_ID`, `AUTHENTIK_CLIENT_SECRET`,
   `AUTHENTIK_REDIRECT_URI` &mdash; OpenID Connect credentials from your
-  Authentik application.
-- `ADMIN_EMAILS=you@example.com,colleague@example.com` &mdash; users
-  matching one of these emails are auto-promoted to admin on first
-  sign-in. You can also promote a user by hand:
-  `User.find_by(email: 'foo@example.com').update!(admin: true)`.
+  Authentik application. Admin access is granted only when Authentik
+  returns `is_admin: true` in the OIDC userinfo claims on each sign-in.
 - `LOCAL_ADMIN_EMAIL`, `LOCAL_ADMIN_PASSWORD`, and optionally
   `LOCAL_ADMIN_NAME` — when email and password are both set, the login
   page shows a password form that signs in as a local admin account

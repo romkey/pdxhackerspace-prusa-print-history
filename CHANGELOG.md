@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.10] - 2026-05-30
+
+### Changed
+- Authentik sign-in syncs admin status only from the `is_admin` claim. Users without it are demoted on login, even if they were admin before. `ADMIN_EMAILS` no longer grants admin on Authentik login.
+
 ## [0.4.9] - 2026-05-30
 
 ### Changed

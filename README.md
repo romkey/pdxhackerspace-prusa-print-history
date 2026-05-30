@@ -69,7 +69,7 @@ for the full list; the values you must set on a fresh install are:
   **Notifications** in the account menu. Without `SMTP_SERVER`, email is
   not offered. In development without SMTP, outgoing mail is written to
   `tmp/mail/` instead.
-- `SLACK_API_TOKEN` — bot token with `chat:write` and `files:write`;
+- `SLACK_API_TOKEN` — bot token with `chat:write`, `files:write`, and `im:write`;
   used to DM claimants who opt in and have a Slack user ID on their profile.
 
 ## Local development

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-30
+
+### Fixed
+- Slack file DMs resolve the bot–user IM channel via `conversations.open` before upload (`channel_id` must be `D…`, not `U…`).
+
+### Changed
+- Slack bot token docs now list `im:write` alongside `chat:write` and `files:write`.
+
 ## [0.4.1] - 2026-05-30
 
 ### Fixed

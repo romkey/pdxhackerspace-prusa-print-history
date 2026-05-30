@@ -6,6 +6,7 @@ module Slack
     class Error < StandardError; end
 
     POST_MESSAGE_URL = 'https://slack.com/api/chat.postMessage'.freeze
+    CONVERSATIONS_OPEN_URL = 'https://slack.com/api/conversations.open'.freeze
     GET_UPLOAD_URL = 'https://slack.com/api/files.getUploadURLExternal'.freeze
     COMPLETE_UPLOAD_URL = 'https://slack.com/api/files.completeUploadExternal'.freeze
 
@@ -25,7 +26,7 @@ module Slack
       raise Error, 'Slack API token is missing' if @token.blank?
       raise Error, 'Slack user ID is missing' if user_id.blank?
 
-      response = post(POST_MESSAGE_URL, { channel: user_id, text:, as_user: true })
+      response = post(POST_MESSAGE_URL, { channel: open_dm_channel(user_id), text: })
       raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
 
       response
@@ -52,13 +53,23 @@ module Slack
       post_file_to_upload_url(upload_info.fetch('upload_url'), file_data, content_type: attachment.content_type)
       response = post(
         COMPLETE_UPLOAD_URL,
-        channel_id: user_id,
+        channel_id: open_dm_channel(user_id),
         initial_comment: text,
         files: [{ id: upload_info.fetch('file_id'), title: filename }]
       )
       raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
 
       response
+    end
+
+    def open_dm_channel(user_id)
+      response = post(CONVERSATIONS_OPEN_URL, { users: user_id })
+      raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
+
+      channel_id = response.dig('channel', 'id')
+      raise Error, 'Slack DM channel id missing' if channel_id.blank?
+
+      channel_id
     end
 
     def attachment_filename(attachment)

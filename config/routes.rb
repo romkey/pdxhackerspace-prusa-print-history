@@ -35,6 +35,7 @@ Rails.application.routes.draw do
       get :printers
       get :users
       get :filament
+      get :attention
     end
   end
 

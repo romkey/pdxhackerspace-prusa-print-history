@@ -16,7 +16,9 @@ class PrintTimeReport
     end
 
     def by_user
-      merge_rows(User.alphabetical, rows_from_sql(user_sql))
+      rows = rows_from_sql(user_report_sql)
+      unclaimed = rows.find { |row| row.key == 'unclaimed' } || empty_row('unclaimed', 'Unclaimed')
+      merge_rows(User.alphabetical, rows.reject { |row| row.key == 'unclaimed' }) + [unclaimed]
     end
 
     def by_filament
@@ -77,19 +79,15 @@ class PrintTimeReport
     end
 
     def period_sums(table_alias)
-      week_cutoff = connection.quote(WEEK_WINDOW.ago)
-      month_cutoff = connection.quote(MONTH_WINDOW.ago)
-      duration = duration_expression(table_alias)
+      week_cutoff = ActiveRecord::Base.connection.quote(WEEK_WINDOW.ago)
+      month_cutoff = ActiveRecord::Base.connection.quote(MONTH_WINDOW.ago)
+      duration = PrintTimeAccounting.duration_sql(table_alias)
 
       <<~SQL.squish
         SUM(CASE WHEN #{table_alias}.ended_at >= #{week_cutoff} THEN #{duration} ELSE 0 END) AS week_seconds,
         SUM(CASE WHEN #{table_alias}.ended_at >= #{month_cutoff} THEN #{duration} ELSE 0 END) AS month_seconds,
         SUM(#{duration}) AS all_seconds
       SQL
-    end
-
-    def duration_expression(table_alias)
-      PrintTimeAccounting.duration_sql(table_alias)
     end
 
     def countable_jobs_clause(table_alias)
@@ -111,7 +109,7 @@ class PrintTimeReport
       SQL
     end
 
-    def user_sql
+    def user_report_sql
       <<~SQL.squish
         SELECT users.id::text AS key,
                COALESCE(NULLIF(users.username, ''), users.email) AS label,
@@ -120,12 +118,21 @@ class PrintTimeReport
         INNER JOIN users ON users.id = jobs.owner_id
         WHERE #{countable_jobs_clause('jobs')}
         GROUP BY users.id, users.username, users.email
+
+        UNION ALL
+
+        SELECT 'unclaimed' AS key,
+               'Unclaimed' AS label,
+               #{period_sums('jobs')}
+        FROM jobs
+        WHERE #{countable_jobs_clause('jobs')}
+          AND jobs.owner_id IS NULL
       SQL
     end
 
     def filament_sql
-      week_cutoff = connection.quote(WEEK_WINDOW.ago)
-      month_cutoff = connection.quote(MONTH_WINDOW.ago)
+      week_cutoff = ActiveRecord::Base.connection.quote(WEEK_WINDOW.ago)
+      month_cutoff = ActiveRecord::Base.connection.quote(MONTH_WINDOW.ago)
 
       <<~SQL.squish
         SELECT material AS key,
@@ -143,7 +150,7 @@ class PrintTimeReport
     end
 
     def filament_tool_shares_sql
-      duration = duration_expression('jobs')
+      duration = PrintTimeAccounting.duration_sql('jobs')
 
       <<~SQL.squish
         SELECT jobs.ended_at,
@@ -161,7 +168,7 @@ class PrintTimeReport
     end
 
     def filament_unknown_shares_sql
-      duration = duration_expression('jobs')
+      duration = PrintTimeAccounting.duration_sql('jobs')
 
       <<~SQL.squish
         SELECT jobs.ended_at,
@@ -172,10 +179,6 @@ class PrintTimeReport
         WHERE #{countable_jobs_clause('jobs')}
           AND tools.id IS NULL
       SQL
-    end
-
-    def connection
-      ActiveRecord::Base.connection
     end
   end
 end

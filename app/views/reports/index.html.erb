@@ -3,7 +3,7 @@
     <div>
       <h1 class="h-page-title mb-0">Reports</h1>
       <div class="text-13 text-secondary mt-1">
-        Admin-only cumulative print time
+        Admin-only usage and reliability reports
       </div>
     </div>
   </div>
@@ -37,6 +37,17 @@
           <div class="h-section-label mb-2">Filament</div>
           <p class="text-13 text-secondary mb-0">
             Print time by material for the last 7 days, 30 days, and all time.
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="col-md-4">
+      <%= link_to attention_reports_path, class: 'card h-100 text-decoration-none' do %>
+        <div class="card-body">
+          <div class="h-section-label mb-2">Attention</div>
+          <p class="text-13 text-secondary mb-0">
+            Attention events by printer for the last 7 days, 30 days, and all time.
           </p>
         </div>
       <% end %>

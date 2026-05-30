@@ -1,0 +1,14 @@
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item">
+    <%= link_to 'Print time · Printers', printers_reports_path, class: reports_nav_class(:printers) %>
+  </li>
+  <li class="nav-item">
+    <%= link_to 'Print time · Users', users_reports_path, class: reports_nav_class(:users) %>
+  </li>
+  <li class="nav-item">
+    <%= link_to 'Print time · Filament', filament_reports_path, class: reports_nav_class(:filament) %>
+  </li>
+  <li class="nav-item">
+    <%= link_to 'Attention · Printers', attention_reports_path, class: reports_nav_class(:attention) %>
+  </li>
+</ul>

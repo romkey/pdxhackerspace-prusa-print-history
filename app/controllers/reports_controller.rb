@@ -18,6 +18,12 @@ class ReportsController < ApplicationController
     render :report
   end
 
+  def attention
+    @rows = AttentionEventsReport.by_printer
+    @chart_series = AttentionEventsReport.chart_series(@rows)
+    render :attention
+  end
+
   private
 
   def load_report(report_type)

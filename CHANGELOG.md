@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-05-30
+
+### Added
+- **Attention events by printer** report with table and chart for the last 7 days, 30 days, and all time.
+- **Unclaimed** row on the print-time-by-user report for terminal jobs with no owner.
+
+### Changed
+- Reports index and sub-navigation cover print-time and attention reports together.
+
 ## [0.6.3] - 2026-05-30
 
 ### Fixed

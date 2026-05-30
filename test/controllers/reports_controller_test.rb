@@ -22,6 +22,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select 'h1', text: 'Reports'
     assert_select 'a.nav-link.active', text: 'Reports'
+    assert_select 'a[href=?]', attention_reports_path
   end
 
   test 'admins can view print time sub-reports' do
@@ -37,12 +38,35 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'h1', text: 'Print time by user'
+    assert_match(/Unclaimed/, response.body)
 
     get filament_reports_path
 
     assert_response :success
     assert_select 'h1', text: 'Print time by filament'
     assert_match(/PLA/, response.body)
+  end
+
+  test 'users print time report shows unclaimed row and duration' do
+    login_as(users(:admin))
+
+    get users_reports_path
+
+    assert_response :success
+    assert_select 'td', text: 'Unclaimed'
+    assert_match(/1h 30m|1h/, response.body)
+  end
+
+  test 'admins can view attention events report' do
+    login_as(users(:admin))
+
+    get attention_reports_path
+
+    assert_response :success
+    assert_select 'h1', text: 'Attention events by printer'
+    assert_select 'a.nav-link.active', text: 'Attention · Printers'
+    assert_select 'td', text: 'Prusa MK4'
+    assert_select 'td.num', text: '1'
   end
 
   test 'navbar shows reports link only for admins' do

@@ -12,6 +12,22 @@ active_xl_attention:
   message: Filament runout sensor triggered
   occurred_at: <%= 5.minutes.ago.iso8601 %>
 
+xl_attention:
+  job: active_xl
+  event_type: attention
+  from_status: printing
+  to_status: attention
+  message: Pause requested from printer
+  occurred_at: <%= 2.days.ago.iso8601 %>
+
+mini_attention_old:
+  job: finished_old
+  event_type: attention
+  from_status: printing
+  to_status: attention
+  message: Heatbed thermal runaway prevented
+  occurred_at: <%= 40.days.ago.iso8601 %>
+
 finished_done:
   job: finished
   event_type: finished

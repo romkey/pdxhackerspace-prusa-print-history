@@ -27,4 +27,26 @@ module ReportsHelper
       ]
     )
   end
+
+  def attention_events_report_summary(rows)
+    total_count = rows.sum(&:all_count)
+    active_count = rows.count { |row| row.all_count.positive? }
+
+    safe_join(
+      [
+        tag.span(active_count, class: 'text-body'),
+        ' with attention events · ',
+        tag.span(total_count, class: total_count.positive? ? 'text-body fw-medium' : 'text-secondary'),
+        ' total'
+      ]
+    )
+  end
+
+  def format_report_count_cell(count)
+    if count.to_i <= 0
+      tag.span('—', class: 'text-secondary')
+    else
+      count.to_i
+    end
+  end
 end

@@ -1,6 +1,4 @@
 class DashboardController < ApplicationController
-  before_action :require_login_or_internal
-
   def index
     @printers = Printer.ordered.includes(:printer_heads, photo_captures: { image_attachment: :blob })
     active_jobs = Job.active

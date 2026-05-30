@@ -12,10 +12,10 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     InternalNetworks.reset!
   end
 
-  test 'external anonymous users are redirected to login for status pages' do
+  test 'external anonymous users can view the dashboard but not other status pages' do
     get root_path, headers: external_request_headers
 
-    assert_redirected_to login_path
+    assert_response :success
 
     get jobs_path, headers: external_request_headers
 

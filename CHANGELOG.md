@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-05-30
+
 ### Fixed
 - Slack file upload requests use form encoding for `files.getUploadURLExternal` and multipart upload to the presigned URL (fixes `invalid_arguments` after v2 migration).
+- The printer dashboard at `/` is public again; sign-in is only required for jobs, printers, and other pages when visiting from outside `INTERNAL_NETWORKS`.
 
 ## [0.4.2] - 2026-05-30
 

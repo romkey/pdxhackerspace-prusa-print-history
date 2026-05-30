@@ -6,6 +6,22 @@ class EndToEndFlowTest < ActionDispatch::IntegrationTest
     @job     = jobs(:active_xl)
   end
 
+  test 'anonymous viewer off the internal network can only view the dashboard' do
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_select 'a', text: /Sign in/
+    assert_select 'a.nav-link', text: 'Jobs', count: 0
+
+    get jobs_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+
+    get printers_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+  end
+
   test 'anonymous viewer on the internal network can browse status pages but sees no admin affordances' do
     get root_path
 

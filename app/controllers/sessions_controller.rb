@@ -8,7 +8,7 @@ class SessionsController < ApplicationController
   def create
     auth = auth_hash
     AuthentikDebug.log_auth_hash(auth)
-    sign_in_user(User.find_or_create_from_auth(auth))
+    sign_in_user(User.find_or_create_from_auth(auth), auth: auth)
   rescue KeyError => e
     handle_sign_in_error(
       e,
@@ -52,9 +52,12 @@ class SessionsController < ApplicationController
 
   private
 
-  def sign_in_user(user)
+  def sign_in_user(user, auth:)
     session[:user_id] = user.id
-    redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
+    flash[:notice] = "Signed in as #{user.display_name}."
+    training_notice = PrusaTrainingNotice.for_auth(auth, user: user)
+    flash[:warning] = training_notice if training_notice.present?
+    redirect_to stored_return_path
   end
 
   def handle_sign_in_error(error, context:, message: nil)

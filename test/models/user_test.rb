@@ -246,6 +246,40 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'UVIEWER123', user.reload.slack_id
   end
 
+  test 'trained_on? matches Prusa from array claims' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'trained-uid',
+      info: { email: 'trained@example.com', name: 'Trained User' },
+      extra: { raw_info: { trained_on: %w[Laser prusa] } }
+    )
+
+    assert User.trained_on?(auth, 'Prusa')
+    assert_not User.trained_on?(auth, 'Woodshop')
+  end
+
+  test 'trained_on_names reads hash entries with name keys' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'hash-trained-uid',
+      info: { email: 'hash@example.com', name: 'Hash User' },
+      extra: { raw_info: { trained_on: [{ 'name' => 'Prusa' }, { 'title' => 'Laser' }] } }
+    )
+
+    assert_equal %w[Prusa Laser], User.trained_on_names(auth)
+  end
+
+  test 'trained_on? is false when trained_on claim is absent' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'no-trained-uid',
+      info: { email: 'no-trained@example.com', name: 'No Trained User' }
+    )
+
+    assert_empty User.trained_on_names(auth)
+    assert_not User.trained_on?(auth, 'Prusa')
+  end
+
   test 'normalizes slack_handle by stripping @ prefix' do
     user = users(:viewer)
     user.slack_handle = '@makerbot'

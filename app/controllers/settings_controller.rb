@@ -9,6 +9,8 @@ class SettingsController < ApplicationController
     @footer_text        = Setting.footer_text
     @footer_link_label  = Setting.footer_link_label
     @footer_link_url    = Setting.footer_link_url
+    @prusa_untrained_message = Setting.prusa_untrained_message
+    @prusa_trained_account_message = Setting.prusa_trained_account_message
   end
 
   def update
@@ -19,6 +21,8 @@ class SettingsController < ApplicationController
     Setting.footer_text = settings[:footer_text]
     Setting.footer_link_label = settings[:footer_link_label]
     Setting.footer_link_url = settings[:footer_link_url]
+    Setting.prusa_untrained_message = settings[:prusa_untrained_message]
+    Setting.prusa_trained_account_message = settings[:prusa_trained_account_message]
     redirect_to settings_path, notice: 'Settings saved.'
   end
 end

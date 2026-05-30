@@ -54,6 +54,17 @@ class User < ApplicationRecord
     apply_slack_hash(user, claims['slack'])
   end
 
+  def self.trained_on?(auth, name)
+    trained_on_names(auth).any? { |training| training.casecmp?(name.to_s) }
+  end
+
+  def self.trained_on_names(auth)
+    claims = auth_claims(auth)
+    return [] unless claims.key?('trained_on')
+
+    normalize_trained_on(claims['trained_on'])
+  end
+
   def self.apply_slack_hash(user, slack)
     return clear_slack!(user) unless slack.is_a?(Hash)
 
@@ -94,11 +105,34 @@ class User < ApplicationRecord
 
   def self.claim_value_present?(value)
     return true if value.is_a?(TrueClass) || value.is_a?(FalseClass) || value.is_a?(Hash)
+    return true if value.is_a?(Array)
 
     value.present?
   end
+
+  def self.normalize_trained_on(value)
+    case value
+    when Array
+      value.filter_map { |entry| trained_on_entry_name(entry) }
+    when String
+      value.split(',').filter_map { |entry| entry.to_s.strip.presence }
+    else
+      name = trained_on_entry_name(value)
+      name ? [name] : []
+    end
+  end
+
+  def self.trained_on_entry_name(entry)
+    case entry
+    when Hash
+      claim_value(entry, 'name') || claim_value(entry, 'title')
+    else
+      entry.to_s.strip.presence
+    end
+  end
   private_class_method :apply_admin_from_auth, :apply_slack_from_auth, :apply_slack_hash, :apply_username_from_auth,
-                       :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :truthy?, :auth_claims
+                       :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :normalize_trained_on,
+                       :trained_on_entry_name, :truthy?, :auth_claims
 
   def display_name
     username.presence || email

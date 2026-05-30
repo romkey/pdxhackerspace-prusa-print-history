@@ -45,6 +45,24 @@
                               class: 'form-control', placeholder: 'https://example.com/faq' %>
           </div>
         </div>
+
+        <hr class="my-4">
+
+        <div class="h-section-label">Prusa training notice</div>
+        <p class="text-13 text-secondary mb-3">
+          Shown as a warning when a member signs in via Authentik without Prusa in their
+          <code>trained_on</code> claim.
+        </p>
+        <div class="mb-3">
+          <%= label_tag 'settings[prusa_untrained_message]', 'Not trained message', class: 'form-label' %>
+          <%= text_area_tag 'settings[prusa_untrained_message]', @prusa_untrained_message,
+                            class: 'form-control', rows: 3 %>
+        </div>
+        <div class="mb-0">
+          <%= label_tag 'settings[prusa_trained_account_message]', 'Already trained message', class: 'form-label' %>
+          <%= text_area_tag 'settings[prusa_trained_account_message]', @prusa_trained_account_message,
+                            class: 'form-control', rows: 2 %>
+        </div>
       <% end %>
     </div>
   </div>

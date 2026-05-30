@@ -66,6 +66,21 @@ class SettingTest < ActiveSupport::TestCase
     assert_equal 'https://example.com/faq', Setting.footer_link_url
   end
 
+  test 'prusa training messages default when unset and can be cleared' do
+    assert_equal Setting::DEFAULT_PRUSA_UNTRAINED_MESSAGE, Setting.prusa_untrained_message
+    assert_equal Setting::DEFAULT_PRUSA_TRAINED_ACCOUNT_MESSAGE, Setting.prusa_trained_account_message
+
+    Setting.prusa_untrained_message = 'Custom untrained.'
+    Setting.prusa_trained_account_message = 'Custom account.'
+
+    assert_equal 'Custom untrained.', Setting.prusa_untrained_message
+    assert_equal 'Custom account.', Setting.prusa_trained_account_message
+
+    Setting.prusa_trained_account_message = '   '
+
+    assert_nil Setting.prusa_trained_account_message
+  end
+
   test 'home_assistant_health returns a hash with parsed timestamp' do
     Setting.set(:ha_last_status, 'ok')
     Setting.set(:ha_last_polled_at, Time.zone.parse('2026-05-25 10:00:00').iso8601)

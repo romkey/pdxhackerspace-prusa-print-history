@@ -24,6 +24,43 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/Signed in as freshuser/, flash[:notice].to_s)
+    assert_nil flash[:warning]
+  end
+
+  test 'authentik callback warns when member lacks Prusa training' do
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'untrained-uid',
+      info: { email: 'untrained@example.com', name: 'Untrained User', nickname: 'untrained' },
+      extra: { raw_info: { trained_on: ['Laser'] } }
+    )
+
+    post '/auth/developer/callback'
+
+    follow_redirect!
+
+    assert_response :success
+    assert_match(/Signed in as untrained/, flash[:notice].to_s)
+    assert_includes flash[:warning], Setting::DEFAULT_PRUSA_UNTRAINED_MESSAGE
+    assert_includes flash[:warning], Setting::DEFAULT_PRUSA_TRAINED_ACCOUNT_MESSAGE
+  end
+
+  test 'authentik callback does not warn when member is trained on Prusa' do
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'trained-uid',
+      info: { email: 'trained@example.com', name: 'Trained User', nickname: 'trained' },
+      extra: { raw_info: { trained_on: %w[Prusa Laser] } }
+    )
+
+    post '/auth/developer/callback'
+
+    follow_redirect!
+
+    assert_response :success
+    assert_nil flash[:warning]
   end
 
   test 'callback logs auth hash when AUTHENTIK_DEBUG is enabled' do

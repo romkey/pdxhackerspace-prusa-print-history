@@ -20,6 +20,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'h1', text: /Settings/
+    assert_select 'textarea[name="settings[prusa_untrained_message]"]'
+    assert_select 'textarea[name="settings[prusa_trained_account_message]"]'
   end
 
   test 'admins can update settings' do
@@ -30,7 +32,9 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
         dashboard_heading: 'PDX Hackerspace 3D Printers',
         footer_text: 'PDX Hackerspace 3D Printing',
         footer_link_label: 'FAQ',
-        footer_link_url: 'https://example.com/faq'
+        footer_link_url: 'https://example.com/faq',
+        prusa_untrained_message: 'Do not print without training.',
+        prusa_trained_account_message: 'Ask for Prusa on your account.'
       }
     }
 
@@ -40,6 +44,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'PDX Hackerspace 3D Printing', Setting.footer_text
     assert_equal 'FAQ', Setting.footer_link_label
     assert_equal 'https://example.com/faq', Setting.footer_link_url
+    assert_equal 'Do not print without training.', Setting.prusa_untrained_message
+    assert_equal 'Ask for Prusa on your account.', Setting.prusa_trained_account_message
   end
 
   test 'non-admins cannot update settings' do

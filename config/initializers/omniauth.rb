@@ -5,11 +5,12 @@ require Rails.root.join('lib/omniauth/strategies/authentik')
 # OIDC claims parameter (JSON) — ask Authentik for admin status on each sign-in.
 AUTHENTIK_CLAIMS = {
   userinfo: {
-    is_admin: nil
+    is_admin: nil,
+    trained_on: nil
   }
 }.freeze
 
-AUTHENTIK_SCOPES = %i[openid email profile slack].freeze
+AUTHENTIK_SCOPES = %i[openid email profile slack trained_on].freeze
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   if issuer.present?

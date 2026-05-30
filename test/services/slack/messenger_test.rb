@@ -45,11 +45,12 @@ class SlackMessengerTest < ActiveSupport::TestCase
   test 'dm raises on slack api error with response metadata' do
     messenger = Slack::Messenger.new(token: 'xoxb-test')
     messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-      messenger.stub(:post_json, {
+      api_error = {
         'ok' => false,
         'error' => 'invalid_arguments',
         'response_metadata' => { 'messages' => ['[ERROR] bad channel [json-pointer:/channel]'] }
-      }) do
+      }
+      messenger.stub(:post_json, api_error) do
         error = assert_raises(Slack::Messenger::Error) do
           messenger.dm(user_id: 'U404', text: 'hi')
         end
@@ -152,7 +153,7 @@ class SlackMessengerTest < ActiveSupport::TestCase
       )
     end
 
-    assert_match(/multipart\/form-data/, captured_request['Content-Type'])
+    assert_match(%r{multipart/form-data}, captured_request['Content-Type'])
     assert_includes captured_request.body, 'name="filename"'
     assert_includes captured_request.body, 'final.jpg'
     assert_includes captured_request.body, 'binary-data'

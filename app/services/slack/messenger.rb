@@ -48,18 +48,27 @@ module Slack
 
       file_data = attachment.download
       filename = attachment_filename(attachment)
-      upload_info = post_form(
-        GET_UPLOAD_URL,
-        { filename:, length: file_data.bytesize.to_s }
-      )
-      assert_ok!(upload_info, 'files.getUploadURLExternal')
+      upload_info = request_upload_url(filename, file_data)
+      deliver_uploaded_file(upload_info, file_data, filename:, content_type: attachment.content_type)
+      finalize_upload(user_id:, text:, upload_info:, filename:)
+    end
 
+    def request_upload_url(filename, file_data)
+      upload_info = post_form(GET_UPLOAD_URL, { filename:, length: file_data.bytesize.to_s })
+      assert_ok!(upload_info, 'files.getUploadURLExternal')
+      upload_info
+    end
+
+    def deliver_uploaded_file(upload_info, file_data, filename:, content_type:)
       post_file_to_upload_url(
         upload_info.fetch('upload_url'),
         file_data,
         filename:,
-        content_type: attachment.content_type
+        content_type:
       )
+    end
+
+    def finalize_upload(user_id:, text:, upload_info:, filename:)
       response = post_json(
         COMPLETE_UPLOAD_URL,
         channel_id: open_dm_channel(user_id),
@@ -67,7 +76,6 @@ module Slack
         files: [{ id: upload_info.fetch('file_id'), title: filename }]
       )
       assert_ok!(response, 'files.completeUploadExternal')
-
       response
     end
 

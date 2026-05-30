@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.11] - 2026-05-30
+
+### Changed
+- Authentik OIDC requests `is_admin` as a scope instead of a userinfo claim.
+
 ## [0.4.10] - 2026-05-30
 
 ### Changed

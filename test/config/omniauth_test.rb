@@ -1,17 +1,19 @@
 require 'test_helper'
 
 class OmniauthTest < ActiveSupport::TestCase
-  test 'Authentik authorize requests slack and trained_on scopes' do
-    assert_equal %i[openid email profile slack trained_on], AUTHENTIK_SCOPES
+  test 'Authentik authorize requests slack, trained_on, and is_admin scopes' do
+    assert_equal %i[openid email profile slack trained_on is_admin], AUTHENTIK_SCOPES
     assert_not_includes AUTHENTIK_SCOPES, :has_slack
     assert_includes AUTHENTIK_SCOPES, :slack
     assert_includes AUTHENTIK_SCOPES, :trained_on
+    assert_includes AUTHENTIK_SCOPES, :is_admin
   end
 
-  test 'Authentik authorize requests is_admin and trained_on claims' do
+  test 'Authentik authorize requests trained_on claim only' do
     claims = JSON.parse(AUTHENTIK_CLAIMS.to_json)
 
-    assert_equal %w[is_admin trained_on], claims.fetch('userinfo').keys.sort
+    assert_equal %w[trained_on], claims.fetch('userinfo').keys
+    assert_not claims.fetch('userinfo').key?('is_admin')
     assert_not claims.fetch('userinfo').key?('slack')
   end
 

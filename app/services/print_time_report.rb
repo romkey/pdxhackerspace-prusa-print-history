@@ -4,6 +4,12 @@ class PrintTimeReport
   WEEK_WINDOW = 7.days
   MONTH_WINDOW = 30.days
 
+  CHART_PERIODS = [
+    ['Last 7 days', :week_seconds],
+    ['Last 30 days', :month_seconds],
+    ['All time', :all_seconds]
+  ].freeze
+
   class << self
     def by_printer
       merge_rows(Printer.ordered, rows_from_sql(printer_sql))
@@ -18,24 +24,20 @@ class PrintTimeReport
     end
 
     def chart_series(rows, limit: 10)
-      rows.sort_by { |row| [-row.all_seconds, row.label.downcase] }
-          .first(limit)
-          .filter_map { |row| chart_row(row) }
+      top_rows = chartable_rows(rows, limit)
+      return [] if top_rows.empty?
+
+      CHART_PERIODS.map do |label, accessor|
+        { name: label, data: top_rows.map { |row| [row.label, hours(row.public_send(accessor))] } }
+      end
     end
 
     private
 
-    def chart_row(row)
-      return if row.week_seconds.zero? && row.month_seconds.zero? && row.all_seconds.zero?
-
-      [
-        row.label,
-        [
-          ['Last 7 days', hours(row.week_seconds)],
-          ['Last 30 days', hours(row.month_seconds)],
-          ['All time', hours(row.all_seconds)]
-        ]
-      ]
+    def chartable_rows(rows, limit)
+      rows.sort_by { |row| [-row.all_seconds, row.label.downcase] }
+          .first(limit)
+          .reject { |row| row.week_seconds.zero? && row.month_seconds.zero? && row.all_seconds.zero? }
     end
 
     def hours(seconds)
@@ -122,23 +124,17 @@ class PrintTimeReport
     end
 
     def filament_sql
-      <<~SQL.squish
-        SELECT material AS key,
-               material AS label,
-               #{filament_period_sums}
-        FROM (#{filament_shares_sql}) AS filament_shares
-        GROUP BY material
-      SQL
-    end
-
-    def filament_period_sums
       week_cutoff = connection.quote(WEEK_WINDOW.ago)
       month_cutoff = connection.quote(MONTH_WINDOW.ago)
 
       <<~SQL.squish
-        SUM(CASE WHEN ended_at >= #{week_cutoff} THEN share_seconds ELSE 0 END)::bigint AS week_seconds,
-        SUM(CASE WHEN ended_at >= #{month_cutoff} THEN share_seconds ELSE 0 END)::bigint AS month_seconds,
-        SUM(share_seconds)::bigint AS all_seconds
+        SELECT material AS key,
+               material AS label,
+               SUM(CASE WHEN ended_at >= #{week_cutoff} THEN share_seconds ELSE 0 END)::bigint AS week_seconds,
+               SUM(CASE WHEN ended_at >= #{month_cutoff} THEN share_seconds ELSE 0 END)::bigint AS month_seconds,
+               SUM(share_seconds)::bigint AS all_seconds
+        FROM (#{filament_shares_sql}) AS filament_shares
+        GROUP BY material
       SQL
     end
 

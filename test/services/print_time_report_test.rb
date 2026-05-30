@@ -30,11 +30,14 @@ class PrintTimeReportTest < ActiveSupport::TestCase
     assert_equal 1800, rows['PETG'].all_seconds
   end
 
-  test 'chart_series converts seconds to hours for chartkick' do
+  test 'chart_series converts seconds to hours for chartkick multi-series format' do
     rows = PrintTimeReport.by_printer
     series = PrintTimeReport.chart_series(rows, limit: 2)
 
-    assert_equal 'Prusa XL', series.first.first
-    assert_in_delta 2.0, series.first.last.find { |label, _| label == 'All time' }.last
+    assert_equal 'Last 7 days', series.first[:name]
+    xl = series.first[:data].find { |label, _| label == 'Prusa XL' }
+
+    assert_in_delta 2.0, xl.last, 0.01
+    assert(series.all? { |entry| entry.key?(:name) && entry.key?(:data) })
   end
 end

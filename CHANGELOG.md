@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-05-30
+
+### Fixed
+- Report charts now render grouped bars correctly by using Chartkick's multi-series data format.
+
 ## [0.6.1] - 2026-05-30
 
 ### Fixed

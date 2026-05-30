@@ -1,0 +1,89 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0">Users</h1>
+      <div class="text-13 text-secondary mt-1">
+        <%= pluralize(@users.size, 'user') %>
+      </div>
+    </div>
+  </div>
+
+  <% if @users.any? %>
+    <div class="card">
+      <table class="table table-compact mb-0">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Admin</th>
+            <th>Prusa</th>
+            <th>Slack</th>
+            <th>Notifications</th>
+            <th>Last login</th>
+            <th>Claimed jobs</th>
+            <th>Auth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <% claimed_jobs = user_claimed_jobs(user) %>
+            <tr>
+              <td>
+                <span class="fw-medium"><%= user.display_name %></span>
+                <% if user.username.present? && user.username != user.display_name %>
+                  <div class="text-12 text-secondary"><%= user.username %></div>
+                <% end %>
+              </td>
+              <td class="text-secondary text-13"><%= user.email %></td>
+              <td class="text-secondary text-13"><%= user.name.presence || '—' %></td>
+              <td class="text-13" title="<%= user_access_title(user) %>"><%= user_admin_label(user) %></td>
+              <td class="text-13" title="<%= user_access_title(user) %>"><%= user_prusa_training_label(user) %></td>
+              <td class="text-secondary text-13">
+                <% if user.slack_handle.present? || user.slack_id.present? %>
+                  <% if user.slack_handle.present? %>
+                    @<%= user.slack_handle %>
+                  <% end %>
+                  <% if user.slack_id.present? %>
+                    <div class="text-12"><%= user.slack_id %></div>
+                  <% end %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td class="text-secondary text-13">
+                Email <%= user_notification_label(user.notify_via_email?) %>
+                · Slack <%= user_notification_label(user.notify_via_slack?) %>
+              </td>
+              <td class="text-secondary text-13" title="<%= user_last_login_title(user) %>">
+                <%= user_last_login_label(user) %>
+              </td>
+              <td class="text-13">
+                <% if claimed_jobs.any? %>
+                  <% claimed_jobs.each_with_index do |job, index| %>
+                    <% if index.positive? %><span class="text-secondary">, </span><% end %>
+                    <%= link_to job.filename, job_path(job), class: 'text-decoration-none' %>
+                  <% end %>
+                <% else %>
+                  <span class="text-secondary">—</span>
+                <% end %>
+              </td>
+              <td class="text-secondary text-12">
+                <%= user.provider %>
+                <div><%= user.uid %></div>
+                <div class="mt-1" title="<%= l(user.created_at, format: :precise) %>">
+                  Created <%= l(user.created_at, format: :short) %>
+                </div>
+                <div title="<%= l(user.updated_at, format: :precise) %>">
+                  Updated <%= l(user.updated_at, format: :short) %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-secondary">No users yet.</p>
+  <% end %>
+</div>

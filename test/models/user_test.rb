@@ -179,6 +179,45 @@ class UserTest < ActiveSupport::TestCase
     assert_predicate user, :admin?
   end
 
+  test 'find_or_create_from_auth syncs trained_on_prusa from trained_on claim' do
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'trained-uid',
+      info: { email: 'trained@example.com', name: 'Trained User' },
+      extra: { raw_info: { trained_on: %w[Laser Prusa] } }
+    )
+
+    user = User.find_or_create_from_auth(auth)
+
+    assert user.trained_on_prusa?
+
+    auth = OmniAuth::AuthHash.new(
+      provider: 'authentik',
+      uid: 'trained-uid',
+      info: { email: 'trained@example.com', name: 'Trained User' },
+      extra: { raw_info: { trained_on: ['Laser'] } }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_not user.reload.trained_on_prusa?
+  end
+
+  test 'find_or_create_from_auth clears trained_on_prusa when trained_on claim is absent' do
+    user = users(:viewer)
+    user.update!(trained_on_prusa: true)
+
+    auth = OmniAuth::AuthHash.new(
+      provider: user.provider,
+      uid: user.uid,
+      info: { email: user.email, name: user.name }
+    )
+
+    User.find_or_create_from_auth(auth)
+
+    assert_not user.reload.trained_on_prusa?
+  end
+
   test 'find_or_create_from_auth stores slack fields from slack claim' do
     auth = OmniAuth::AuthHash.new(
       provider: 'authentik',
@@ -337,5 +376,15 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.wants_slack_notifications?
   ensure
     ENV.delete('SLACK_API_TOKEN')
+  end
+
+  test 'record_login! stores last_login_at' do
+    user = users(:viewer)
+
+    travel_to Time.zone.parse('2026-05-30 12:00:00') do
+      user.record_login!
+
+      assert_in_delta Time.current, user.reload.last_login_at, 1.second
+    end
   end
 end

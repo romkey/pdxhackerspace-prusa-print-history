@@ -11,6 +11,10 @@ class User < ApplicationRecord
   normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
   normalizes :slack_id, with: ->(value) { value.to_s.strip.presence }
 
+  scope :alphabetical, lambda {
+    order(Arel.sql("LOWER(COALESCE(NULLIF(username, ''), email)) ASC"))
+  }
+
   attribute :notify_via_email, :boolean, default: true
   attribute :notify_via_slack, :boolean, default: true
 
@@ -21,6 +25,7 @@ class User < ApplicationRecord
     claims = auth_claims(auth)
     apply_username_from_auth(user, auth, claims)
     apply_admin_from_auth(user, claims)
+    apply_trained_on_from_auth(user, auth)
     apply_slack_from_auth(user, claims)
     user.save!
     user
@@ -46,6 +51,12 @@ class User < ApplicationRecord
     return unless user.provider == 'authentik'
 
     user.admin = claims.key?('is_admin') && truthy?(claims['is_admin'])
+  end
+
+  def self.apply_trained_on_from_auth(user, auth)
+    return unless user.provider == 'authentik'
+
+    user.trained_on_prusa = trained_on?(auth, 'Prusa')
   end
 
   def self.apply_slack_from_auth(user, claims)
@@ -130,12 +141,17 @@ class User < ApplicationRecord
       entry.to_s.strip.presence
     end
   end
-  private_class_method :apply_admin_from_auth, :apply_slack_from_auth, :apply_slack_hash, :apply_username_from_auth,
+  private_class_method :apply_admin_from_auth, :apply_trained_on_from_auth, :apply_slack_from_auth,
+                       :apply_slack_hash, :apply_username_from_auth,
                        :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :normalize_trained_on,
                        :trained_on_entry_name, :truthy?, :auth_claims
 
   def display_name
     username.presence || email
+  end
+
+  def record_login!
+    update!(last_login_at: Time.current)
   end
 
   def email_notifications_available?

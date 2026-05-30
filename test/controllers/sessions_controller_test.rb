@@ -80,6 +80,17 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate user.reload, :admin?
   end
 
+  test 'sign-in records last login time' do
+    user = users(:viewer)
+    user.update!(last_login_at: 1.week.ago)
+
+    travel_to Time.zone.parse('2026-05-30 12:00:00') do
+      login_as(user)
+
+      assert_in_delta Time.current, user.reload.last_login_at, 1.second
+    end
+  end
+
   test 'developer omniauth flow creates a user and logs them in' do
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(

@@ -34,6 +34,7 @@ class SessionsController < ApplicationController
     user = LocalAdmin.authenticate(params[:email], params[:password])
     if user
       session[:user_id] = user.id
+      user.record_login!
       redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
     else
       redirect_to login_path, alert: 'Invalid email or password.'
@@ -61,6 +62,7 @@ class SessionsController < ApplicationController
     return_to = session[:return_to]
     reset_session
     session[:user_id] = user.id
+    user.record_login!
     session[:return_to] = return_to if return_to.present?
 
     flash[:notice] = "Signed in as #{user.display_name}."

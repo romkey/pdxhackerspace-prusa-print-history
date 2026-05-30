@@ -5,6 +5,7 @@ admin:
   provider: authentik
   uid: admin-uid-1
   admin: true
+  trained_on_prusa: true
 
 viewer:
   email: viewer@example.com
@@ -13,6 +14,7 @@ viewer:
   provider: authentik
   uid: viewer-uid-2
   admin: false
+  trained_on_prusa: false
   slack_id: UVIEWER123
   slack_handle: vieweruser
   notify_via_email: true
@@ -25,3 +27,4 @@ other_viewer:
   provider: authentik
   uid: viewer-uid-3
   admin: false
+  trained_on_prusa: false

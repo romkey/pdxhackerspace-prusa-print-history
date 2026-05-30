@@ -28,6 +28,8 @@ Rails.application.routes.draw do
 
   resources :events, only: %i[index]
 
+  resources :users, only: %i[index]
+
   resource :profile, only: %i[show update]
 
   resources :label_printers, path: 'settings/label_printers' do

@@ -5,27 +5,51 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path, headers: external_request_headers
 
     assert_response :success
-    assert_select 'h1', text: /Prusa Print History/
-    assert_select '[data-controller="clock"] time'
+    assert_select '.dashboard-clock time'
+    assert_select 'h1', count: 0
   end
 
   test 'anonymous visitors on the internal network can view the dashboard' do
     get root_path
 
     assert_response :success
-    assert_select 'h1', text: /Prusa Print History/
-    assert_select '[data-controller="clock"] time'
+    assert_select '.dashboard-clock time'
+    assert_select 'h1', count: 0
   end
 
-  test 'dashboard uses configured heading' do
+  test 'dashboard ignores configured heading and shows only the clock' do
     Setting.dashboard_heading = 'PDX Hackerspace 3D Printers'
 
     get root_path
 
     assert_response :success
-    assert_select 'h1', text: 'PDX Hackerspace 3D Printers'
+    assert_select 'h1', count: 0
+    assert_no_match(/PDX Hackerspace 3D Printers/, response.body)
+    assert_select '.dashboard-clock time'
   ensure
     Setting.dashboard_heading = nil
+  end
+
+  test 'dashboard idle cards show green dot when PrusaLink is reachable' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .status-dot.status-success', minimum: 1
+  end
+
+  test 'dashboard idle cards show red dot when PrusaLink is unreachable' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .status-dot.status-danger', minimum: 1
   end
 
   test 'logged-in users can view the dashboard' do
@@ -147,11 +171,11 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card img.dashboard-image[alt=?]', 'Preview of cube.gcode'
   end
 
-  test 'anonymous navbar off the internal network shows only sign in' do
+  test 'anonymous navbar off the internal network shows only sign in on the right' do
     get root_path, headers: external_request_headers
 
     assert_response :success
-    assert_select 'a.nav-link', text: 'Sign in'
+    assert_select 'ul.navbar-nav.ms-auto a.nav-link', text: 'Sign in'
     assert_select 'a.nav-link', text: 'Jobs', count: 0
     assert_select 'a.nav-link', text: 'Printers', count: 0
   end
@@ -185,18 +209,36 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/PDX Hackerspace 3D Printing/, response.body)
     assert_select 'footer a[href=?]', 'https://example.com/faq', text: 'FAQ'
+    assert_select 'footer a[href=?]', ApplicationHelper::PDX_HACKERSPACE_URL, text: 'PDX Hackerspace'
+    assert_select 'footer a[href=?]', ApplicationHelper::GITHUB_REPO_URL, text: 'GitHub'
   ensure
     Setting.footer_text = nil
     Setting.footer_link_label = nil
     Setting.footer_link_url = nil
   end
 
-  test 'layout footer falls back to version and GitHub link' do
+  test 'layout footer falls back to app name, PDX Hackerspace, and GitHub links' do
     get root_path
 
     assert_response :success
-    assert_match(/Prusa Print History v#{Regexp.escape(app_version_from_repo)}/, response.body)
+    assert_match(/3D Printer History v#{Regexp.escape(app_version_from_repo)}/, response.body)
+    assert_select 'footer a[href=?]', ApplicationHelper::PDX_HACKERSPACE_URL, text: 'PDX Hackerspace'
     assert_select 'footer a[href=?]', ApplicationHelper::GITHUB_REPO_URL, text: 'GitHub'
+  end
+
+  test 'navbar brand uses 3D Printer History' do
+    get root_path
+
+    assert_response :success
+    assert_select 'a.navbar-brand', text: /3D Printer History/
+  end
+
+  test 'layout uses 3D Printer History in title and app name meta tag' do
+    get root_path
+
+    assert_response :success
+    assert_select 'title', text: '3D Printer History'
+    assert_select 'meta[name=?][content=?]', 'application-name', '3D Printer History'
   end
 
   test 'layout uses the printer icon favicon' do

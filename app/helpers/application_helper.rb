@@ -33,9 +33,19 @@ module ApplicationHelper
   end
 
   GITHUB_REPO_URL = 'https://github.com/romkey/pdxhackerspace-prusa-print-history'.freeze
+  APP_NAME = '3D Printer History'.freeze
+  PDX_HACKERSPACE_URL = 'https://pdxhackerspace.org'.freeze
 
   def github_repo_url
     GITHUB_REPO_URL
+  end
+
+  def app_name
+    APP_NAME
+  end
+
+  def pdx_hackerspace_url
+    PDX_HACKERSPACE_URL
   end
 
   def storage_blob_path(attachment)
@@ -43,19 +53,15 @@ module ApplicationHelper
   end
 
   def dashboard_heading
-    Setting.dashboard_heading.presence || 'Prusa Print History'
+    Setting.dashboard_heading.presence || APP_NAME
   end
 
   def footer_text
-    Setting.footer_text.presence || "Prusa Print History v#{app_version}"
+    Setting.footer_text.presence || "#{APP_NAME} v#{app_version}"
   end
 
-  def footer_link_label
-    Setting.footer_link_label.presence || 'GitHub'
-  end
-
-  def footer_link_url
-    Setting.footer_link_url.presence || github_repo_url
+  def printer_idle_dot_class(printer)
+    printer.prusalink_connection_status == :reachable ? 'status-success' : 'status-danger'
   end
 
   def dashboard_temp_label(value)

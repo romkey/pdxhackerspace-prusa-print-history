@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-05-30
+
+### Changed
+- Rebrand the UI to **3D Printer History**; the public dashboard shows a larger live clock instead of a page title.
+- Footer always links to PDX Hackerspace and GitHub, in addition to any configured footer text/link.
+- Remote anonymous visitors see Sign in aligned to the right when Jobs/Printers nav is hidden.
+- Idle printer status dots are green when PrusaLink is reachable and red when it is not.
+
 ## [0.4.5] - 2026-05-30
 
 ### Fixed

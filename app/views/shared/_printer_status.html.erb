@@ -1,6 +1,6 @@
 <% status = printer.display_status %>
 <% if status == 'idle' %>
-  <span class="status-dot status-muted me-1"></span>
+  <span class="status-dot <%= printer_idle_dot_class(printer) %> me-1"></span>
   <span class="text-secondary">idle</span>
 <% else %>
   <span class="status-dot status-success me-1"></span>

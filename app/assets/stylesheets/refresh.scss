@@ -76,6 +76,13 @@ body {
   max-width: 1400px;
 }
 
+.dashboard-clock {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .dashboard-printer-card {
   padding: 0.5rem;
 }

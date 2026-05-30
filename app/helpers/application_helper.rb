@@ -60,6 +60,10 @@ module ApplicationHelper
     Setting.footer_text.presence || "#{APP_NAME} v#{app_version}"
   end
 
+  def status_export_visible?
+    logged_in? || internal_network?
+  end
+
   def printer_status_dot_class(printer)
     printer.prusalink_connection_status == :reachable ? 'status-success' : 'status-danger'
   end

@@ -5,6 +5,10 @@ Rails.application.routes.draw do
 
   root 'dashboard#index'
 
+  get 'printers.json', to: 'status#printers'
+  get 'jobs.json', to: 'status#jobs'
+  get 'events.json', to: 'status#events'
+
   resources :printers do
     member do
       get :camera
@@ -21,6 +25,8 @@ Rails.application.routes.draw do
       post   :reprint_label
     end
   end
+
+  resources :events, only: %i[index]
 
   resource :profile, only: %i[show update]
 

@@ -12,12 +12,48 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     InternalNetworks.reset!
   end
 
+  test 'logged in users see status export links in the footer from outside the internal network' do
+    login_as(users(:viewer))
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_select 'footer a[href=?]', '/printers.json', text: 'printers.json'
+  end
+
+  test 'external anonymous users do not see status export links in the footer' do
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_select 'footer a[href=?]', '/printers.json', count: 0
+    assert_select 'footer a[href=?]', '/jobs.json', count: 0
+    assert_select 'footer a[href=?]', '/events.json', count: 0
+  end
+
+  test 'internal anonymous users see status export links in the footer' do
+    ENV['INTERNAL_NETWORKS'] = '192.168.0.0/24'
+    InternalNetworks.reset!
+
+    get root_path, headers: { 'REMOTE_ADDR' => '192.168.0.50' }
+
+    assert_response :success
+    assert_select 'footer a[href=?]', '/printers.json', text: 'printers.json'
+    assert_select 'footer a[href=?]', '/jobs.json', text: 'jobs.json'
+    assert_select 'footer a[href=?]', '/events.json', text: 'events.json'
+  ensure
+    ENV['INTERNAL_NETWORKS'] = '127.0.0.1/32'
+    InternalNetworks.reset!
+  end
+
   test 'external anonymous users can view the dashboard but not other status pages' do
     get root_path, headers: external_request_headers
 
     assert_response :success
 
     get jobs_path, headers: external_request_headers
+
+    assert_redirected_to login_path
+
+    get events_path, headers: external_request_headers
 
     assert_redirected_to login_path
 
@@ -32,6 +68,18 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     get printer_path(printers(:prusa_xl)), headers: external_request_headers
 
     assert_redirected_to login_path
+
+    get '/printers.json', headers: external_request_headers
+
+    assert_response :unauthorized
+
+    get '/jobs.json', headers: external_request_headers
+
+    assert_response :unauthorized
+
+    get '/events.json', headers: external_request_headers
+
+    assert_response :unauthorized
   end
 
   test 'internal anonymous users can view status pages' do
@@ -43,11 +91,27 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
 
     assert_response :success
 
+    get events_path, headers: internal_request_headers
+
+    assert_response :success
+
     get job_path(@job), headers: internal_request_headers
 
     assert_response :success
 
     get printers_path, headers: internal_request_headers
+
+    assert_response :success
+
+    get '/printers.json', headers: internal_request_headers
+
+    assert_response :success
+
+    get '/jobs.json', headers: internal_request_headers
+
+    assert_response :success
+
+    get '/events.json', headers: internal_request_headers
 
     assert_response :success
   end
@@ -94,6 +158,7 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'a.nav-link', text: 'Jobs'
+    assert_select 'a.nav-link', text: 'Events'
     assert_select 'a.nav-link', text: 'Printers'
     assert_select 'a.nav-link', text: 'My prints', count: 0
     assert_select 'a.nav-link', text: 'Sign in'

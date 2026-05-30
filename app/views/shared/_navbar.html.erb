@@ -36,6 +36,10 @@
             <%= link_to 'Jobs', jobs_path, class: "nav-link #{'active' if controller_name == 'jobs' && params[:owner] != 'me'}" %>
           </li>
 
+          <li class="nav-item">
+            <%= link_to 'Events', events_path, class: "nav-link #{'active' if controller_name == 'events'}" %>
+          </li>
+
           <% if logged_in? %>
             <li class="nav-item">
               <%= link_to 'My prints', jobs_path(owner: 'me'),

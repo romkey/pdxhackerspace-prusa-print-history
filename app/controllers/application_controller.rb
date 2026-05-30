@@ -52,6 +52,11 @@ class ApplicationController < ActionController::Base
   def require_login_or_internal
     return if logged_in? || internal_network?
 
+    if request.format.json?
+      head :unauthorized
+      return
+    end
+
     require_login
   end
 

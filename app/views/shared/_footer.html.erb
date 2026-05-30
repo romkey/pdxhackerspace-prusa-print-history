@@ -9,5 +9,13 @@
     <%= link_to 'PDX Hackerspace', pdx_hackerspace_url, target: '_blank', rel: 'noopener' %>
     <span class="mx-1">&middot;</span>
     <%= link_to 'GitHub', github_repo_url, target: '_blank', rel: 'noopener' %>
+    <% if status_export_visible? %>
+      <span class="mx-1">&middot;</span>
+      <%= link_to 'printers.json', '/printers.json' %>
+      <span class="mx-1">&middot;</span>
+      <%= link_to 'jobs.json', '/jobs.json' %>
+      <span class="mx-1">&middot;</span>
+      <%= link_to 'events.json', '/events.json' %>
+    <% end %>
   </div>
 </footer>

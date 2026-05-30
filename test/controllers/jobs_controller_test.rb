@@ -17,6 +17,29 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'index hides pagination when all jobs fit on one page' do
+    get jobs_path
+
+    assert_response :success
+    assert_select 'a[href*="page="]', count: 0
+  end
+
+  test 'index shows pagination when jobs span multiple pages' do
+    printer = printers(:prusa_mini)
+    23.times do |index|
+      printer.jobs.create!(
+        filename: "batch-#{index}.gcode",
+        status: 'finished',
+        started_at: index.hours.ago
+      )
+    end
+
+    get jobs_path
+
+    assert_response :success
+    assert_select 'a[href*="page=2"]', count: 1
+  end
+
   test 'index shows preview and snapshot thumbnails with placeholders when missing' do
     get jobs_path
 

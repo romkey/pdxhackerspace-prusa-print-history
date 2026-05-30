@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_30_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,6 +115,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_120000) do
     t.index ["printer_id"], name: "index_photo_captures_on_printer_id"
   end
 
+  create_table "printer_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_type", null: false
+    t.string "from_material"
+    t.text "message"
+    t.datetime "occurred_at", null: false
+    t.bigint "printer_id", null: false
+    t.string "to_material"
+    t.integer "tool_index"
+    t.datetime "updated_at", null: false
+    t.index ["occurred_at"], name: "index_printer_events_on_occurred_at"
+    t.index ["printer_id", "occurred_at"], name: "index_printer_events_on_printer_id_and_occurred_at"
+    t.index ["printer_id"], name: "index_printer_events_on_printer_id"
+  end
+
   create_table "printer_heads", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "high_flow", default: false, null: false
@@ -207,6 +222,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_120000) do
   add_foreign_key "photo_captures", "job_events"
   add_foreign_key "photo_captures", "jobs"
   add_foreign_key "photo_captures", "printers"
+  add_foreign_key "printer_events", "printers"
   add_foreign_key "printer_heads", "printers"
   add_foreign_key "telemetry_readings", "jobs"
   add_foreign_key "tools", "jobs"

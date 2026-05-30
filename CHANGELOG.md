@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.13] - 2026-05-30
+
+### Added
+- **Events** page in the navbar: paginated list of job events and filament changes across all printers, with filter chips for start, end, attention, and filament change.
+- Filament changes on a toolhead are recorded as printer events when polling detects new material.
+- Footer links to `printers.json`, `jobs.json`, and `events.json` for signed-in users and internal-network visitors.
+
+### Changed
+- Jobs and Events indexes hide pagination when everything fits on one page.
+
 ## [0.4.12] - 2026-05-30
 
 ### Added

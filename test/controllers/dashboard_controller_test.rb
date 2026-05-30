@@ -235,6 +235,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'footer a[href=?]', 'https://example.com/faq', text: 'FAQ'
     assert_select 'footer a[href=?]', ApplicationHelper::PDX_HACKERSPACE_URL, text: 'PDX Hackerspace'
     assert_select 'footer a[href=?]', ApplicationHelper::GITHUB_REPO_URL, text: 'GitHub'
+    assert_select 'footer a[href=?]', '/printers.json', text: 'printers.json'
   ensure
     Setting.footer_text = nil
     Setting.footer_link_label = nil

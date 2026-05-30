@@ -1,0 +1,8 @@
+xl_filament_change:
+  printer: prusa_xl
+  event_type: filament_change
+  tool_index: 0
+  from_material: PLA
+  to_material: PETG
+  message: "T0: PLA → PETG"
+  occurred_at: <%= 2.hours.ago.iso8601 %>

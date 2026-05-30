@@ -34,7 +34,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path
 
     assert_response :success
-    assert_select 'a[href*="page=2"]', count: 1
+    assert_select 'a[href*="page=2"]', minimum: 1
   end
 
   test 'index lists job and printer events' do

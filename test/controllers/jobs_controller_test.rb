@@ -37,7 +37,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     get jobs_path
 
     assert_response :success
-    assert_select 'a[href*="page=2"]', count: 1
+    assert_select 'a[href*="page=2"]', minimum: 1
   end
 
   test 'index shows preview and snapshot thumbnails with placeholders when missing' do

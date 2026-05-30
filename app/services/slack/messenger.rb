@@ -1,5 +1,6 @@
 require 'net/http'
 require 'json'
+require 'securerandom'
 
 module Slack
   class Messenger
@@ -26,8 +27,8 @@ module Slack
       raise Error, 'Slack API token is missing' if @token.blank?
       raise Error, 'Slack user ID is missing' if user_id.blank?
 
-      response = post(POST_MESSAGE_URL, { channel: open_dm_channel(user_id), text: })
-      raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
+      response = post_json(POST_MESSAGE_URL, { channel: open_dm_channel(user_id), text: })
+      assert_ok!(response, 'chat.postMessage')
 
       response
     end
@@ -47,24 +48,32 @@ module Slack
 
       file_data = attachment.download
       filename = attachment_filename(attachment)
-      upload_info = post(GET_UPLOAD_URL, { filename:, length: file_data.bytesize })
-      raise Error, upload_info['error'] || 'Unknown Slack error' unless upload_info['ok']
+      upload_info = post_form(
+        GET_UPLOAD_URL,
+        { filename:, length: file_data.bytesize.to_s }
+      )
+      assert_ok!(upload_info, 'files.getUploadURLExternal')
 
-      post_file_to_upload_url(upload_info.fetch('upload_url'), file_data, content_type: attachment.content_type)
-      response = post(
+      post_file_to_upload_url(
+        upload_info.fetch('upload_url'),
+        file_data,
+        filename:,
+        content_type: attachment.content_type
+      )
+      response = post_json(
         COMPLETE_UPLOAD_URL,
         channel_id: open_dm_channel(user_id),
         initial_comment: text,
         files: [{ id: upload_info.fetch('file_id'), title: filename }]
       )
-      raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
+      assert_ok!(response, 'files.completeUploadExternal')
 
       response
     end
 
     def open_dm_channel(user_id)
-      response = post(CONVERSATIONS_OPEN_URL, { users: user_id })
-      raise Error, response['error'] || 'Unknown Slack error' unless response['ok']
+      response = post_json(CONVERSATIONS_OPEN_URL, { users: user_id })
+      assert_ok!(response, 'conversations.open')
 
       channel_id = response.dig('channel', 'id')
       raise Error, 'Slack DM channel id missing' if channel_id.blank?
@@ -76,11 +85,12 @@ module Slack
       attachment.filename.to_s.presence || 'print-photo.jpg'
     end
 
-    def post_file_to_upload_url(upload_url, file_data, content_type:)
+    def post_file_to_upload_url(upload_url, file_data, filename:, content_type:)
       uri = URI(upload_url)
+      boundary = "----RubySlackUpload#{SecureRandom.hex(16)}"
       request = Net::HTTP::Post.new(uri)
-      request.body = file_data
-      request['Content-Type'] = content_type.presence || 'application/octet-stream'
+      request['Content-Type'] = "multipart/form-data; boundary=#{boundary}"
+      request.body = build_filename_multipart(boundary, filename, file_data, content_type)
 
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http| http.request(request) }
       return if response.is_a?(Net::HTTPSuccess)
@@ -88,7 +98,18 @@ module Slack
       raise Error, "Slack file upload failed (HTTP #{response.code})"
     end
 
-    def post(url, payload)
+    def build_filename_multipart(boundary, filename, file_data, content_type)
+      header = [
+        "--#{boundary}\r\n",
+        "Content-Disposition: form-data; name=\"filename\"; filename=\"#{filename}\"\r\n",
+        "Content-Type: #{content_type.presence || 'application/octet-stream'}\r\n\r\n"
+      ].join
+      footer = "\r\n--#{boundary}--\r\n"
+
+      header.b + file_data.b + footer.b
+    end
+
+    def post_json(url, payload)
       uri = URI(url)
       request = Net::HTTP::Post.new(uri)
       request['Authorization'] = "Bearer #{@token}"
@@ -98,9 +119,31 @@ module Slack
       execute(request, uri)
     end
 
+    def post_form(url, payload)
+      uri = URI(url)
+      request = Net::HTTP::Post.new(uri)
+      request['Authorization'] = "Bearer #{@token}"
+      request.set_form_data(payload.transform_keys(&:to_s).transform_values(&:to_s))
+
+      execute(request, uri)
+    end
+
     def execute(request, uri)
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(request) }
       JSON.parse(response.body)
+    end
+
+    def assert_ok!(response, step)
+      return if response['ok']
+
+      raise Error, api_error_message(response, step)
+    end
+
+    def api_error_message(response, step)
+      parts = ["#{step}: #{response['error']}"]
+      metadata_messages = response.dig('response_metadata', 'messages')
+      parts.concat(metadata_messages) if metadata_messages.present?
+      parts.join(' — ')
     end
   end
 end

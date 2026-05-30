@@ -14,7 +14,7 @@ class SlackMessengerTest < ActiveSupport::TestCase
     captured = nil
     messenger = Slack::Messenger.new(token: 'xoxb-test')
     messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-      messenger.stub(:post, lambda { |_url, payload|
+      messenger.stub(:post_json, lambda { |_url, payload|
         captured = payload
         { 'ok' => true }
       }) do
@@ -29,7 +29,7 @@ class SlackMessengerTest < ActiveSupport::TestCase
   test 'open_dm_channel calls conversations.open' do
     captured = nil
     messenger = Slack::Messenger.new(token: 'xoxb-test')
-    messenger.stub(:post, lambda { |url, payload|
+    messenger.stub(:post_json, lambda { |url, payload|
       captured = [url, payload]
       { 'ok' => true, 'channel' => { 'id' => DM_CHANNEL_ID } }
     }) do
@@ -42,21 +42,26 @@ class SlackMessengerTest < ActiveSupport::TestCase
     assert_equal({ users: 'U123' }, captured[1])
   end
 
-  test 'dm raises on slack api error' do
+  test 'dm raises on slack api error with response metadata' do
     messenger = Slack::Messenger.new(token: 'xoxb-test')
     messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-      messenger.stub(:post, { 'ok' => false, 'error' => 'channel_not_found' }) do
+      messenger.stub(:post_json, {
+        'ok' => false,
+        'error' => 'invalid_arguments',
+        'response_metadata' => { 'messages' => ['[ERROR] bad channel [json-pointer:/channel]'] }
+      }) do
         error = assert_raises(Slack::Messenger::Error) do
           messenger.dm(user_id: 'U404', text: 'hi')
         end
-        assert_equal 'channel_not_found', error.message
+        assert_match(/chat\.postMessage: invalid_arguments/, error.message)
+        assert_match(/bad channel/, error.message)
       end
     end
   end
 
   test 'open_dm_channel raises when response omits channel id' do
     messenger = Slack::Messenger.new(token: 'xoxb-test')
-    messenger.stub(:post, { 'ok' => true, 'channel' => {} }) do
+    messenger.stub(:post_json, { 'ok' => true, 'channel' => {} }) do
       error = assert_raises(Slack::Messenger::Error) do
         messenger.send(:open_dm_channel, 'U123')
       end
@@ -66,11 +71,11 @@ class SlackMessengerTest < ActiveSupport::TestCase
 
   test 'open_dm_channel raises on conversations.open api error' do
     messenger = Slack::Messenger.new(token: 'xoxb-test')
-    messenger.stub(:post, { 'ok' => false, 'error' => 'missing_scope' }) do
+    messenger.stub(:post_json, { 'ok' => false, 'error' => 'missing_scope' }) do
       error = assert_raises(Slack::Messenger::Error) do
         messenger.send(:open_dm_channel, 'U123')
       end
-      assert_equal 'missing_scope', error.message
+      assert_match(/conversations\.open: missing_scope/, error.message)
     end
   end
 
@@ -78,7 +83,7 @@ class SlackMessengerTest < ActiveSupport::TestCase
     captured_url = nil
     messenger = Slack::Messenger.new(token: 'xoxb-test')
     messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-      messenger.stub(:post, lambda { |url, _payload|
+      messenger.stub(:post_json, lambda { |url, _payload|
         captured_url = url
         { 'ok' => true }
       }) do
@@ -87,6 +92,21 @@ class SlackMessengerTest < ActiveSupport::TestCase
     end
 
     assert_equal Slack::Messenger::POST_MESSAGE_URL, captured_url
+  end
+
+  test 'request_upload_url uses form encoding' do
+    captured_request = nil
+    messenger = Slack::Messenger.new(token: 'xoxb-test')
+    messenger.stub(:execute, lambda { |request, _uri|
+      captured_request = request
+      { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F1' }
+    }) do
+      messenger.send(:post_form, Slack::Messenger::GET_UPLOAD_URL, { filename: 'photo.jpg', length: '42' })
+    end
+
+    assert_equal 'application/x-www-form-urlencoded', captured_request.content_type
+    assert_includes captured_request.body, 'filename=photo.jpg'
+    assert_includes captured_request.body, 'length=42'
   end
 
   test 'upload_file defaults filename when attachment has none' do
@@ -98,25 +118,44 @@ class SlackMessengerTest < ActiveSupport::TestCase
     )
     captured = nil
     messenger = Slack::Messenger.new(token: 'xoxb-test')
-    messenger.stub(:post, lambda { |url, payload|
+    messenger.stub(:post_form, lambda { |url, payload|
       captured = [url, payload] if url == Slack::Messenger::GET_UPLOAD_URL
-      case url
-      when Slack::Messenger::GET_UPLOAD_URL
-        { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F1' }
-      when Slack::Messenger::COMPLETE_UPLOAD_URL
-        { 'ok' => true }
-      else
-        { 'ok' => false }
-      end
+      { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F1' }
     }) do
-      messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-        messenger.stub(:post_file_to_upload_url, nil) do
-          messenger.send(:upload_file, user_id: 'U123', text: 'hi', attachment:)
+      messenger.stub(:post_json, { 'ok' => true }) do
+        messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
+          messenger.stub(:post_file_to_upload_url, nil) do
+            messenger.send(:upload_file, user_id: 'U123', text: 'hi', attachment:)
+          end
         end
       end
     end
 
-    assert_equal({ filename: 'print-photo.jpg', length: 'bytes'.bytesize }, captured[1])
+    assert_equal({ filename: 'print-photo.jpg', length: 'bytes'.bytesize.to_s }, captured[1])
+  end
+
+  test 'post_file_to_upload_url sends multipart filename field' do
+    captured_request = nil
+    messenger = Slack::Messenger.new(token: 'xoxb-test')
+    fake_http = Object.new
+    fake_http.define_singleton_method(:request) do |request|
+      captured_request = request
+      Net::HTTPOK.new('1.1', '200', 'OK')
+    end
+    Net::HTTP.stub(:start, ->(*_args, **_kwargs, &block) { block.call(fake_http) }) do
+      messenger.send(
+        :post_file_to_upload_url,
+        'https://files.slack.com/upload/v1/test',
+        'binary-data',
+        filename: 'final.jpg',
+        content_type: 'image/jpeg'
+      )
+    end
+
+    assert_match(/multipart\/form-data/, captured_request['Content-Type'])
+    assert_includes captured_request.body, 'name="filename"'
+    assert_includes captured_request.body, 'final.jpg'
+    assert_includes captured_request.body, 'binary-data'
   end
 
   test 'post_file_to_upload_url raises on non-success response' do
@@ -130,6 +169,7 @@ class SlackMessengerTest < ActiveSupport::TestCase
           :post_file_to_upload_url,
           'https://files.slack.com/upload/v1/test',
           'data',
+          filename: 'photo.jpg',
           content_type: 'image/jpeg'
         )
       end
@@ -144,37 +184,40 @@ class SlackMessengerTest < ActiveSupport::TestCase
       filename: ActiveStorage::Filename.new('final.jpg'),
       content_type: 'image/jpeg'
     )
-    calls = []
+    form_calls = []
+    json_calls = []
     messenger = Slack::Messenger.new(token: 'xoxb-test')
-    messenger.stub(:post, lambda { |url, payload|
-      calls << [url, payload]
-      case url
-      when Slack::Messenger::GET_UPLOAD_URL
-        { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F123' }
-      when Slack::Messenger::CONVERSATIONS_OPEN_URL
-        { 'ok' => true, 'channel' => { 'id' => DM_CHANNEL_ID } }
-      when Slack::Messenger::COMPLETE_UPLOAD_URL
-        { 'ok' => true }
-      else
-        { 'ok' => false, 'error' => 'unexpected_url' }
-      end
+    messenger.stub(:post_form, lambda { |url, payload|
+      form_calls << [url, payload]
+      { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F123' }
     }) do
-      messenger.stub(:post_file_to_upload_url, nil) do
-        messenger.dm_with_attachment(user_id: 'U123', text: 'Your print is ready', attachment:)
+      messenger.stub(:post_json, lambda { |url, payload|
+        json_calls << [url, payload]
+        case url
+        when Slack::Messenger::CONVERSATIONS_OPEN_URL
+          { 'ok' => true, 'channel' => { 'id' => DM_CHANNEL_ID } }
+        when Slack::Messenger::COMPLETE_UPLOAD_URL
+          { 'ok' => true }
+        else
+          { 'ok' => false, 'error' => 'unexpected_url' }
+        end
+      }) do
+        messenger.stub(:post_file_to_upload_url, nil) do
+          messenger.dm_with_attachment(user_id: 'U123', text: 'Your print is ready', attachment:)
+        end
       end
     end
 
-    assert_equal Slack::Messenger::GET_UPLOAD_URL, calls[0][0]
-    assert_equal({ filename: 'final.jpg', length: 'image-bytes'.bytesize }, calls[0][1])
-    assert_equal Slack::Messenger::CONVERSATIONS_OPEN_URL, calls[1][0]
-    assert_equal({ users: 'U123' }, calls[1][1])
-    assert_equal Slack::Messenger::COMPLETE_UPLOAD_URL, calls[2][0]
+    assert_equal Slack::Messenger::GET_UPLOAD_URL, form_calls[0][0]
+    assert_equal({ filename: 'final.jpg', length: 'image-bytes'.bytesize.to_s }, form_calls[0][1])
+    assert_equal Slack::Messenger::CONVERSATIONS_OPEN_URL, json_calls[0][0]
+    assert_equal Slack::Messenger::COMPLETE_UPLOAD_URL, json_calls[1][0]
     complete_payload = {
       channel_id: DM_CHANNEL_ID,
       initial_comment: 'Your print is ready',
       files: [{ id: 'F123', title: 'final.jpg' }]
     }
 
-    assert_equal complete_payload, calls[2][1]
+    assert_equal complete_payload, json_calls[1][1]
   end
 end

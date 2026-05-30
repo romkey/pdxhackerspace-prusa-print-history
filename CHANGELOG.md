@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-05-30
+
+### Fixed
+- RuboCop lint: use slash-delimited regex in events controller test.
+
 ## [0.6.2] - 2026-05-30
 
 ### Fixed

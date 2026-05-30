@@ -68,7 +68,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select 'a.filter-chip.active[href=?]', events_path
     assert_select 'a.filter-chip[href=?]', events_path(filter: 'filament_change')
-    assert_no_match %r{filter\[\]=}, response.body
+    assert_no_match(/filter\[\]=/, response.body)
   end
 
   test 'active filter chip clears the filter when clicked again' do

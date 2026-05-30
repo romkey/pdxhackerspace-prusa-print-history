@@ -21,6 +21,7 @@
             <th>Slack</th>
             <th>Notifications</th>
             <th>Last login</th>
+            <th class="num">Print time</th>
             <th>Claimed jobs</th>
             <th>Auth</th>
           </tr>
@@ -58,6 +59,7 @@
               <td class="text-secondary text-13" title="<%= user_last_login_title(user) %>">
                 <%= user_last_login_label(user) %>
               </td>
+              <td class="num text-13"><%= format_print_duration_cell(user.total_print_seconds) %></td>
               <td class="text-13">
                 <% if claimed_jobs.any? %>
                   <% claimed_jobs.each_with_index do |job, index| %>

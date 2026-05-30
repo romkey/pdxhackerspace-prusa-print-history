@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-30
+
+### Added
+- Admin **Reports** section with cumulative print time by printer, user, and filament for the last 7 days, 30 days, and all time — each report includes a table and grouped bar chart.
+- `users.total_print_seconds` stores each member's all-time claimed print time, backfilled from existing jobs and kept in sync as jobs finish or change owner; shown on the Users index.
+
 ## [0.5.1] - 2026-05-30
 
 ### Changed

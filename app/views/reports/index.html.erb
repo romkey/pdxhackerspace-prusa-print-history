@@ -1,0 +1,45 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0">Reports</h1>
+      <div class="text-13 text-secondary mt-1">
+        Admin-only cumulative print time
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <%= link_to printers_reports_path, class: 'card h-100 text-decoration-none' do %>
+        <div class="card-body">
+          <div class="h-section-label mb-2">Printers</div>
+          <p class="text-13 text-secondary mb-0">
+            Print time by printer for the last 7 days, 30 days, and all time.
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="col-md-4">
+      <%= link_to users_reports_path, class: 'card h-100 text-decoration-none' do %>
+        <div class="card-body">
+          <div class="h-section-label mb-2">Users</div>
+          <p class="text-13 text-secondary mb-0">
+            Claimed print time by user for the last 7 days, 30 days, and all time.
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="col-md-4">
+      <%= link_to filament_reports_path, class: 'card h-100 text-decoration-none' do %>
+        <div class="card-body">
+          <div class="h-section-label mb-2">Filament</div>
+          <p class="text-13 text-secondary mb-0">
+            Print time by material for the last 7 days, 30 days, and all time.
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

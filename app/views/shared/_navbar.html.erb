@@ -49,6 +49,10 @@
 
           <% if admin? %>
             <li class="nav-item">
+              <%= link_to 'Reports', reports_path, class: "nav-link #{'active' if controller_name == 'reports'}" %>
+            </li>
+
+            <li class="nav-item">
               <%= link_to 'Users', users_path, class: "nav-link #{'active' if controller_name == 'users'}" %>
             </li>
 

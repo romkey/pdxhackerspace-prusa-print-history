@@ -83,4 +83,26 @@ module ApplicationHelper
 
     value.to_f.round(0).to_s
   end
+
+  def format_print_duration(seconds)
+    seconds = seconds.to_i
+    return '—' if seconds <= 0
+
+    hours, remainder = seconds.divmod(3600)
+    minutes, = remainder.divmod(60)
+
+    if hours.positive?
+      minutes.positive? ? "#{hours}h #{minutes}m" : "#{hours}h"
+    else
+      "#{minutes}m"
+    end
+  end
+
+  def format_print_duration_cell(seconds)
+    if seconds.to_i <= 0
+      tag.span('—', class: 'text-secondary')
+    else
+      format_print_duration(seconds)
+    end
+  end
 end

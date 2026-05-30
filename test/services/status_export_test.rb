@@ -17,7 +17,7 @@ class StatusExportTest < ActiveSupport::TestCase
   end
 
   test 'printers sets job to nil when idle' do
-    Job.where(printer: printers(:prusa_mini)).delete_all
+    Job.where(printer: printers(:prusa_mini)).destroy_all
 
     payload = StatusExport.printers
     mini = payload.find { |entry| entry[:name] == 'Prusa Mini' }

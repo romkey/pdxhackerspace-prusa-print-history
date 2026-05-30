@@ -30,6 +30,14 @@ Rails.application.routes.draw do
 
   resources :users, only: %i[index]
 
+  resources :reports, only: %i[index] do
+    collection do
+      get :printers
+      get :users
+      get :filament
+    end
+  end
+
   resource :profile, only: %i[show update]
 
   resources :label_printers, path: 'settings/label_printers' do

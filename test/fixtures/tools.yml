@@ -18,3 +18,24 @@ mk4_tool_a:
   nozzle_size_mm: 0.40
   high_flow: false
   material: ASA
+
+finished_pla_tool:
+  job: finished_pla
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: PLA
+
+finished_old_tool:
+  job: finished_old
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: PETG
+
+finished_tool:
+  job: finished
+  tool_index: 0
+  nozzle_size_mm: 0.40
+  high_flow: false
+  material: PLA

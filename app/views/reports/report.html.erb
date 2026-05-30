@@ -1,0 +1,69 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0"><%= @report_title %></h1>
+      <div class="text-13 text-secondary mt-1">
+        <%= print_time_report_summary(@rows) %>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to 'All reports', reports_path, class: 'btn btn-outline-secondary btn-sm' %>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+      <%= link_to 'Printers', printers_reports_path, class: reports_nav_class(:printers) %>
+    </li>
+    <li class="nav-item">
+      <%= link_to 'Users', users_reports_path, class: reports_nav_class(:users) %>
+    </li>
+    <li class="nav-item">
+      <%= link_to 'Filament', filament_reports_path, class: reports_nav_class(:filament) %>
+    </li>
+  </ul>
+
+  <% if @chart_series.any? %>
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="h-section-label mb-2">Hours printed</div>
+        <%= column_chart @chart_series,
+                         height: '260px',
+                         suffix: ' h',
+                         library: {
+                           plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 } } } },
+                           scales: {
+                             y: { title: { display: true, text: 'Hours', font: { size: 11 } } }
+                           }
+                         } %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @rows.any? %>
+    <div class="card">
+      <table class="table table-compact mb-0">
+        <thead>
+          <tr>
+            <th><%= @report_label %></th>
+            <th class="num">Last 7 days</th>
+            <th class="num">Last 30 days</th>
+            <th class="num">All time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rows.each do |row| %>
+            <tr>
+              <td><span class="<%= row.all_seconds.positive? ? 'fw-medium' : 'text-secondary' %>"><%= row.label %></span></td>
+              <td class="num text-13"><%= format_print_duration_cell(row.week_seconds) %></td>
+              <td class="num text-13"><%= format_print_duration_cell(row.month_seconds) %></td>
+              <td class="num text-13"><%= format_print_duration_cell(row.all_seconds) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-secondary">No print time recorded yet.</p>
+  <% end %>
+</div>

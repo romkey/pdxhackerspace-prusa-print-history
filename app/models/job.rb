@@ -31,6 +31,8 @@ class Job < ApplicationRecord
   scope :recent,    -> { reorder(started_at: :desc, created_at: :desc) }
   scope :owned_by,  ->(user) { where(owner_id: user&.id) }
 
+  after_commit :sync_owner_print_time_totals, on: %i[create update]
+
   def active?
     ACTIVE_STATUSES.include?(status)
   end
@@ -60,5 +62,21 @@ class Job < ApplicationRecord
     return nil if started_at.nil?
 
     ((ended_at || Time.current) - started_at).to_i
+  end
+
+  private
+
+  def sync_owner_print_time_totals
+    return unless print_time_totals_dirty?
+
+    PrintTimeAccounting.sync_users_for_job!(self, previous_owner_id: owner_id_before_last_save)
+  end
+
+  def print_time_totals_dirty?
+    saved_change_to_status? ||
+      saved_change_to_total_duration_seconds? ||
+      saved_change_to_started_at? ||
+      saved_change_to_ended_at? ||
+      saved_change_to_owner_id?
   end
 end

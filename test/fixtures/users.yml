@@ -6,6 +6,7 @@ admin:
   uid: admin-uid-1
   admin: true
   trained_on_prusa: true
+  total_print_seconds: 1800
 
 viewer:
   email: viewer@example.com
@@ -19,6 +20,7 @@ viewer:
   slack_handle: vieweruser
   notify_via_email: true
   notify_via_slack: false
+  total_print_seconds: 7200
 
 other_viewer:
   email: other@example.com
@@ -28,3 +30,4 @@ other_viewer:
   uid: viewer-uid-3
   admin: false
   trained_on_prusa: false
+  total_print_seconds: 3600

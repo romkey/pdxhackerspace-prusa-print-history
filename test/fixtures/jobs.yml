@@ -23,3 +23,23 @@ finished:
   ended_at:   <%= 1.hour.ago.iso8601 %>
   total_duration_seconds: 7200
   total_filament_grams: 42.5
+
+finished_pla:
+  printer: prusa_mk4
+  owner: other_viewer
+  filename: hook.gcode
+  status: finished
+  prusalink_job_id: pl-0998
+  started_at: <%= 3.days.ago.iso8601 %>
+  ended_at: <%= 2.days.ago.iso8601 %>
+  total_duration_seconds: 3600
+
+finished_old:
+  printer: prusa_mini
+  owner: admin
+  filename: badge.gcode
+  status: finished
+  prusalink_job_id: pl-0997
+  started_at: <%= 45.days.ago.iso8601 %>
+  ended_at: <%= 44.days.ago.iso8601 %>
+  total_duration_seconds: 1800

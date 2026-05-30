@@ -54,6 +54,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_select 'th', text: 'Admin'
     assert_select 'th', text: 'Prusa'
+    assert_select 'th', text: 'Print time'
     assert_select 'span.badge', text: 'Yes'
     assert_select 'span.fw-medium', text: 'Yes'
   end
@@ -71,6 +72,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_match jobs(:finished).filename, body
     assert_match(/2 days ago/, body)
     assert_match viewer.email, body
+    assert_match(/2h 0m|2h/, body)
     assert_match(/@#{viewer.slack_handle}/, body)
     assert_match viewer.slack_id, body
   end

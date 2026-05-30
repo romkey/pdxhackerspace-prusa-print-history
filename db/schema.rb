@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_30_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -207,6 +207,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_160000) do
     t.string "provider", null: false
     t.string "slack_handle"
     t.string "slack_id"
+    t.integer "total_print_seconds", default: 0, null: false
     t.boolean "trained_on_prusa"
     t.string "uid", null: false
     t.datetime "updated_at", null: false

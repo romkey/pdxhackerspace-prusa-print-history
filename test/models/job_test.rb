@@ -33,7 +33,7 @@ class JobTest < ActiveSupport::TestCase
 
   test 'owned_by filters by owner' do
     assert_equal [@active.id, @done.id].sort, Job.owned_by(users(:viewer)).pluck(:id).sort
-    assert_empty Job.owned_by(users(:admin))
+    assert_equal [jobs(:finished_old).id], Job.owned_by(users(:admin)).pluck(:id)
   end
 
   test 'duration_seconds prefers stored value, otherwise computes from timestamps' do

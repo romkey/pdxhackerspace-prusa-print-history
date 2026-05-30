@@ -24,4 +24,12 @@ class JobPhotosPresenter
   def photos?
     progress_photos.any?
   end
+
+  def snapshot_photo
+    progress_photos.last
+  end
+
+  def snapshot_attached?
+    snapshot_photo&.image&.attached?
+  end
 end

@@ -60,8 +60,18 @@ module ApplicationHelper
     Setting.footer_text.presence || "#{APP_NAME} v#{app_version}"
   end
 
-  def printer_idle_dot_class(printer)
+  def printer_status_dot_class(printer)
     printer.prusalink_connection_status == :reachable ? 'status-success' : 'status-danger'
+  end
+
+  def printer_status_label(printer)
+    return 'unavailable' unless printer.prusalink_connection_status == :reachable
+
+    printer.display_status
+  end
+
+  def printer_idle_dot_class(printer)
+    printer_status_dot_class(printer)
   end
 
   def dashboard_temp_label(value)

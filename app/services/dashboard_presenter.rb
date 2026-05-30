@@ -52,18 +52,6 @@ class DashboardPresenter
       latest_reading&.ambient_temp || printer.ambient_temp
     end
 
-    def availability_label
-      case printer.prusalink_connection_status
-      when :reachable then 'available'
-      when :unreachable then 'unavailable'
-      else 'unknown'
-      end
-    end
-
-    def availability_muted?
-      printer.prusalink_connection_status != :reachable
-    end
-
     def image_outline_status
       status = printer.display_status
       return 'printing' if status == 'printing'

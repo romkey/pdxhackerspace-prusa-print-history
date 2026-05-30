@@ -55,33 +55,6 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_equal 'finished', card.last_job.status
   end
 
-  test 'availability reflects PrusaLink connection status' do
-    printer = printers(:prusa_xl)
-    printer.update!(prusalink_key: 'secret', prusalink_reachable: true)
-
-    card = DashboardPresenter.new(
-      printers: [printer],
-      active_jobs_by_printer: {},
-      last_jobs_by_printer: {},
-      recent_events: []
-    ).cards.first
-
-    assert_equal 'available', card.availability_label
-    assert_not card.availability_muted?
-
-    printer.update!(prusalink_reachable: false)
-
-    card = DashboardPresenter.new(
-      printers: [printer.reload],
-      active_jobs_by_printer: {},
-      last_jobs_by_printer: {},
-      recent_events: []
-    ).cards.first
-
-    assert_equal 'unavailable', card.availability_label
-    assert card.availability_muted?
-  end
-
   test 'image outline status reflects printer state and availability' do
     printer = printers(:prusa_mini)
     printer.update!(prusalink_key: 'secret', operational_state: 'idle', prusalink_reachable: true)

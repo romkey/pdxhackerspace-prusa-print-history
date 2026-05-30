@@ -27,6 +27,18 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal 'PDX Hackerspace', dashboard_heading
   end
 
+  test 'printer_status_label reflects PrusaLink reachability' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    assert_equal 'idle', printer_status_label(printer)
+
+    printer.update!(prusalink_reachable: false)
+
+    assert_equal 'unavailable', printer_status_label(printer)
+  end
+
   test 'printer_idle_dot_class reflects PrusaLink reachability' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: true)

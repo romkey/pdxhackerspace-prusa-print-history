@@ -15,6 +15,7 @@
       <table class="table table-compact mb-0">
         <thead>
           <tr>
+            <th class="job-list-thumbs-col"></th>
             <th>File</th>
             <th>Printer</th>
             <th>Status</th>
@@ -26,6 +27,9 @@
         <tbody>
           <% @jobs.each do |job| %>
             <tr>
+              <td class="job-list-thumbs-col">
+                <%= render 'jobs/thumbnails', job: job %>
+              </td>
               <td><%= link_to job.filename, job_path(job), class: 'fw-medium' %></td>
               <td><%= link_to job.printer.name, printer_path(job.printer), class: 'text-decoration-none' %></td>
               <td>

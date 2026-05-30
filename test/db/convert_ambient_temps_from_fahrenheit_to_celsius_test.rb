@@ -4,6 +4,7 @@ require Rails.root.join('db/migrate/20260527200000_convert_ambient_temps_from_fa
 class ConvertAmbientTempsFromFahrenheitToCelsiusTest < ActiveSupport::TestCase
   setup do
     @migration = ConvertAmbientTempsFromFahrenheitToCelsius.new
+    @migration.verbose = false
     @printer = printers(:prusa_xl)
     @reading = telemetry_readings(:active_xl_one)
   end

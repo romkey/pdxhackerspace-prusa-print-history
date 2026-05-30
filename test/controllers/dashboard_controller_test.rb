@@ -61,16 +61,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test 'dashboard shows printer cards with state and availability' do
+  test 'dashboard shows printer cards with idle status when reachable' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago)
 
     get root_path
 
     assert_response :success
     assert_select '.dashboard-printer-card', minimum: 1
     assert_match(/idle/, response.body)
-    assert_match(/available/, response.body)
+    assert_no_match(/\bavailable\b/, response.body)
     assert_select '.dashboard-image-wrap--ready', minimum: 2
   end
 
@@ -85,6 +87,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card .dashboard-image-wrap--printing', minimum: 2
   end
 
+  test 'dashboard printing card shows current job filename' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    jobs(:active_xl).update!(status: 'printing', filename: 'dragon.gcode', progress_percent: 42.0)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path
+
+    assert_response :success
+    xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
+
+    assert_includes xl_card.text, 'dragon.gcode'
+    assert_includes xl_card.text, 'printing'
+    assert_not xl_card.text.match?(/\bavailable\b/)
+  end
+
   test 'dashboard printer images use attention outline for problem states' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', operational_state: 'attention', prusalink_reachable: false)
@@ -95,14 +113,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card .dashboard-image-wrap--attention', minimum: 2
   end
 
-  test 'dashboard shows unavailable when PrusaLink is unreachable' do
+  test 'dashboard shows unavailable status when PrusaLink is unreachable' do
     printer = printers(:prusa_xl)
-    printer.update!(prusalink_key: 'secret', prusalink_reachable: false)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
 
     get root_path
 
     assert_response :success
-    assert_match(/unavailable/, response.body)
+    xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
+
+    assert_includes xl_card.text, 'unavailable'
+    assert_select '.dashboard-printer-card .status-dot.status-danger', minimum: 1
   end
 
   test 'dashboard shows temperature table and material info' do

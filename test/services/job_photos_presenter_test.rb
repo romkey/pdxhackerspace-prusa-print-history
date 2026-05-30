@@ -26,6 +26,23 @@ class JobPhotosPresenterTest < ActiveSupport::TestCase
     assert_nil presenter.final_photo
   end
 
+  test 'snapshot_photo returns the latest progress photo' do
+    attach_progress_photo(captured_at: 30.minutes.ago)
+    attach_progress_photo(captured_at: 10.minutes.ago)
+
+    presenter = JobPhotosPresenter.new(@job)
+
+    assert_equal @job.photo_captures.chronological.last, presenter.snapshot_photo
+    assert presenter.snapshot_attached?
+  end
+
+  test 'snapshot_photo is nil without progress photos' do
+    presenter = JobPhotosPresenter.new(jobs(:finished))
+
+    assert_nil presenter.snapshot_photo
+    assert_not presenter.snapshot_attached?
+  end
+
   private
 
   def attach_progress_photo(captured_at:)

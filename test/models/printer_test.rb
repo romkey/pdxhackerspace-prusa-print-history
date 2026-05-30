@@ -57,10 +57,18 @@ class PrinterTest < ActiveSupport::TestCase
     assert_predicate @mini, :prusalink?
   end
 
-  test 'display_status prefers operational_state over current job' do
+  test 'display_status prefers active job over stale idle operational_state' do
     @xl.update!(operational_state: 'idle')
 
     assert @xl.current_job.present?
+    assert_equal 'printing', @xl.display_status
+    assert_not @xl.idle?
+  end
+
+  test 'display_status uses operational_state when no active job' do
+    @xl.update!(operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+
     assert_equal 'idle', @xl.display_status
     assert_predicate @xl, :idle?
   end

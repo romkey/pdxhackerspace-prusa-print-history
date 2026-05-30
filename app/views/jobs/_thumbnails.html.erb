@@ -1,0 +1,25 @@
+<% photos = JobPhotosPresenter.new(job) %>
+<div class="job-list-thumbs d-flex gap-1">
+  <div class="job-list-thumb">
+    <% if job.preview_image.attached? %>
+      <%= image_tag storage_blob_path(job.preview_image),
+                    class: 'job-list-thumb__img',
+                    alt: "Preview of #{job.filename}" %>
+    <% else %>
+      <%= image_tag '/images/placeholder-preview.svg',
+                    class: 'job-list-thumb__img job-list-thumb__img--placeholder',
+                    alt: "No preview for #{job.filename}" %>
+    <% end %>
+  </div>
+  <div class="job-list-thumb">
+    <% if photos.snapshot_attached? %>
+      <%= image_tag storage_blob_path(photos.snapshot_photo.image),
+                    class: 'job-list-thumb__img',
+                    alt: "Snapshot of #{job.filename}" %>
+    <% else %>
+      <%= image_tag '/images/placeholder-photo.svg',
+                    class: 'job-list-thumb__img job-list-thumb__img--placeholder',
+                    alt: "No snapshot for #{job.filename}" %>
+    <% end %>
+  </div>
+</div>

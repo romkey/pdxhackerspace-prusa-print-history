@@ -17,6 +17,22 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'index shows preview and snapshot thumbnails with placeholders when missing' do
+    get jobs_path
+
+    assert_select 'img[src="/images/placeholder-preview.svg"]', minimum: 1
+    assert_select 'img[src="/images/placeholder-photo.svg"]', minimum: 1
+  end
+
+  test 'index shows preview and snapshot thumbnails when attached' do
+    attach_job_photos(@job)
+
+    get jobs_path
+
+    assert_select "tr td img[alt='Preview of #{@job.filename}'][src^='/rails/active_storage/blobs/redirect/']"
+    assert_select "tr td img[alt='Snapshot of #{@job.filename}'][src^='/rails/active_storage/blobs/redirect/']"
+  end
+
   test 'show is accessible on the internal network' do
     get job_path(@job)
 

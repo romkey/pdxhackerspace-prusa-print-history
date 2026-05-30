@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.12] - 2026-05-30
+
+### Added
+- Jobs index shows small preview and snapshot thumbnails at the start of each row, with placeholders when missing.
+
+### Changed
+- Dashboard printing cards show the current job filename and progress bar instead of a separate availability label.
+- Printer status prefers the active job state over a stale idle operational state, and shows **unavailable** when PrusaLink is unreachable.
+
 ## [0.4.11] - 2026-05-30
 
 ### Changed

@@ -6,7 +6,8 @@ class JobsController < ApplicationController
   before_action :set_job, only: %i[show update claim unclaim clear_print unclear_print reprint_label]
 
   def index
-    scope = base_scope.includes(:printer, :owner).recent
+    scope = base_scope.includes(:printer, :owner, :preview_image_attachment,
+                                photo_captures: { image_attachment: :blob }).recent
     scope = scope.where(printer_id: params[:printer_id]) if params[:printer_id].present?
 
     scope = scope.where(owner_id: current_user.id) if params[:owner] == 'me' && logged_in?

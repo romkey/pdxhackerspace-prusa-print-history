@@ -64,9 +64,14 @@ class Printer < ApplicationRecord
   end
 
   def display_status
-    return operational_state if environment_tracking? && operational_state.present? && operational_state != 'unknown'
+    job_status = current_job&.status
+    if environment_tracking? && operational_state.present? && operational_state != 'unknown'
+      return job_status if job_status.present?
 
-    current_job&.status || 'idle'
+      return operational_state
+    end
+
+    job_status || 'idle'
   end
 
   def idle?

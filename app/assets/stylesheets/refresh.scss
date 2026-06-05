@@ -143,7 +143,7 @@ body {
 
 .job-timeline__bar {
   position: relative;
-  height: 24px;
+  height: 26px;
   background: var(--bs-tertiary-bg);
   border: 1px solid var(--bs-border-color);
   border-radius: var(--bs-border-radius-sm);
@@ -154,21 +154,21 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  min-width: 3px;
+  min-width: 2px;
 }
 
-.job-timeline__segment--printing { background-color: var(--bs-success); }
-.job-timeline__segment--attention,
-.job-timeline__segment--error { background-color: var(--bs-danger); }
-.job-timeline__segment--paused { background-color: var(--bs-warning); }
-.job-timeline__segment--finished,
-.job-timeline__segment--cancelled { background-color: var(--bs-secondary); opacity: 0.55; }
-.job-timeline__segment--pending { background-color: var(--bs-secondary-bg-subtle); }
+.job-timeline__segment--printing { background-color: #2ea043; }
+.job-timeline__segment--attention { background-color: #e3a008; }
+.job-timeline__segment--error { background-color: #e5484d; }
+.job-timeline__segment--paused { background-color: #d29922; }
+.job-timeline__segment--finished { background-color: #2f6f4f; }
+.job-timeline__segment--cancelled { background-color: #6e7681; }
+.job-timeline__segment--pending { background-color: #30363d; }
 
 .job-timeline__marks {
   position: relative;
-  height: 22px;
-  margin-top: 2px;
+  height: 24px;
+  margin-top: 3px;
 }
 
 .job-timeline__mark {
@@ -182,34 +182,38 @@ body {
 .job-timeline__mark-tick {
   display: block;
   width: 1px;
-  height: 8px;
+  height: 7px;
   margin: 0 auto;
   background-color: var(--bs-border-color);
 }
 
-.job-timeline__mark-label {
-  display: inline-block;
-  min-width: 14px;
-  padding: 0 2px;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 14px;
-  border-radius: 2px;
-  color: var(--bs-body-bg);
+.job-timeline__mark-letter {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  color: var(--bs-body-color);
 }
 
-.job-timeline__mark--success { background-color: var(--bs-success); }
-.job-timeline__mark--danger { background-color: var(--bs-danger); }
-.job-timeline__mark--warning { background-color: var(--bs-warning); color: #000; }
-.job-timeline__mark--muted { background-color: var(--bs-secondary); }
+.job-timeline__mark--success { color: #3fb950; }
+.job-timeline__mark--danger { color: #f85149; }
+.job-timeline__mark--warning { color: #e3a008; }
+.job-timeline__mark--muted { color: var(--bs-secondary-color); }
 
-.job-timeline__legend-swatch {
+.job-timeline__key-swatch {
   display: inline-block;
   width: 12px;
   height: 12px;
-  margin-right: 0.25rem;
+  margin-right: 0.35rem;
   border-radius: 2px;
   vertical-align: -2px;
+}
+
+.job-timeline__legend-letter {
+  display: inline-block;
+  min-width: 1em;
+  font-weight: 700;
+  color: var(--bs-body-color);
 }
 
 .dashboard-temps {

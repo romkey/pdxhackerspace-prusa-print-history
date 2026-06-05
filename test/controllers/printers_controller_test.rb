@@ -194,7 +194,8 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
 
     assert_select '.h-section-label', text: 'Print timeline'
     assert_select '.job-timeline__bar'
-    assert_select '.job-timeline__mark-label', text: 'S'
+    assert_select '.job-timeline__mark-letter', text: 'S'
+    assert_select '.job-timeline__legend-letter', text: 'S'
   end
 
   test 'show displays PrusaLink status dot when configured' do

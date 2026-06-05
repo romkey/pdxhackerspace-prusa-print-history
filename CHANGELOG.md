@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-06-05
+
+### Changed
+- **Print timeline** now uses solid status colors that no longer depend on theme variables, places a single letter directly under each event mark, and shows two compact legends below the bar: a color key for the states drawn and an alphabetical key of only the event letters actually used.
+
 ## [0.6.6] - 2026-06-05
 
 ### Fixed

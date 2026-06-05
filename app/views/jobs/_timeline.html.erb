@@ -21,16 +21,29 @@
         <% timeline.markers.each do |marker| %>
           <div class="job-timeline__mark" style="left: <%= marker.position_percent %>%;" title="<%= marker.title %>">
             <span class="job-timeline__mark-tick"></span>
-            <span class="job-timeline__mark-label <%= marker.css_class %>"><%= marker.short_label %></span>
+            <span class="job-timeline__mark-letter <%= marker.css_class %>"><%= marker.short_label %></span>
           </div>
         <% end %>
       </div>
+    <% end %>
 
-      <div class="job-timeline__legend text-12 text-secondary mt-2 d-flex flex-wrap gap-3">
-        <span><span class="job-timeline__legend-swatch job-timeline-segment--printing"></span> Printing</span>
-        <span><span class="job-timeline__legend-swatch job-timeline-segment--attention"></span> Attention / error</span>
-        <span><span class="job-timeline__legend-swatch job-timeline-segment--paused"></span> Paused</span>
-        <span class="text-secondary">Marks: S start · A attention · E error · P paused · F finished</span>
+    <% if timeline.status_key.any? %>
+      <div class="job-timeline__key text-12 text-secondary mt-2 d-flex flex-wrap gap-3">
+        <% timeline.status_key.each do |entry| %>
+          <span class="job-timeline__key-item">
+            <span class="job-timeline__key-swatch <%= entry.css_class %>"></span><%= entry.label %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if timeline.legend.any? %>
+      <div class="job-timeline__legend text-12 text-secondary mt-1 d-flex flex-wrap gap-3">
+        <% timeline.legend.each do |entry| %>
+          <span class="job-timeline__legend-item">
+            <span class="job-timeline__legend-letter"><%= entry.letter %></span> <%= entry.label %>
+          </span>
+        <% end %>
       </div>
     <% end %>
   </div>

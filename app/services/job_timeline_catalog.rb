@@ -9,6 +9,16 @@ module JobTimelineCatalog
     'pending' => 'job-timeline-segment--pending'
   }.freeze
 
+  STATUS_LABELS = {
+    'printing' => 'Printing',
+    'paused' => 'Paused',
+    'attention' => 'Attention',
+    'error' => 'Error',
+    'finished' => 'Finished',
+    'cancelled' => 'Cancelled',
+    'pending' => 'Pending'
+  }.freeze
+
   MARKER_CLASSES = {
     'started' => 'job-timeline-mark--success',
     'resumed' => 'job-timeline-mark--success',
@@ -27,7 +37,18 @@ module JobTimelineCatalog
     'error' => 'E',
     'paused' => 'P',
     'finished' => 'F',
-    'cancelled' => 'C',
-    'status_changed' => '•'
+    'cancelled' => 'X',
+    'status_changed' => 'C'
+  }.freeze
+
+  MARKER_LABELS = {
+    'started' => 'Started',
+    'resumed' => 'Resumed',
+    'attention' => 'Attention',
+    'error' => 'Error',
+    'paused' => 'Paused',
+    'finished' => 'Finished',
+    'cancelled' => 'Cancelled',
+    'status_changed' => 'Status change'
   }.freeze
 end

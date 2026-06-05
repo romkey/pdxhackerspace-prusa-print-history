@@ -43,6 +43,33 @@ class JobTimelineTest < ActiveSupport::TestCase
     assert_operator markers.last.position_percent, :>, markers.first.position_percent
   end
 
+  test 'legend lists only used letters alphabetically' do
+    timeline = JobTimeline.new(@job, now: @now)
+
+    legend = timeline.legend
+
+    assert_equal %w[A S], legend.map(&:letter)
+    assert_equal %w[Attention Started], legend.map(&:label)
+  end
+
+  test 'legend deduplicates repeated event types' do
+    @job.events.create!(event_type: 'attention', to_status: 'attention', occurred_at: @now - 2.minutes)
+
+    legend = JobTimeline.new(@job, now: @now).legend
+
+    assert_equal %w[A S], legend.map(&:letter)
+  end
+
+  test 'status key covers the colors actually drawn' do
+    key = JobTimeline.new(@job, now: @now).status_key
+
+    classes = key.map(&:css_class)
+
+    assert_includes classes, 'job-timeline-segment--printing'
+    assert_includes classes, 'job-timeline-segment--attention'
+    assert_equal classes, classes.uniq
+  end
+
   test 'tail segment reflects current job status after last event' do
     resumed_at = @now - 5.minutes
     @job.update!(status: 'printing')

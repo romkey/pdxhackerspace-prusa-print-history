@@ -1,8 +1,11 @@
 class JobTimeline
   include JobTimelineCatalog
+  include JobTimelineFormatting
 
   Segment = Data.define(:left_percent, :width_percent, :status, :css_class, :title)
   Marker = Data.define(:position_percent, :event_type, :short_label, :occurred_at, :title, :css_class)
+  LegendEntry = Data.define(:letter, :label)
+  StatusKey = Data.define(:css_class, :label)
 
   def initialize(job, events: nil, now: Time.current)
     @job = job
@@ -36,6 +39,24 @@ class JobTimeline
         css_class: MARKER_CLASSES.fetch(event.event_type, 'job-timeline-mark--muted')
       )
     end
+  end
+
+  def legend
+    markers.map(&:event_type).uniq.map do |event_type|
+      LegendEntry.new(
+        letter: MARKER_SHORT_LABELS.fetch(event_type, event_type.first.upcase),
+        label: MARKER_LABELS.fetch(event_type, event_type.humanize)
+      )
+    end.uniq.sort_by(&:letter)
+  end
+
+  def status_key
+    segments.map(&:status).uniq.map do |status|
+      StatusKey.new(
+        css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending'),
+        label: STATUS_LABELS.fetch(status, status.humanize)
+      )
+    end.uniq
   end
 
   def start_at
@@ -107,55 +128,6 @@ class JobTimeline
     else
       points << [time, status]
     end
-  end
-
-  def initial_status(first_event)
-    first_event.from_status.presence || status_for_event(first_event)
-  end
-
-  def status_for_event(event)
-    event.to_status.presence || inferred_status_for(event)
-  end
-
-  def inferred_status_for(event)
-    case event.event_type
-    when 'started', 'resumed' then 'printing'
-    when 'attention' then 'attention'
-    when 'error' then 'error'
-    when 'paused' then 'paused'
-    when 'finished' then 'finished'
-    when 'cancelled' then 'cancelled'
-    else @job.status
-    end
-  end
-
-  def segment_title(status, seconds)
-    "#{status.humanize} · #{duration_label(seconds)}"
-  end
-
-  def duration_label(seconds)
-    total = seconds.to_i
-    hours, remainder = total.divmod(3600)
-    minutes, secs = remainder.divmod(60)
-
-    if hours.positive?
-      minutes.positive? ? "#{hours}h #{minutes}m" : "#{hours}h"
-    elsif minutes.positive?
-      "#{minutes}m"
-    else
-      "#{secs}s"
-    end
-  end
-
-  def marker_title(event)
-    parts = [event.event_type.humanize]
-    if event.from_status.present? && event.to_status.present?
-      parts << "#{event.from_status} → #{event.to_status}"
-    elsif event.to_status.present?
-      parts << event.to_status
-    end
-    parts << event.message if event.message.present?
-    parts.join(' · ')
   end
 
   def percent_for(time)

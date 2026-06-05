@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-06-05
+
+### Fixed
+- **Print timeline** segments and color key now actually show their colors. The status/mark CSS classes emitted in the markup (`job-timeline-segment--*`, `job-timeline-mark--*`) never matched the BEM selectors defined in the stylesheet (`job-timeline__segment--*`, `job-timeline__mark--*`), so every colored rule was silently dead. Added a regression test asserting every emitted timeline class has a matching stylesheet rule.
+
 ## [0.6.7] - 2026-06-05
 
 ### Changed

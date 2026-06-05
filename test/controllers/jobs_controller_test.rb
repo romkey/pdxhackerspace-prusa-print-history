@@ -122,11 +122,11 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select '.h-section-label', text: 'Print timeline'
     assert_select '.job-timeline__bar'
-    assert_select '.job-timeline__segment.job-timeline-segment--printing', minimum: 1
-    assert_select '.job-timeline__segment.job-timeline-segment--attention', minimum: 1
+    assert_select '.job-timeline__segment.job-timeline__segment--printing', minimum: 1
+    assert_select '.job-timeline__segment.job-timeline__segment--attention', minimum: 1
     assert_select '.job-timeline__mark-letter', text: 'S'
     assert_select '.job-timeline__mark-letter', text: 'A'
-    assert_select '.job-timeline__key-swatch.job-timeline-segment--printing', minimum: 1
+    assert_select '.job-timeline__key-swatch.job-timeline__segment--printing', minimum: 1
     assert_select '.job-timeline__legend-letter', text: 'A'
     assert_select '.job-timeline__legend-letter', text: 'S'
   end

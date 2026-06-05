@@ -1,12 +1,12 @@
 module JobTimelineCatalog
   STATUS_CLASSES = {
-    'printing' => 'job-timeline-segment--printing',
-    'paused' => 'job-timeline-segment--paused',
-    'attention' => 'job-timeline-segment--attention',
-    'error' => 'job-timeline-segment--error',
-    'finished' => 'job-timeline-segment--finished',
-    'cancelled' => 'job-timeline-segment--cancelled',
-    'pending' => 'job-timeline-segment--pending'
+    'printing' => 'job-timeline__segment--printing',
+    'paused' => 'job-timeline__segment--paused',
+    'attention' => 'job-timeline__segment--attention',
+    'error' => 'job-timeline__segment--error',
+    'finished' => 'job-timeline__segment--finished',
+    'cancelled' => 'job-timeline__segment--cancelled',
+    'pending' => 'job-timeline__segment--pending'
   }.freeze
 
   STATUS_LABELS = {
@@ -20,14 +20,14 @@ module JobTimelineCatalog
   }.freeze
 
   MARKER_CLASSES = {
-    'started' => 'job-timeline-mark--success',
-    'resumed' => 'job-timeline-mark--success',
-    'attention' => 'job-timeline-mark--danger',
-    'error' => 'job-timeline-mark--danger',
-    'paused' => 'job-timeline-mark--warning',
-    'finished' => 'job-timeline-mark--muted',
-    'cancelled' => 'job-timeline-mark--muted',
-    'status_changed' => 'job-timeline-mark--muted'
+    'started' => 'job-timeline__mark--success',
+    'resumed' => 'job-timeline__mark--success',
+    'attention' => 'job-timeline__mark--danger',
+    'error' => 'job-timeline__mark--danger',
+    'paused' => 'job-timeline__mark--warning',
+    'finished' => 'job-timeline__mark--muted',
+    'cancelled' => 'job-timeline__mark--muted',
+    'status_changed' => 'job-timeline__mark--muted'
   }.freeze
 
   MARKER_SHORT_LABELS = {

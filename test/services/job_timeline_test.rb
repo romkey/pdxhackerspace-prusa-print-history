@@ -24,10 +24,10 @@ class JobTimelineTest < ActiveSupport::TestCase
     segments = timeline.segments
 
     assert_equal 2, segments.size
-    assert_equal 'job-timeline-segment--printing', segments.first.css_class
+    assert_equal 'job-timeline__segment--printing', segments.first.css_class
     assert_includes segments.first.title, '20m'
     assert_operator segments.first.width_percent, :>, 0
-    assert_equal 'job-timeline-segment--attention', segments.last.css_class
+    assert_equal 'job-timeline__segment--attention', segments.last.css_class
     assert_includes segments.last.title, '10m'
     assert_in_delta 100, segments.sum(&:width_percent), 0.5
   end
@@ -65,8 +65,8 @@ class JobTimelineTest < ActiveSupport::TestCase
 
     classes = key.map(&:css_class)
 
-    assert_includes classes, 'job-timeline-segment--printing'
-    assert_includes classes, 'job-timeline-segment--attention'
+    assert_includes classes, 'job-timeline__segment--printing'
+    assert_includes classes, 'job-timeline__segment--attention'
     assert_equal classes, classes.uniq
   end
 
@@ -82,7 +82,7 @@ class JobTimelineTest < ActiveSupport::TestCase
 
     segments = JobTimeline.new(@job, now: @now).segments
 
-    assert_equal 'job-timeline-segment--printing', segments.last.css_class
+    assert_equal 'job-timeline__segment--printing', segments.last.css_class
     assert_includes segments.last.title, '5m'
   end
 
@@ -100,5 +100,15 @@ class JobTimelineTest < ActiveSupport::TestCase
     timeline = JobTimeline.new(job, events: [], now: @now)
 
     assert_not timeline.renderable?
+  end
+
+  test 'every emitted css class has a matching rule in the stylesheet' do
+    stylesheet = Rails.root.join('app/assets/stylesheets/refresh.scss').read
+    defined_selectors = stylesheet.scan(/\.([\w-]+)\s*[,{]/).flatten.to_set
+
+    emitted = JobTimelineCatalog::STATUS_CLASSES.values + JobTimelineCatalog::MARKER_CLASSES.values
+    missing = emitted.uniq.reject { |css_class| defined_selectors.include?(css_class) }
+
+    assert_empty missing, "Timeline classes with no CSS rule: #{missing.join(', ')}"
   end
 end

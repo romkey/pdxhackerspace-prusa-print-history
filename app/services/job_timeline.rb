@@ -36,7 +36,7 @@ class JobTimeline
         short_label: MARKER_SHORT_LABELS.fetch(event.event_type, event.event_type.first.upcase),
         occurred_at: event.occurred_at,
         title: marker_title(event),
-        css_class: MARKER_CLASSES.fetch(event.event_type, 'job-timeline-mark--muted')
+        css_class: MARKER_CLASSES.fetch(event.event_type, 'job-timeline__mark--muted')
       )
     end
   end
@@ -53,7 +53,7 @@ class JobTimeline
   def status_key
     segments.map(&:status).uniq.map do |status|
       StatusKey.new(
-        css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending'),
+        css_class: STATUS_CLASSES.fetch(status, 'job-timeline__segment--pending'),
         label: STATUS_LABELS.fetch(status, status.humanize)
       )
     end.uniq
@@ -102,7 +102,7 @@ class JobTimeline
       left_percent: left,
       width_percent: width,
       status: status,
-      css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending'),
+      css_class: STATUS_CLASSES.fetch(status, 'job-timeline__segment--pending'),
       title: segment_title(status, end_time - start_time)
     )
   end

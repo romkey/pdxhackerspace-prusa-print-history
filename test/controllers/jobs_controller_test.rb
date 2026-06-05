@@ -110,12 +110,22 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
   test 'show renders print timeline after photos when events exist' do
     attach_job_photos(@job)
+    @job.update!(status: 'attention')
+    @job.events.create!(
+      event_type: 'attention',
+      from_status: 'printing',
+      to_status: 'attention',
+      occurred_at: 10.minutes.ago
+    )
 
     get job_path(@job)
 
     assert_select '.h-section-label', text: 'Print timeline'
-    assert_select '.job-timeline__track'
+    assert_select '.job-timeline__bar'
     assert_select '.job-timeline__segment.job-timeline-segment--printing', minimum: 1
+    assert_select '.job-timeline__segment.job-timeline-segment--attention', minimum: 1
+    assert_select '.job-timeline__mark-label', text: 'S'
+    assert_select '.job-timeline__mark-label', text: 'A'
   end
 
   test 'show omits temperature chart when job has no telemetry' do

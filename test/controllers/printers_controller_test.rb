@@ -193,7 +193,8 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get printer_path(@printer)
 
     assert_select '.h-section-label', text: 'Print timeline'
-    assert_select '.job-timeline__track'
+    assert_select '.job-timeline__bar'
+    assert_select '.job-timeline__mark-label', text: 'S'
   end
 
   test 'show displays PrusaLink status dot when configured' do

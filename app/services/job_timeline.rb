@@ -1,27 +1,8 @@
 class JobTimeline
-  Segment = Data.define(:left_percent, :width_percent, :status, :css_class)
-  Marker = Data.define(:position_percent, :event_type, :label, :occurred_at, :title, :css_class)
+  include JobTimelineCatalog
 
-  STATUS_CLASSES = {
-    'printing' => 'job-timeline-segment--printing',
-    'paused' => 'job-timeline-segment--paused',
-    'attention' => 'job-timeline-segment--attention',
-    'error' => 'job-timeline-segment--error',
-    'finished' => 'job-timeline-segment--finished',
-    'cancelled' => 'job-timeline-segment--cancelled',
-    'pending' => 'job-timeline-segment--pending'
-  }.freeze
-
-  MARKER_CLASSES = {
-    'started' => 'job-timeline-marker--success',
-    'resumed' => 'job-timeline-marker--success',
-    'attention' => 'job-timeline-marker--danger',
-    'error' => 'job-timeline-marker--danger',
-    'paused' => 'job-timeline-marker--warning',
-    'finished' => 'job-timeline-marker--muted',
-    'cancelled' => 'job-timeline-marker--muted',
-    'status_changed' => 'job-timeline-marker--muted'
-  }.freeze
+  Segment = Data.define(:left_percent, :width_percent, :status, :css_class, :title)
+  Marker = Data.define(:position_percent, :event_type, :short_label, :occurred_at, :title, :css_class)
 
   def initialize(job, events: nil, now: Time.current)
     @job = job
@@ -42,17 +23,17 @@ class JobTimeline
   def markers
     return [] unless renderable?
 
-    @events.filter_map do |event|
+    window_events.filter_map do |event|
       position = percent_for(event.occurred_at)
       next if position.nil?
 
       Marker.new(
         position_percent: position,
         event_type: event.event_type,
-        label: event.event_type.humanize,
+        short_label: MARKER_SHORT_LABELS.fetch(event.event_type, event.event_type.first.upcase),
         occurred_at: event.occurred_at,
         title: marker_title(event),
-        css_class: MARKER_CLASSES.fetch(event.event_type, 'job-timeline-marker--muted')
+        css_class: MARKER_CLASSES.fetch(event.event_type, 'job-timeline-mark--muted')
       )
     end
   end
@@ -73,47 +54,97 @@ class JobTimeline
 
   def build_segments
     points = status_points
-    return [single_segment(@job.status)] if points.size == 1
+    finish = window_end
 
-    points.each_cons(2).filter_map do |(start_time, status), (end_time, _)|
-      left = percent_for(start_time)
-      width = percent_for(end_time) - left
-      next if width <= 0
-
-      Segment.new(
-        left_percent: left,
-        width_percent: width,
-        status: status,
-        css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending')
-      )
+    if points.size == 1
+      start_time, = points.first
+      segment = segment_between(start_time, finish, @job.status)
+      return segment ? [segment] : []
     end
+
+    segments = points.each_cons(2).filter_map do |(start_time, status), (end_time, _)|
+      segment_between(start_time, end_time, status)
+    end
+
+    last_time, = points.last
+    tail = segment_between(last_time, finish, @job.status)
+    segments << tail if tail
+    segments
+  end
+
+  def segment_between(start_time, end_time, status)
+    left = percent_for(start_time)
+    width = percent_for(end_time) - left
+    return if width <= 0.1
+
+    Segment.new(
+      left_percent: left,
+      width_percent: width,
+      status: status,
+      css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending'),
+      title: segment_title(status, end_time - start_time)
+    )
   end
 
   def status_points
     start = window_start
-    finish = window_end
-    return [[start, @job.status]] if @events.empty?
+    return [[start, @job.status]] if window_events.empty?
 
-    points = [[start, initial_status(@events.first)]]
-    @events.each do |event|
-      status = event.to_status.presence || @job.status
-      points << [clamp_time(event.occurred_at), status]
+    points = [[start, initial_status(window_events.first)]]
+    window_events.each do |event|
+      append_point(points, clamp_time(event.occurred_at), status_for_event(event))
     end
-    points << [finish, points.last[1]]
     points
   end
 
-  def initial_status(first_event)
-    first_event.from_status.presence || 'pending'
+  def window_events
+    @window_events ||= @events.select { |event| event.occurred_at.between?(window_start, window_end) }
   end
 
-  def single_segment(status)
-    Segment.new(
-      left_percent: 0,
-      width_percent: 100,
-      status: status,
-      css_class: STATUS_CLASSES.fetch(status, 'job-timeline-segment--pending')
-    )
+  def append_point(points, time, status)
+    if points.last&.first == time
+      points[-1] = [time, status]
+    else
+      points << [time, status]
+    end
+  end
+
+  def initial_status(first_event)
+    first_event.from_status.presence || status_for_event(first_event)
+  end
+
+  def status_for_event(event)
+    event.to_status.presence || inferred_status_for(event)
+  end
+
+  def inferred_status_for(event)
+    case event.event_type
+    when 'started', 'resumed' then 'printing'
+    when 'attention' then 'attention'
+    when 'error' then 'error'
+    when 'paused' then 'paused'
+    when 'finished' then 'finished'
+    when 'cancelled' then 'cancelled'
+    else @job.status
+    end
+  end
+
+  def segment_title(status, seconds)
+    "#{status.humanize} · #{duration_label(seconds)}"
+  end
+
+  def duration_label(seconds)
+    total = seconds.to_i
+    hours, remainder = total.divmod(3600)
+    minutes, secs = remainder.divmod(60)
+
+    if hours.positive?
+      minutes.positive? ? "#{hours}h #{minutes}m" : "#{hours}h"
+    elsif minutes.positive?
+      "#{minutes}m"
+    else
+      "#{secs}s"
+    end
   end
 
   def marker_title(event)

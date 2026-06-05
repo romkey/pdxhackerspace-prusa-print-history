@@ -53,6 +53,8 @@ COPY . .
 
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
+RUN yarn build:css
+
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 RUN rm -rf node_modules

@@ -25,18 +25,38 @@ class JobTimelineTest < ActiveSupport::TestCase
 
     assert_equal 2, segments.size
     assert_equal 'job-timeline-segment--printing', segments.first.css_class
+    assert_includes segments.first.title, '20m'
     assert_operator segments.first.width_percent, :>, 0
     assert_equal 'job-timeline-segment--attention', segments.last.css_class
+    assert_includes segments.last.title, '10m'
+    assert_in_delta 100, segments.sum(&:width_percent), 0.5
   end
 
-  test 'places markers at event times with titles' do
+  test 'places labeled markers at every event time' do
     timeline = JobTimeline.new(@job, now: @now)
     markers = timeline.markers
 
     assert_equal 2, markers.size
+    assert_equal %w[S A], markers.map(&:short_label)
     assert_equal 'started', markers.first.event_type
     assert_includes markers.last.title, 'Filament runout'
     assert_operator markers.last.position_percent, :>, markers.first.position_percent
+  end
+
+  test 'tail segment reflects current job status after last event' do
+    resumed_at = @now - 5.minutes
+    @job.update!(status: 'printing')
+    @job.events.create!(
+      event_type: 'resumed',
+      from_status: 'attention',
+      to_status: 'printing',
+      occurred_at: resumed_at
+    )
+
+    segments = JobTimeline.new(@job, now: @now).segments
+
+    assert_equal 'job-timeline-segment--printing', segments.last.css_class
+    assert_includes segments.last.title, '5m'
   end
 
   test 'uses ended_at as timeline end for finished jobs' do

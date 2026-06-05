@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.6] - 2026-06-05
+
+### Fixed
+- **Print timeline** shows distinct colored status patches (printing, attention/error, paused) sized by duration, with a first-letter label on every event below the bar.
+
 ## [0.6.5] - 2026-06-05
 
 ### Added

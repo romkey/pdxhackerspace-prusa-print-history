@@ -183,6 +183,19 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select '.h-section-label', text: 'Camera'
   end
 
+  test 'show renders print timeline for active job' do
+    job = jobs(:active_xl)
+    job.events.find_or_create_by!(event_type: 'started') do |event|
+      event.to_status = 'printing'
+      event.occurred_at = job.started_at || 30.minutes.ago
+    end
+
+    get printer_path(@printer)
+
+    assert_select '.h-section-label', text: 'Print timeline'
+    assert_select '.job-timeline__track'
+  end
+
   test 'show displays PrusaLink status dot when configured' do
     @printer.update!(prusalink_key: 'secret', prusalink_reachable: true)
 

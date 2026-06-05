@@ -21,6 +21,18 @@ class PrinterShowPresenter
     display_job.events.recent.includes(photo_attachment: :blob)
   end
 
+  def timeline
+    return unless display_job
+
+    JobTimeline.new(display_job, events: display_job.events.ordered.to_a)
+  end
+
+  def photos
+    return unless display_job
+
+    JobPhotosPresenter.new(display_job)
+  end
+
   def telemetry_readings
     display_job&.telemetry_readings&.ordered || TelemetryReading.none
   end

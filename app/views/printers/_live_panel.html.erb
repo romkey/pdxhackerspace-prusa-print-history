@@ -5,6 +5,15 @@
 <% reported_tools = presenter.reported_tools %>
 <% latest_photo = presenter.latest_photo %>
 
+<% if display_job %>
+  <% if (job_photos = presenter.photos)&.photos? %>
+    <%= render 'jobs/photo_gallery', job: display_job, photos: job_photos, wrapper_class: 'mb-3' %>
+  <% end %>
+  <% if (timeline = presenter.timeline)&.renderable? %>
+    <%= render 'jobs/timeline', job: display_job, timeline: timeline, wrapper_class: 'mb-3' %>
+  <% end %>
+<% end %>
+
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card mb-3">

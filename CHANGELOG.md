@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-06-05
+
+### Added
+- **Print timeline** on job and printer pages: a full-width bar under print photos showing colored status segments (printing, attention/error, paused) and event markers from start through end or now.
+
 ## [0.6.4] - 2026-05-30
 
 ### Added

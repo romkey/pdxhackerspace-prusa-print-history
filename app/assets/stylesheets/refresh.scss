@@ -141,6 +141,56 @@ body {
   background: var(--bs-tertiary-bg);
 }
 
+.job-timeline__track {
+  position: relative;
+  height: 14px;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-sm);
+}
+
+.job-timeline__segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  min-width: 2px;
+}
+
+.job-timeline__segment--printing { background-color: var(--bs-success); }
+.job-timeline__segment--attention,
+.job-timeline__segment--error { background-color: var(--bs-danger); }
+.job-timeline__segment--paused { background-color: var(--bs-warning); }
+.job-timeline__segment--finished,
+.job-timeline__segment--cancelled,
+.job-timeline__segment--pending { background-color: var(--bs-secondary); opacity: 0.45; }
+
+.job-timeline__marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  margin-left: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--bs-body-bg);
+  box-shadow: 0 0 0 1px var(--bs-border-color);
+  z-index: 1;
+}
+
+.job-timeline__marker--success { background-color: var(--bs-success); }
+.job-timeline__marker--danger { background-color: var(--bs-danger); }
+.job-timeline__marker--warning { background-color: var(--bs-warning); }
+.job-timeline__marker--muted { background-color: var(--bs-secondary); }
+
+.job-timeline__legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.25rem;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
 .dashboard-temps {
   max-width: 180px;
 }

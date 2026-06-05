@@ -23,6 +23,7 @@ class JobsController < ApplicationController
     @chart_series      = JobTelemetryCharts.series_for(@telemetry.to_a, job: @job)
     @chart_options     = JobTelemetryCharts.chart_options(@job)
     @photos            = JobPhotosPresenter.new(@job)
+    @timeline          = JobTimeline.new(@job, events: @job.events.ordered.to_a)
     @label_printers    = LabelPrinter.ordered
     @default_label_printer = LabelPrinter.default
   end

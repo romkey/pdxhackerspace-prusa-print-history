@@ -108,6 +108,16 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Finish/, response.body)
   end
 
+  test 'show renders print timeline after photos when events exist' do
+    attach_job_photos(@job)
+
+    get job_path(@job)
+
+    assert_select '.h-section-label', text: 'Print timeline'
+    assert_select '.job-timeline__track'
+    assert_select '.job-timeline__segment.job-timeline-segment--printing', minimum: 1
+  end
+
   test 'show omits temperature chart when job has no telemetry' do
     job = jobs(:finished)
 

@@ -91,6 +91,12 @@ body {
 
 .dashboard-printer-card {
   padding: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-job-filename {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dashboard-printer-name {

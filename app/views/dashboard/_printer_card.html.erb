@@ -42,7 +42,7 @@
   </div>
 
   <% if card.current_job %>
-    <div class="text-13 mb-2">
+    <div class="dashboard-job-filename text-13 mb-2">
       <%= link_to card.current_job.filename, job_path(card.current_job), class: 'fw-medium text-decoration-none' %>
       <div class="text-12 text-secondary">
         <%= card.current_job.status %>
@@ -50,7 +50,7 @@
       <%= render 'jobs/progress', job: card.current_job, wrapper_class: 'mt-2' %>
     </div>
   <% elsif card.idle? && card.last_job %>
-    <div class="text-13 mb-2">
+    <div class="dashboard-job-filename text-13 mb-2">
       <%= link_to card.last_job.filename, job_path(card.last_job), class: 'fw-medium text-decoration-none' %>
       <div class="text-12 text-secondary">
         <%= card.last_job.status %>

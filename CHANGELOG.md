@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-06-10
+
+### Fixed
+- **Dashboard** long job filenames now wrap inside each printer card instead of overflowing into neighboring columns on narrow screens.
+
 ## [0.6.8] - 2026-06-05
 
 ### Fixed

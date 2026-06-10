@@ -103,6 +103,27 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_not xl_card.text.match?(/\bavailable\b/)
   end
 
+  test 'dashboard job filenames are wrapped to stay within printer columns' do
+    stylesheet = Rails.root.join('app/assets/stylesheets/refresh.scss').read
+    defined_selectors = stylesheet.scan(/\.([\w-]+)\s*[,{]/).flatten.to_set
+
+    assert_includes defined_selectors, 'dashboard-job-filename'
+    assert_includes stylesheet, 'overflow-wrap: anywhere'
+    assert_match(/\.dashboard-printer-card[\s\S]*?min-width:\s*0/, stylesheet)
+
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    long_filename = 'very_long_print_filename_that_would_overflow_without_wrapping.gcode'
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: long_filename, progress_percent: 42.0)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .dashboard-job-filename a[href=?]', job_path(job), text: long_filename
+  end
+
   test 'dashboard printer images use attention outline for problem states' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', operational_state: 'attention', prusalink_reachable: false)

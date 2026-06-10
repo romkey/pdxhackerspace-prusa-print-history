@@ -61,6 +61,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_not admin.reload.admin?
+    assert_match(/admin access was removed/i, flash[:warning].to_s)
   end
 
   test 'authentik sign-in promotes user when is_admin claim is true' do
@@ -227,6 +228,60 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_path
     assert_match(/Invalid email or password/, flash[:alert].to_s)
+  ensure
+    ENV.delete('LOCAL_ADMIN_EMAIL')
+    ENV.delete('LOCAL_ADMIN_PASSWORD')
+  end
+
+  test 'local login rate limits repeated failures' do
+    ENV['LOCAL_ADMIN_EMAIL'] = 'local-admin@example.com'
+    ENV['LOCAL_ADMIN_PASSWORD'] = 'local-secret'
+
+    5.times do
+      post local_login_path, params: { email: 'local-admin@example.com', password: 'wrong' }
+
+      assert_redirected_to login_path
+    end
+
+    post local_login_path, params: { email: 'local-admin@example.com', password: 'wrong' }
+
+    assert_redirected_to login_path
+    assert_match(/Too many sign-in attempts/, flash[:alert].to_s)
+  ensure
+    ENV.delete('LOCAL_ADMIN_EMAIL')
+    ENV.delete('LOCAL_ADMIN_PASSWORD')
+    LocalLoginRateLimiter.reset!('127.0.0.1')
+  end
+
+  test 'local login resets the session before establishing the user session' do
+    ENV['LOCAL_ADMIN_EMAIL'] = 'local-admin@example.com'
+    ENV['LOCAL_ADMIN_PASSWORD'] = 'local-secret'
+
+    get settings_path
+
+    assert_redirected_to login_path
+
+    post local_login_path, params: { email: 'local-admin@example.com', password: 'local-secret' }
+    follow_redirect!
+
+    assert_response :success
+    assert_match(/Signed in as local-admin/, flash[:notice].to_s)
+  ensure
+    ENV.delete('LOCAL_ADMIN_EMAIL')
+    ENV.delete('LOCAL_ADMIN_PASSWORD')
+  end
+
+  test 'local login redirects to stored return path after sign-in' do
+    ENV['LOCAL_ADMIN_EMAIL'] = 'local-admin@example.com'
+    ENV['LOCAL_ADMIN_PASSWORD'] = 'local-secret'
+
+    get settings_path
+
+    assert_redirected_to login_path
+
+    post local_login_path, params: { email: 'local-admin@example.com', password: 'local-secret' }
+
+    assert_redirected_to settings_path
   ensure
     ENV.delete('LOCAL_ADMIN_EMAIL')
     ENV.delete('LOCAL_ADMIN_PASSWORD')

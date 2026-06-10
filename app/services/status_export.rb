@@ -5,7 +5,7 @@ module StatusExport
 
   module_function
 
-  def printers
+  def printers(include_email: true)
     records = Printer.ordered.includes(:printer_heads)
     active_jobs = Job.active
                      .where(printer_id: records.map(&:id))
@@ -13,28 +13,28 @@ module StatusExport
     active_by_printer = active_jobs.index_by(&:printer_id)
 
     records.map do |printer|
-      printer_as_json(printer, job: active_by_printer[printer.id])
+      printer_as_json(printer, job: active_by_printer[printer.id], include_email: include_email)
     end
   end
 
-  def jobs(limit: RECENT_JOBS_LIMIT)
+  def jobs(limit: RECENT_JOBS_LIMIT, include_email: true)
     Job.recent
        .includes(:printer, :owner, :cleared_by, :tools)
        .limit(limit)
-       .map { |job| job_as_json(job, include_printer: true) }
+       .map { |job| job_as_json(job, include_printer: true, include_email: include_email) }
   end
 
-  def events(limit: RECENT_EVENTS_LIMIT)
+  def events(limit: RECENT_EVENTS_LIMIT, include_email: true)
     JobEvent.recent
             .includes(job: %i[printer owner tools])
             .limit(limit)
-            .map { |event| event_as_json(event) }
+            .map { |event| event_as_json(event, include_email: include_email) }
   end
 
-  def printer_as_json(printer, job:)
+  def printer_as_json(printer, job:, include_email: true)
     printer_attributes(printer).merge(
       heads: printer.printer_heads.sort_by(&:tool_index).map { |head| head_as_json(head) },
-      job: job ? job_as_json(job) : nil
+      job: job ? job_as_json(job, include_email: include_email) : nil
     )
   end
 
@@ -83,19 +83,19 @@ module StatusExport
     }
   end
 
-  def job_as_json(job, include_printer: false)
-    payload = job_attributes(job)
+  def job_as_json(job, include_printer: false, include_email: true)
+    payload = job_attributes(job, include_email: include_email)
     payload[:printer] = printer_summary_as_json(job.printer) if include_printer
     payload
   end
 
-  def job_attributes(job)
+  def job_attributes(job, include_email: true)
     job_core_attributes(job)
       .merge(job_timing_attributes(job))
       .merge(job_clearance_attributes(job))
       .merge(
-        owner: user_as_json(job.owner),
-        cleared_by: user_as_json(job.cleared_by),
+        owner: user_as_json(job.owner, include_email: include_email),
+        cleared_by: user_as_json(job.cleared_by, include_email: include_email),
         tools: job.tools.sort_by(&:tool_index).map { |tool| tool_as_json(tool) }
       )
   end
@@ -134,7 +134,7 @@ module StatusExport
     }
   end
 
-  def event_as_json(event)
+  def event_as_json(event, include_email: true)
     {
       id: event.id,
       event_type: event.event_type,
@@ -144,7 +144,7 @@ module StatusExport
       occurred_at: timestamp(event.occurred_at),
       created_at: timestamp(event.created_at),
       updated_at: timestamp(event.updated_at),
-      job: job_as_json(event.job)
+      job: job_as_json(event.job, include_email: include_email)
     }
   end
 
@@ -179,16 +179,17 @@ module StatusExport
     }
   end
 
-  def user_as_json(user)
+  def user_as_json(user, include_email: true)
     return nil unless user
 
-    {
+    payload = {
       id: user.id,
       name: user.name,
       username: user.username,
-      email: user.email,
       display_name: user.display_name
     }
+    payload[:email] = user.email if include_email
+    payload
   end
 
   def decimal(value)

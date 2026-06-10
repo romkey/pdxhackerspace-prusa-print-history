@@ -18,8 +18,18 @@ class User < ApplicationRecord
   attribute :notify_via_email, :boolean, default: true
   attribute :notify_via_slack, :boolean, default: true
 
+  attr_accessor :authentik_admin_revoked
+
   def self.find_or_create_from_auth(auth)
     user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)
+    admin_before = user.persisted? && user.admin?
+    apply_profile_from_auth(user, auth)
+    user.authentik_admin_revoked = user.provider == 'authentik' && admin_before && !user.admin?
+    user.save!
+    user
+  end
+
+  def self.apply_profile_from_auth(user, auth)
     user.email = auth.info.email
     user.name  = auth.info.name.presence || auth.info.email
     claims = auth_claims(auth)
@@ -27,8 +37,6 @@ class User < ApplicationRecord
     apply_admin_from_auth(user, claims)
     apply_trained_on_from_auth(user, auth)
     apply_slack_from_auth(user, claims)
-    user.save!
-    user
   end
 
   def self.apply_username_from_auth(user, auth, claims)
@@ -60,9 +68,13 @@ class User < ApplicationRecord
   end
 
   def self.apply_slack_from_auth(user, claims)
-    return unless claims.key?('slack')
+    return unless user.provider == 'authentik'
 
-    apply_slack_hash(user, claims['slack'])
+    if claims.key?('slack')
+      apply_slack_hash(user, claims['slack'])
+    else
+      clear_slack!(user)
+    end
   end
 
   def self.trained_on?(auth, name)
@@ -142,7 +154,7 @@ class User < ApplicationRecord
     end
   end
   private_class_method :apply_admin_from_auth, :apply_trained_on_from_auth, :apply_slack_from_auth,
-                       :apply_slack_hash, :apply_username_from_auth,
+                       :apply_slack_hash, :apply_username_from_auth, :apply_profile_from_auth,
                        :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :normalize_trained_on,
                        :trained_on_entry_name, :truthy?, :auth_claims
 

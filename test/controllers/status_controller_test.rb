@@ -56,6 +56,28 @@ class StatusControllerTest < ActionDispatch::IntegrationTest
     assert body.first['printer']
   end
 
+  test 'internal anonymous jobs.json omits user emails' do
+    get '/jobs.json', headers: internal_request_headers
+
+    body = response.parsed_body
+    owner = body.find { |entry| entry['id'] == @job.id }&.dig('owner')
+
+    assert owner
+    assert_not owner.key?('email')
+    assert owner['display_name'].present?
+  end
+
+  test 'logged in jobs.json includes user emails' do
+    login_as(users(:viewer))
+    get '/jobs.json', headers: external_request_headers
+
+    body = response.parsed_body
+    entry = body.find { |row| row['owner'].present? }
+
+    assert entry
+    assert entry['owner']['email'].present?
+  end
+
   test 'events.json returns at most one hundred events' do
     get '/events.json', headers: internal_request_headers
 

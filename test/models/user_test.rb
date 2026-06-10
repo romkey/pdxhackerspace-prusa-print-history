@@ -95,25 +95,6 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 'keepme', user.reload.username
   end
 
-  test 'find_or_create_from_auth ignores ADMIN_EMAILS without is_admin claim' do
-    ENV['ADMIN_EMAILS'] = 'promoted@example.com'
-    AdminEmails.reset!
-
-    auth = OmniAuth::AuthHash.new(
-      provider: 'authentik',
-      uid: 'promo-uid',
-      info: { email: 'promoted@example.com', name: 'Promoted Person' }
-    )
-
-    user = User.find_or_create_from_auth(auth)
-
-    assert_predicate user, :persisted?
-    assert_not user.admin?
-  ensure
-    ENV.delete('ADMIN_EMAILS')
-    AdminEmails.reset!
-  end
-
   test 'find_or_create_from_auth syncs admin from is_admin claim' do
     auth = OmniAuth::AuthHash.new(
       provider: 'authentik',
@@ -282,7 +263,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.notify_via_slack?
   end
 
-  test 'find_or_create_from_auth leaves slack fields unchanged when claims are absent' do
+  test 'find_or_create_from_auth clears slack fields when slack claim is absent' do
     user = users(:viewer)
 
     auth = OmniAuth::AuthHash.new(
@@ -293,7 +274,11 @@ class UserTest < ActiveSupport::TestCase
 
     User.find_or_create_from_auth(auth)
 
-    assert_equal 'UVIEWER123', user.reload.slack_id
+    user.reload
+
+    assert_nil user.slack_id
+    assert_nil user.slack_handle
+    assert_not user.notify_via_slack?
   end
 
   test 'trained_on? matches Prusa from array claims' do

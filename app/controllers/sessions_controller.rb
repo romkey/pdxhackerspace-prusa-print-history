@@ -31,12 +31,18 @@ class SessionsController < ApplicationController
       return
     end
 
+    if LocalLoginRateLimiter.throttled?(request.remote_ip)
+      redirect_to login_path, alert: 'Too many sign-in attempts. Try again in a few minutes.'
+      return
+    end
+
     user = LocalAdmin.authenticate(params[:email], params[:password])
     if user
-      session[:user_id] = user.id
-      user.record_login!
+      establish_session(user)
+      LocalLoginRateLimiter.reset!(request.remote_ip)
       redirect_to stored_return_path, notice: "Signed in as #{user.display_name}."
     else
+      LocalLoginRateLimiter.record_failure(request.remote_ip)
       redirect_to login_path, alert: 'Invalid email or password.'
     end
   end
@@ -59,16 +65,27 @@ class SessionsController < ApplicationController
   private
 
   def sign_in_user(user, auth:)
+    establish_session(user)
+
+    flash[:notice] = "Signed in as #{user.display_name}."
+    warnings = []
+    training_notice = PrusaTrainingNotice.for_auth(auth, user: user)
+    warnings << training_notice if training_notice.present?
+    warnings << admin_access_revoked_message if user.authentik_admin_revoked
+    flash[:warning] = warnings.join(' ') if warnings.any?
+    redirect_to stored_return_path
+  end
+
+  def establish_session(user)
     return_to = session[:return_to]
     reset_session
     session[:user_id] = user.id
     user.record_login!
     session[:return_to] = return_to if return_to.present?
+  end
 
-    flash[:notice] = "Signed in as #{user.display_name}."
-    training_notice = PrusaTrainingNotice.for_auth(auth, user: user)
-    flash[:warning] = training_notice if training_notice.present?
-    redirect_to stored_return_path
+  def admin_access_revoked_message
+    'Your admin access was removed by Authentik. Contact an administrator if this is unexpected.'
   end
 
   def handle_sign_in_error(error, context:, message: nil)

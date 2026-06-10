@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.11] - 2026-06-10
+
+### Fixed
+- Local password sign-in now resets the session before establishing the user session, closing a session-fixation gap.
+- Authentik sign-in clears stale Slack linkage when the `slack` claim is no longer returned.
+
+### Changed
+- Local password sign-in is rate-limited after repeated failures.
+- Status JSON omits user emails for anonymous internal-network clients; signed-in users still receive emails.
+- Removed unused `ADMIN_EMAILS` configuration.
+- Reverse-proxy trust is documented and configurable via `TRUSTED_PROXY_CIDRS`.
+- Authentik sign-in warns when a returning admin is demoted because `is_admin` is missing or false.
+
 ## [0.6.10] - 2026-06-10
 
 ### Changed

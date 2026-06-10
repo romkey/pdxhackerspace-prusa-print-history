@@ -32,15 +32,34 @@ module ActionDispatch
 
     def omniauth_login(user)
       OmniAuth.config.test_mode = true
-      info = { email: user.email, name: user.name, nickname: user.username }
-      info[:is_admin] = true if user.provider == 'authentik' && user.admin?
-      OmniAuth.config.mock_auth[:developer] = OmniAuth::AuthHash.new(
-        provider: user.provider,
-        uid: user.uid,
-        info: info
-      )
+      OmniAuth.config.mock_auth[:developer] = omniauth_auth_hash_for(user)
       post '/auth/developer/callback'
       follow_redirect! while response.redirect?
+    end
+
+    def omniauth_auth_hash_for(user)
+      OmniAuth::AuthHash.new(
+        provider: user.provider,
+        uid: user.uid,
+        info: omniauth_info_for(user),
+        extra: omniauth_extra_for(user)
+      )
+    end
+
+    def omniauth_info_for(user)
+      info = { email: user.email, name: user.name, nickname: user.username }
+      info[:is_admin] = true if user.provider == 'authentik' && user.admin?
+      info
+    end
+
+    def omniauth_extra_for(user)
+      return {} unless user.provider == 'authentik' && user.slack_id.present?
+
+      {
+        raw_info: {
+          slack: { uid: user.slack_id, name: user.slack_handle || user.username }
+        }
+      }
     end
 
     def internal_request_headers(ip = '192.168.0.50')

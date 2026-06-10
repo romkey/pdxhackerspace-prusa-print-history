@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.10] - 2026-06-10
+
+### Changed
+- Updated Ruby gem dependencies, including Sidekiq 8.1.6, Puma 8.0.2, and openid_connect 2.5.0.
+
 ## [0.6.9] - 2026-06-10
 
 ### Fixed

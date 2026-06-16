@@ -110,29 +110,35 @@ class SlackMessengerTest < ActiveSupport::TestCase
     assert_includes captured_request.body, 'length=42'
   end
 
-  test 'upload_file defaults filename when attachment has none' do
+  test 'upload_file always uses final.jpg and image/jpeg for notification photos' do
     attachment = Struct.new(:attached?, :download, :filename, :content_type, keyword_init: true).new(
       attached?: true,
       download: 'bytes',
-      filename: ActiveStorage::Filename.new(''),
-      content_type: 'image/png'
+      filename: ActiveStorage::Filename.new('SET_OF~1.BGC'),
+      content_type: 'application/octet-stream'
     )
-    captured = nil
+    form_payload = nil
+    upload_args = nil
     messenger = Slack::Messenger.new(token: 'xoxb-test')
     messenger.stub(:post_form, lambda { |url, payload|
-      captured = [url, payload] if url == Slack::Messenger::GET_UPLOAD_URL
+      form_payload = payload if url == Slack::Messenger::GET_UPLOAD_URL
       { 'ok' => true, 'upload_url' => 'https://files.slack.com/upload/v1/test', 'file_id' => 'F1' }
     }) do
       messenger.stub(:post_json, { 'ok' => true }) do
         messenger.stub(:open_dm_channel, DM_CHANNEL_ID) do
-          messenger.stub(:post_file_to_upload_url, nil) do
+          messenger.stub(:post_file_to_upload_url, lambda { |*_args, **kwargs|
+            upload_args = kwargs
+            nil
+          }) do
             messenger.send(:upload_file, user_id: 'U123', text: 'hi', attachment:)
           end
         end
       end
     end
 
-    assert_equal({ filename: 'print-photo.jpg', length: 'bytes'.bytesize.to_s }, captured[1])
+    assert_equal({ filename: 'final.jpg', length: 'bytes'.bytesize.to_s }, form_payload)
+    assert_equal 'final.jpg', upload_args[:filename]
+    assert_equal 'image/jpeg', upload_args[:content_type]
   end
 
   test 'post_file_to_upload_url sends multipart filename field' do
@@ -156,7 +162,14 @@ class SlackMessengerTest < ActiveSupport::TestCase
     assert_match(%r{multipart/form-data}, captured_request['Content-Type'])
     assert_includes captured_request.body, 'name="filename"'
     assert_includes captured_request.body, 'final.jpg'
-    assert_includes captured_request.body, 'binary-data'
+    assert_includes captured_request.body, 'Content-Type: image/jpeg'
+  end
+
+  test 'build_filename_multipart defaults missing content type to octet-stream' do
+    messenger = Slack::Messenger.new(token: 'xoxb-test')
+    body = messenger.send(:build_filename_multipart, 'boundary', 'final.jpg', 'data', nil)
+
+    assert_includes body, 'Content-Type: application/octet-stream'
   end
 
   test 'post_file_to_upload_url raises on non-success response' do
@@ -178,12 +191,12 @@ class SlackMessengerTest < ActiveSupport::TestCase
     end
   end
 
-  test 'dm_with_attachment uses files upload v2 flow' do
+  test 'dm_with_attachment uses files upload v2 flow with normalized photo metadata' do
     attachment = Struct.new(:attached?, :download, :filename, :content_type, keyword_init: true).new(
       attached?: true,
       download: 'image-bytes',
-      filename: ActiveStorage::Filename.new('final.jpg'),
-      content_type: 'image/jpeg'
+      filename: ActiveStorage::Filename.new('SET_OF~1.BGC'),
+      content_type: 'application/octet-stream'
     )
     form_calls = []
     json_calls = []

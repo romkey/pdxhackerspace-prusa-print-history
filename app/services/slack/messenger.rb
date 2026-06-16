@@ -10,6 +10,8 @@ module Slack
     CONVERSATIONS_OPEN_URL = 'https://slack.com/api/conversations.open'.freeze
     GET_UPLOAD_URL = 'https://slack.com/api/files.getUploadURLExternal'.freeze
     COMPLETE_UPLOAD_URL = 'https://slack.com/api/files.completeUploadExternal'.freeze
+    NOTIFICATION_PHOTO_FILENAME = 'final.jpg'.freeze
+    NOTIFICATION_PHOTO_CONTENT_TYPE = 'image/jpeg'.freeze
 
     def self.dm(user_id:, text:)
       new.dm(user_id:, text:)
@@ -47,9 +49,10 @@ module Slack
       raise Error, 'Slack API token is missing' if @token.blank?
 
       file_data = attachment.download
-      filename = attachment_filename(attachment)
+      filename = NOTIFICATION_PHOTO_FILENAME
+      content_type = NOTIFICATION_PHOTO_CONTENT_TYPE
       upload_info = request_upload_url(filename, file_data)
-      deliver_uploaded_file(upload_info, file_data, filename:, content_type: attachment.content_type)
+      deliver_uploaded_file(upload_info, file_data, filename:, content_type:)
       finalize_upload(user_id:, text:, upload_info:, filename:)
     end
 
@@ -87,10 +90,6 @@ module Slack
       raise Error, 'Slack DM channel id missing' if channel_id.blank?
 
       channel_id
-    end
-
-    def attachment_filename(attachment)
-      attachment.filename.to_s.presence || 'print-photo.jpg'
     end
 
     def post_file_to_upload_url(upload_url, file_data, filename:, content_type:)

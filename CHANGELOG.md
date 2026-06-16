@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Slack print notifications now upload photos as `final.jpg` with an image content type so they render inline instead of as binary attachments when Prusa preview filenames use 8.3-style names.
+
 ## [0.6.11] - 2026-06-10
 
 ### Fixed

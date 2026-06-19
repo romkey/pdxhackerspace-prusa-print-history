@@ -42,8 +42,17 @@ class DashboardHelperTest < ActionView::TestCase
     assert_equal 'filter-chip', dashboard_filter_chip_class('offline')
   end
 
+  test 'dashboard_filter_href replaces exclusive status filters' do
+    href = dashboard_filter_href('printing')
+
+    assert_includes href, 'printing'
+    assert_includes href, 'PLA'
+    assert_not_includes href, 'idle'
+  end
+
   test 'dashboard_status_filter_label humanizes filter names' do
-    assert_equal 'Available', dashboard_status_filter_label('available')
+    assert_equal 'Idle', dashboard_status_filter_label('idle')
+    assert_equal 'Printing', dashboard_status_filter_label('printing')
     assert_equal 'My prints', dashboard_status_filter_label('my_prints')
   end
 end

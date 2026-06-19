@@ -70,16 +70,35 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
   end
 
-  test 'available filter matches reachable idle printers only' do
+  test 'idle filter matches reachable idle printers only' do
     xl = printers(:prusa_xl)
     mini = printers(:prusa_mini)
     xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
     mini.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
     jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
 
-    presenter = build_presenter(filters: ['available'])
+    presenter = build_presenter(filters: ['idle'])
 
     assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'printing filter matches reachable printing printers only' do
+    xl = printers(:prusa_xl)
+    mk4 = printers(:prusa_mk4)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    jobs(:active_xl).update!(status: 'printing')
+    jobs(:orphaned_active).update!(status: 'attention')
+
+    presenter = build_presenter(filters: ['printing'])
+
+    assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'normalize_filters keeps only one exclusive status filter' do
+    presenter = build_presenter(filters: %w[idle printing attention])
+
+    assert_equal ['attention'], presenter.active_filters & DashboardPresenter::EXCLUSIVE_STATUS_FILTERS
   end
 
   test 'offline filter matches unreachable printers' do

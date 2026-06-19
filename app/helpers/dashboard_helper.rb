@@ -3,6 +3,8 @@ module DashboardHelper
     active = dashboard_active_filter_names
     filters = if active.include?(filter_name)
                 active - [filter_name]
+              elsif DashboardPresenter::EXCLUSIVE_STATUS_FILTERS.include?(filter_name)
+                (active - DashboardPresenter::EXCLUSIVE_STATUS_FILTERS) + [filter_name]
               else
                 active + [filter_name]
               end

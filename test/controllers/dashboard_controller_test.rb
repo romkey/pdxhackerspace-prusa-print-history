@@ -71,10 +71,11 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_select 'a.filter-chip', text: 'Available'
-    assert_select 'a.filter-chip', text: 'Attention'
     assert_select 'a.filter-chip', text: 'Idle'
+    assert_select 'a.filter-chip', text: 'Printing'
+    assert_select 'a.filter-chip', text: 'Attention'
     assert_select 'a.filter-chip', text: 'Offline'
+    assert_select 'a.filter-chip', text: 'Available', count: 0
     assert_select 'a.filter-chip', text: 'PLA'
     assert_select 'a.filter-chip', text: 'My prints', count: 0
   end
@@ -105,7 +106,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'dashboard shows empty state when filters match nothing' do
-    get root_path, params: { filter: %w[available offline] }
+    get root_path, params: { filter: %w[idle offline] }
 
     assert_response :success
     assert_match(/No printers match these filters/, response.body)
@@ -152,7 +153,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '.dashboard-printer-card', minimum: 1
     assert_match(/idle/, response.body)
-    assert_select 'a.filter-chip', text: 'Available'
+    assert_select 'a.filter-chip', text: 'Idle'
     assert_select '.dashboard-image-wrap--ready', minimum: 2
   end
 

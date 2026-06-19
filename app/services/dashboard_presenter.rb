@@ -1,6 +1,7 @@
 class DashboardPresenter
   ATTENTION_OUTLINE_STATUSES = %w[paused attention error].freeze
-  STATUS_FILTERS = %w[available attention idle offline].freeze
+  EXCLUSIVE_STATUS_FILTERS = %w[idle printing attention].freeze
+  STATUS_FILTERS = (EXCLUSIVE_STATUS_FILTERS + %w[offline]).freeze
   SPECIAL_FILTERS = (STATUS_FILTERS + %w[my_prints]).freeze
 
   Card = Struct.new(:printer, :current_job, :last_job, :heads, :snapshot, :latest_reading, keyword_init: true) do
@@ -103,6 +104,11 @@ class DashboardPresenter
   def normalize_filters(raw_filters)
     selected = Array(raw_filters).map(&:to_s).compact_blank
     selected -= ['my_prints'] unless @current_user
+    selected -= ['available']
+    exclusive = selected & EXCLUSIVE_STATUS_FILTERS
+    if exclusive.size > 1
+      selected = selected - EXCLUSIVE_STATUS_FILTERS + [exclusive.last]
+    end
     allowed = SPECIAL_FILTERS + material_filters
     selected.select { |filter| allowed.include?(filter) }
   end
@@ -113,17 +119,13 @@ class DashboardPresenter
 
   def matches_filter?(card, filter)
     case filter
-    when 'available' then card_available?(card)
     when 'attention' then card_attention?(card)
     when 'idle' then card_idle?(card)
+    when 'printing' then card_printing?(card)
     when 'offline' then card_offline?(card)
     when 'my_prints' then card_my_print?(card)
     else card_material?(card, filter)
     end
-  end
-
-  def card_available?(card)
-    card.printer.prusalink_connection_status == :reachable && card.printer.display_status == 'idle'
   end
 
   def card_attention?(card)
@@ -132,7 +134,13 @@ class DashboardPresenter
   end
 
   def card_idle?(card)
-    card.printer.display_status == 'idle'
+    card.printer.prusalink_connection_status == :reachable &&
+      card.printer.display_status == 'idle'
+  end
+
+  def card_printing?(card)
+    card.printer.prusalink_connection_status == :reachable &&
+      card.printer.display_status == 'printing'
   end
 
   def card_offline?(card)

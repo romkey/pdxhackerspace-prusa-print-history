@@ -1,7 +1,7 @@
 class DashboardPresenter
   ATTENTION_OUTLINE_STATUSES = %w[paused attention error].freeze
-  EXCLUSIVE_STATUS_FILTERS = %w[idle printing attention].freeze
-  STATUS_FILTERS = (EXCLUSIVE_STATUS_FILTERS + %w[offline]).freeze
+  EXCLUSIVE_STATUS_FILTERS = %w[idle printing attention offline].freeze
+  STATUS_FILTERS = EXCLUSIVE_STATUS_FILTERS
   SPECIAL_FILTERS = (STATUS_FILTERS + %w[my_prints]).freeze
 
   Card = Struct.new(:printer, :current_job, :last_job, :heads, :snapshot, :latest_reading, keyword_init: true) do

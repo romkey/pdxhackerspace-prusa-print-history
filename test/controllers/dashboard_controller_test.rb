@@ -106,7 +106,12 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'dashboard shows empty state when filters match nothing' do
-    get root_path, params: { filter: %w[idle offline] }
+    printers(:prusa_xl).update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    printers(:prusa_mk4).update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    printers(:prusa_mini).update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'printing')
+
+    get root_path, params: { filter: ['idle'] }
 
     assert_response :success
     assert_match(/No printers match these filters/, response.body)

@@ -48,6 +48,12 @@ class DashboardHelperTest < ActionView::TestCase
     assert_includes href, 'printing'
     assert_includes href, 'PLA'
     assert_not_includes href, 'idle'
+
+    href = dashboard_filter_href('offline')
+
+    assert_includes href, 'offline'
+    assert_includes href, 'PLA'
+    assert_not_includes href, 'idle'
   end
 
   test 'dashboard_status_filter_label humanizes filter names' do

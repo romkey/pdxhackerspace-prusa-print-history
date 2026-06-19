@@ -99,6 +99,10 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     presenter = build_presenter(filters: %w[idle printing attention])
 
     assert_equal ['attention'], presenter.active_filters & DashboardPresenter::EXCLUSIVE_STATUS_FILTERS
+
+    presenter = build_presenter(filters: %w[idle offline])
+
+    assert_equal ['offline'], presenter.active_filters & DashboardPresenter::EXCLUSIVE_STATUS_FILTERS
   end
 
   test 'offline filter matches unreachable printers' do

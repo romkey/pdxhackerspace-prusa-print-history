@@ -106,9 +106,7 @@ class DashboardPresenter
     selected -= ['my_prints'] unless @current_user
     selected -= ['available']
     exclusive = selected & EXCLUSIVE_STATUS_FILTERS
-    if exclusive.size > 1
-      selected = selected - EXCLUSIVE_STATUS_FILTERS + [exclusive.last]
-    end
+    selected = selected - EXCLUSIVE_STATUS_FILTERS + [exclusive.last] if exclusive.size > 1
     allowed = SPECIAL_FILTERS + material_filters
     selected.select { |filter| allowed.include?(filter) }
   end

@@ -24,6 +24,9 @@
   </div>
 
   <%= render 'jobs/preview', job: @job, wrapper_class: 'mb-3' %>
+  <% if job_progress_visible?(@job) %>
+    <%= render 'jobs/progress', job: @job, wrapper_class: 'mb-3' %>
+  <% end %>
   <%= render 'jobs/photo_gallery', job: @job, photos: @photos, wrapper_class: 'mb-3' %>
   <%= render 'jobs/timeline', job: @job, timeline: @timeline %>
 
@@ -110,7 +113,7 @@
     <div class="col-lg-5">
       <div class="card">
         <div class="card-body">
-          <div class="h-section-label">Latest telemetry</div>
+          <div class="h-section-label"><%= job_telemetry_section_label(@job) %></div>
           <% if @latest_reading %>
             <table class="table table-compact mb-0">
               <tbody>

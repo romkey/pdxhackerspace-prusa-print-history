@@ -11,6 +11,13 @@ class PrinterShowPresenter
     current_job || printer.jobs.recent.first
   end
 
+  def job_section_label
+    return 'Current job' if current_job
+    return 'Previous job' if display_job
+
+    'Current job'
+  end
+
   def recent_jobs
     printer.jobs.recent.includes(:owner).limit(10)
   end

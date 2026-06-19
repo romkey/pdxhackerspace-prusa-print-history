@@ -17,6 +17,17 @@ class JobPhotosPresenterTest < ActiveSupport::TestCase
     assert_equal 3, presenter.progress_photos.size
   end
 
+  test 'latest_photo_label reflects active and finished jobs' do
+    attach_progress_photo(captured_at: 30.minutes.ago)
+    attach_progress_photo(captured_at: 10.minutes.ago)
+
+    assert_equal 'Current', JobPhotosPresenter.new(@job).latest_photo_label
+
+    @job.update!(status: 'finished', ended_at: Time.current)
+
+    assert_equal 'Job finish', JobPhotosPresenter.new(@job).latest_photo_label
+  end
+
   test 'returns only initial photo when job has one capture' do
     attach_progress_photo(captured_at: 10.minutes.ago)
 

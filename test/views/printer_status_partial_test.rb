@@ -13,7 +13,7 @@ class PrinterStatusPartialTest < ActionView::TestCase
     assert_match(/idle/, rendered)
   end
 
-  test 'idle unreachable printer uses a red dot and unavailable label' do
+  test 'idle unreachable printer uses a red dot and offline label' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
 
@@ -21,27 +21,27 @@ class PrinterStatusPartialTest < ActionView::TestCase
 
     assert_select '.status-dot.status-danger', count: 1
     assert_select '.status-dot.status-success', count: 0
-    assert_match(/unavailable/, rendered)
+    assert_match(/offline/, rendered)
   end
 
-  test 'idle unconfigured printer uses a red dot and unavailable label' do
+  test 'idle unconfigured printer uses a red dot and offline label' do
     printer = printers(:prusa_mk4)
     printer.update!(prusalink_key: nil, operational_state: 'idle')
 
     render partial: 'shared/printer_status', locals: { printer: printer }
 
     assert_select '.status-dot.status-danger', count: 1
-    assert_match(/unavailable/, rendered)
+    assert_match(/offline/, rendered)
   end
 
-  test 'printing printer with unreachable PrusaLink shows unavailable' do
+  test 'printing printer with unreachable PrusaLink shows offline' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: false)
 
     render partial: 'shared/printer_status', locals: { printer: printer }
 
     assert_select '.status-dot.status-danger', count: 1
-    assert_match(/unavailable/, rendered)
+    assert_match(/offline/, rendered)
     assert_no_match(/printing/, rendered)
   end
 

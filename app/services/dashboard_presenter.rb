@@ -1,5 +1,7 @@
 class DashboardPresenter
   ATTENTION_OUTLINE_STATUSES = %w[paused attention error].freeze
+  STATUS_FILTERS = %w[available attention idle offline].freeze
+  SPECIAL_FILTERS = (STATUS_FILTERS + %w[my_prints]).freeze
 
   Card = Struct.new(:printer, :current_job, :last_job, :heads, :snapshot, :latest_reading, keyword_init: true) do
     def idle?
@@ -63,17 +65,29 @@ class DashboardPresenter
     end
   end
 
-  attr_reader :recent_events
+  attr_reader :recent_events, :active_filters
 
-  def initialize(printers:, active_jobs_by_printer:, last_jobs_by_printer:, recent_events:)
+  def initialize(printers:, active_jobs_by_printer:, last_jobs_by_printer:, recent_events:, **options)
     @printers = printers
     @active_jobs_by_printer = active_jobs_by_printer
     @last_jobs_by_printer = last_jobs_by_printer
     @recent_events = recent_events
+    @current_user = options[:current_user]
+    @active_filters = normalize_filters(options.fetch(:filters, []))
   end
 
   def cards
-    @printers.map { |printer| build_card(printer) }
+    @cards ||= @printers.map { |printer| build_card(printer) }
+  end
+
+  def filtered_cards
+    return cards if active_filters.empty?
+
+    cards.select { |card| matches_filters?(card) }
+  end
+
+  def material_filters
+    @material_filters ||= cards.flat_map { |card| card.heads.map(&:material) }.compact_blank.uniq.sort
   end
 
   def printer_count
@@ -85,6 +99,56 @@ class DashboardPresenter
   end
 
   private
+
+  def normalize_filters(raw_filters)
+    selected = Array(raw_filters).map(&:to_s).compact_blank
+    selected -= ['my_prints'] unless @current_user
+    allowed = SPECIAL_FILTERS + material_filters
+    selected.select { |filter| allowed.include?(filter) }
+  end
+
+  def matches_filters?(card)
+    active_filters.all? { |filter| matches_filter?(card, filter) }
+  end
+
+  def matches_filter?(card, filter)
+    case filter
+    when 'available' then card_available?(card)
+    when 'attention' then card_attention?(card)
+    when 'idle' then card_idle?(card)
+    when 'offline' then card_offline?(card)
+    when 'my_prints' then card_my_print?(card)
+    else card_material?(card, filter)
+    end
+  end
+
+  def card_available?(card)
+    card.printer.prusalink_connection_status == :reachable && card.printer.display_status == 'idle'
+  end
+
+  def card_attention?(card)
+    card.printer.prusalink_connection_status == :reachable &&
+      ATTENTION_OUTLINE_STATUSES.include?(card.printer.display_status)
+  end
+
+  def card_idle?(card)
+    card.printer.display_status == 'idle'
+  end
+
+  def card_offline?(card)
+    card.printer.prusalink_connection_status != :reachable
+  end
+
+  def card_my_print?(card)
+    return false unless @current_user
+
+    job = card.current_job || card.last_job
+    job&.owner_id == @current_user.id
+  end
+
+  def card_material?(card, material)
+    card.heads.any? { |head| head.material == material }
+  end
 
   def build_card(printer)
     job = @active_jobs_by_printer[printer.id]

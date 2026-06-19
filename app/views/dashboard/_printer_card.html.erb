@@ -91,4 +91,13 @@
     <span><i class="bi bi-disc me-1"></i><%= card.material_label %></span>
     <span><i class="bi bi-caret-down-fill me-1"></i><%= card.nozzle_label %></span>
   </div>
+
+  <% if (action_job = dashboard_action_job(card)) && (job_show_claim_button?(action_job) || job_show_clear_button?(action_job)) %>
+    <div class="mt-2">
+      <%= render 'jobs/actions',
+                 job: action_job,
+                 label_printers: @label_printers,
+                 default_label_printer: @default_label_printer %>
+    </div>
+  <% end %>
 </div>

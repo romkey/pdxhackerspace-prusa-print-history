@@ -15,8 +15,10 @@
 
       <% if (final = photos.final_photo) %>
         <div class="col-md-6">
-          <div class="text-12 text-secondary mb-1">Finish</div>
-          <%= image_tag storage_blob_path(final.image), class: 'img-fluid rounded border', alt: "Finish of #{job.filename}" %>
+          <div class="text-12 text-secondary mb-1"><%= photos.latest_photo_label %></div>
+          <%= image_tag storage_blob_path(final.image),
+                        class: 'img-fluid rounded border',
+                        alt: "#{photos.latest_photo_label} of #{job.filename}" %>
           <div class="text-12 text-secondary mt-1" title="<%= l(final.captured_at, format: :precise) %>">
             <%= l(final.captured_at, format: :short) %>
           </div>

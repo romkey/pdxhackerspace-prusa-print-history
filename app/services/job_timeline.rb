@@ -71,11 +71,20 @@ class JobTimeline
     @job.ended_at.blank?
   end
 
+  def estimated_finish?
+    active? &&
+      @job.estimated_finish_at.present? &&
+      window_start.present? &&
+      @job.estimated_finish_at > window_start
+  end
+
+  attr_reader :now
+
   private
 
   def build_segments
     points = status_points
-    finish = window_end
+    finish = segment_end
 
     if points.size == 1
       start_time, = points.first
@@ -146,7 +155,15 @@ class JobTimeline
   end
 
   def window_end
-    @window_end ||= @job.ended_at || @now
+    @window_end ||= if estimated_finish?
+                      @job.estimated_finish_at
+                    else
+                      @job.ended_at || @now
+                    end
+  end
+
+  def segment_end
+    @segment_end ||= estimated_finish? ? [@now, window_end].min : window_end
   end
 
   def duration_seconds

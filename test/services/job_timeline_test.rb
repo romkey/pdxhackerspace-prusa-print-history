@@ -95,6 +95,17 @@ class JobTimelineTest < ActiveSupport::TestCase
     assert_equal @job.ended_at, timeline.end_at
   end
 
+  test 'extends timeline to estimated finish and leaves future portion empty' do
+    estimated_finish_at = @now + 30.minutes
+    @job.update!(estimated_finish_at: estimated_finish_at)
+    timeline = JobTimeline.new(@job, now: @now)
+
+    assert timeline.estimated_finish?
+    assert_equal estimated_finish_at, timeline.end_at
+    assert_operator timeline.segments.sum(&:width_percent), :<, 100
+    assert_in_delta 50.0, timeline.segments.sum(&:width_percent), 0.5
+  end
+
   test 'is not renderable without a start time' do
     job = Job.new(filename: 'orphan.gcode', status: 'pending', printer: printers(:prusa_xl))
     timeline = JobTimeline.new(job, events: [], now: @now)

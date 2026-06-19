@@ -1,0 +1,22 @@
+<% job = local_assigns.fetch(:job) %>
+<% label_printers = local_assigns.fetch(:label_printers, LabelPrinter.ordered) %>
+<% default_label_printer = local_assigns[:default_label_printer] || LabelPrinter.default %>
+
+<div class="modal fade" id="<%= dom_id(job, :clear_print_modal) %>" tabindex="-1"
+     aria-labelledby="<%= dom_id(job, :clear_print_modal_label) %>" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="<%= dom_id(job, :clear_print_modal_label) %>">Clear print</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-13 text-secondary mb-3"><%= job.filename %></div>
+        <%= render 'jobs/clear_print_forms',
+                   job: job,
+                   label_printers: label_printers,
+                   default_label_printer: default_label_printer %>
+      </div>
+    </div>
+  </div>
+</div>

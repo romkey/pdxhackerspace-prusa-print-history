@@ -17,6 +17,21 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'index shows claim for logged-in users and clear on internal network' do
+    @job.update!(owner: nil)
+
+    get jobs_path
+
+    assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :clear_print_modal)}", text: 'Clear'
+    assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(@job), 'post', text: 'Claim', count: 0
+
+    login_as(users(:viewer))
+    get jobs_path
+
+    assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(@job), 'post', text: 'Claim'
+    assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :clear_print_modal)}", text: 'Clear'
+  end
+
   test 'index hides pagination when all jobs fit on one page' do
     get jobs_path
 
@@ -76,6 +91,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
   test 'show renders temperature chart when telemetry exists' do
     get job_path(@job)
 
+    assert_select '.h-section-label', text: 'Current telemetry'
     assert_select '.h-section-label', text: 'Temperatures'
     assert_match(/chart/i, response.body)
     assert_match(/"name":"Bed"/, response.body)
@@ -85,6 +101,15 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/"color":"#e07a5f"/, response.body)
     assert_match(/"xmin":/, response.body)
     assert_match(/"xmax":/, response.body)
+  end
+
+  test 'show labels telemetry section as last telemetry for finished jobs' do
+    @job.update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get job_path(@job)
+
+    assert_select '.h-section-label', text: 'Last telemetry'
+    assert_select '.h-section-label', text: 'Current telemetry', count: 0
   end
 
   test 'show renders print heads used for the job' do
@@ -104,8 +129,41 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_match(/Print preview/, response.body)
     assert_select '.h-section-label', text: 'Print photos'
-    assert_match(/Start/, response.body)
-    assert_match(/Finish/, response.body)
+    assert_select '.text-12.text-secondary', text: 'Start'
+    assert_select '.text-12.text-secondary', text: 'Current'
+  end
+
+  test 'show renders clear print forms on job detail page' do
+    get job_path(@job)
+
+    assert_select 'input[type=submit][value=?]', 'Successful, print label'
+    assert_select 'input[type=submit][value=?]', 'Failed'
+    assert_select '[data-controller=?]', 'clear-print-form'
+  end
+
+  test 'show renders timeline progress bar using estimated finish for active jobs' do
+    freeze_time do
+      @job.update!(
+        started_at: 1.hour.ago,
+        estimated_finish_at: 1.hour.from_now,
+        progress_percent: 10.0
+      )
+
+      get job_path(@job)
+
+      assert_select '.job-progress--timeline .progress-bar[style*="width: 50"]'
+      assert_match(/Est\. finish/, response.body)
+    end
+  end
+
+  test 'show labels latest print photo as job finish when job ended' do
+    attach_job_photos(@job)
+    @job.update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get job_path(@job)
+
+    assert_select '.text-12.text-secondary', text: 'Job finish'
+    assert_select '.text-12.text-secondary', text: 'Current', count: 0
   end
 
   test 'show renders print timeline after photos when events exist' do

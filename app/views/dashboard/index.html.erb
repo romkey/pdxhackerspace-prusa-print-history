@@ -11,15 +11,53 @@
         <%= link_to 'Manage printers', printers_path, class: 'btn btn-outline-secondary btn-sm' %>
       </div>
     <% end %>
+    <% if @presenter.printer_count.positive? %>
+      <% if @presenter.active_filters.any? %>
+        <div class="text-13 text-secondary mt-3">
+          <%= pluralize(@presenter.filtered_cards.size, 'printer') %>
+          · <%= pluralize(@presenter.active_filters.size, 'filter') %> active ·
+          <%= link_to 'Clear', root_path, class: 'text-decoration-none' %>
+        </div>
+      <% end %>
+      <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+        <% DashboardPresenter::STATUS_FILTERS.each do |filter_name| %>
+          <%= link_to dashboard_status_filter_label(filter_name),
+                      dashboard_filter_href(filter_name),
+                      class: dashboard_filter_chip_class(filter_name) %>
+        <% end %>
+        <% if logged_in? %>
+          <%= link_to 'My prints',
+                      dashboard_filter_href('my_prints'),
+                      class: dashboard_filter_chip_class('my_prints') %>
+        <% end %>
+      </div>
+      <% if @presenter.material_filters.any? %>
+        <div class="h-section-label text-center mt-3 mb-2">Filament</div>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+          <% @presenter.material_filters.each do |material| %>
+            <%= link_to material,
+                        dashboard_filter_href(material),
+                        class: dashboard_filter_chip_class(material) %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
   </div>
 
-  <% if @presenter.cards.any? %>
+  <% if @presenter.filtered_cards.any? %>
     <div class="row g-3 mb-3">
-      <% @presenter.cards.each do |card| %>
+      <% @presenter.filtered_cards.each do |card| %>
         <div class="col-6 col-lg-3">
           <%= render 'dashboard/printer_card', card: card %>
         </div>
       <% end %>
+    </div>
+  <% elsif @presenter.printer_count.positive? %>
+    <div class="card mb-3">
+      <div class="card-body text-13 text-secondary text-center">
+        No printers match these filters.
+        <%= link_to 'Clear filters', root_path, class: 'text-decoration-none' %>.
+      </div>
     </div>
   <% else %>
     <div class="card mb-3">

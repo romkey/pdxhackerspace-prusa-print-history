@@ -84,9 +84,16 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get printer_path(@printer)
 
     assert_response :success
+    assert_select '.h-section-label', text: 'Previous job'
     assert_match(/Printer is idle/, response.body)
     assert_select '.h-section-label', text: 'Print heads'
     assert_match(/PLA/, response.body)
+  end
+
+  test 'show labels current job section for active prints' do
+    get printer_path(@printer)
+
+    assert_select '.h-section-label', text: 'Current job'
   end
 
   test 'show subscribes to live printer updates' do
@@ -162,25 +169,32 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'show renders print preview and stored camera photo for active job' do
-    job = jobs(:active_xl)
-    job.update!(progress_percent: 35.0, estimated_finish_at: 1.hour.from_now, time_printing_seconds: 900)
-    job.preview_image.attach(
-      io: StringIO.new('preview-bytes'),
-      filename: 'preview.png',
-      content_type: 'image/png'
-    )
-    capture = job.photo_captures.create!(printer: @printer, captured_at: Time.current)
-    capture.image.attach(
-      io: StringIO.new('camera-bytes'),
-      filename: 'camera.jpg',
-      content_type: 'image/jpeg'
-    )
+    freeze_time do
+      job = jobs(:active_xl)
+      job.update!(
+        started_at: 1.hour.ago,
+        estimated_finish_at: 1.hour.from_now,
+        progress_percent: 10.0,
+        time_printing_seconds: 900
+      )
+      job.preview_image.attach(
+        io: StringIO.new('preview-bytes'),
+        filename: 'preview.png',
+        content_type: 'image/png'
+      )
+      capture = job.photo_captures.create!(printer: @printer, captured_at: Time.current)
+      capture.image.attach(
+        io: StringIO.new('camera-bytes'),
+        filename: 'camera.jpg',
+        content_type: 'image/jpeg'
+      )
 
-    get printer_path(@printer)
+      get printer_path(@printer)
 
-    assert_match(/Print preview/, response.body)
-    assert_select '.progress-bar'
-    assert_select '.h-section-label', text: 'Camera'
+      assert_match(/Print preview/, response.body)
+      assert_select '.job-progress--timeline .progress-bar[style*="width: 50"]'
+      assert_select '.h-section-label', text: 'Camera'
+    end
   end
 
   test 'show renders print timeline for active job' do

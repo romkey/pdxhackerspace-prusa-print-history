@@ -1,0 +1,29 @@
+<% job = local_assigns.fetch(:job) %>
+<% label_printers = local_assigns.fetch(:label_printers, LabelPrinter.ordered) %>
+<% default_label_printer = local_assigns[:default_label_printer] || LabelPrinter.default %>
+<% show_claim = job_show_claim_button?(job) %>
+<% show_clear = job_show_clear_button?(job) %>
+
+<% if show_claim || show_clear %>
+  <div class="d-flex flex-wrap gap-1">
+    <% if show_claim %>
+      <%= button_to 'Claim', claim_job_path(job), method: :patch, class: 'btn btn-outline-secondary btn-sm' %>
+    <% end %>
+    <% if show_clear %>
+      <button type="button"
+              class="btn btn-outline-secondary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#<%= dom_id(job, :clear_print_modal) %>">
+        Clear
+      </button>
+    <% end %>
+  </div>
+  <% if show_clear %>
+    <%= render 'jobs/clear_print_modal',
+               job: job,
+               label_printers: label_printers,
+               default_label_printer: default_label_printer %>
+  <% end %>
+<% else %>
+  <span class="text-secondary">—</span>
+<% end %>

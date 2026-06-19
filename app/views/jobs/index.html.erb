@@ -11,6 +11,7 @@
   </div>
 
   <% if @jobs.any? %>
+    <% show_actions_column = @jobs.any? { |job| job_show_claim_button?(job) || job_show_clear_button?(job) } %>
     <div class="card">
       <table class="table table-compact mb-0">
         <thead>
@@ -22,6 +23,9 @@
             <th>Owner</th>
             <th>Started</th>
             <th>Ended</th>
+            <% if show_actions_column %>
+              <th>Actions</th>
+            <% end %>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +53,14 @@
               <td class="text-secondary text-13" title="<%= job.ended_at && l(job.ended_at, format: :precise) %>">
                 <%= job.ended_at ? l(job.ended_at, format: :short) : '—' %>
               </td>
+              <% if show_actions_column %>
+                <td class="text-nowrap">
+                  <%= render 'jobs/actions',
+                             job: job,
+                             label_printers: @label_printers,
+                             default_label_printer: @default_label_printer %>
+                </td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>

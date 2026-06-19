@@ -69,7 +69,7 @@ module ApplicationHelper
   end
 
   def printer_status_label(printer)
-    return 'unavailable' unless printer.prusalink_connection_status == :reachable
+    return 'offline' unless printer.prusalink_connection_status == :reachable
 
     printer.display_status
   end

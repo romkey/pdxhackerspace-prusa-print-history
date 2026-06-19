@@ -13,6 +13,8 @@ class JobsController < ApplicationController
     scope = scope.where(owner_id: current_user.id) if params[:owner] == 'me' && logged_in?
 
     @pagy, @jobs = pagy(scope, limit: 25)
+    @label_printers = LabelPrinter.ordered
+    @default_label_printer = LabelPrinter.default
   end
 
   def show

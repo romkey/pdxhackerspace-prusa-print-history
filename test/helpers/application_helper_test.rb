@@ -36,7 +36,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
     printer.update!(prusalink_reachable: false)
 
-    assert_equal 'unavailable', printer_status_label(printer)
+    assert_equal 'offline', printer_status_label(printer)
   end
 
   test 'printer_idle_dot_class reflects PrusaLink reachability' do

@@ -32,6 +32,86 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     Setting.dashboard_heading = nil
   end
 
+  test 'dashboard shows claim and clear actions for actionable jobs' do
+    job = jobs(:active_xl)
+    job.update!(owner: nil)
+
+    get root_path
+
+    assert_select 'button[data-bs-target=?]', "##{dom_id(job, :clear_print_modal)}", text: 'Clear'
+    assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(job), 'post', text: 'Claim', count: 0
+
+    login_as(users(:viewer))
+    get root_path
+
+    assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(job), 'post', text: 'Claim'
+    assert_select 'button[data-bs-target=?]', "##{dom_id(job, :clear_print_modal)}", text: 'Clear'
+  end
+
+  test 'dashboard idle cards show actions for last finished job' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    job = jobs(:active_xl)
+    job.update!(status: 'finished', ended_at: 1.hour.ago, owner: nil, cleared_at: nil)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 2.hours.ago)
+
+    login_as(users(:viewer))
+    get root_path
+
+    assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(job), 'post', text: 'Claim'
+    assert_select 'button[data-bs-target=?]', "##{dom_id(job, :clear_print_modal)}", text: 'Clear'
+  end
+
+  test 'dashboard shows filter chips' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path
+
+    assert_response :success
+    assert_select 'a.filter-chip', text: 'Available'
+    assert_select 'a.filter-chip', text: 'Attention'
+    assert_select 'a.filter-chip', text: 'Idle'
+    assert_select 'a.filter-chip', text: 'Offline'
+    assert_select 'a.filter-chip', text: 'PLA'
+    assert_select 'a.filter-chip', text: 'My prints', count: 0
+  end
+
+  test 'dashboard stacks active filters and supports clear' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    get root_path, params: { filter: %w[idle PLA] }
+
+    assert_response :success
+    assert_select 'a.filter-chip.active', text: 'Idle'
+    assert_select 'a.filter-chip.active', text: 'PLA'
+    assert_select 'a[href=?]', root_path
+    assert_select '.dashboard-printer-card', count: 1
+    assert_match(/2 filters active/, response.body)
+    assert_match(/Clear/, response.body)
+  end
+
+  test 'logged-in dashboard shows my prints filter chip' do
+    login_as(users(:viewer))
+    get root_path
+
+    assert_response :success
+    assert_select 'a.filter-chip', text: 'My prints'
+  end
+
+  test 'dashboard shows empty state when filters match nothing' do
+    get root_path, params: { filter: %w[available offline] }
+
+    assert_response :success
+    assert_match(/No printers match these filters/, response.body)
+    assert_select '.dashboard-printer-card', count: 0
+  end
+
   test 'dashboard idle cards show green dot when PrusaLink is reachable' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
@@ -72,7 +152,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '.dashboard-printer-card', minimum: 1
     assert_match(/idle/, response.body)
-    assert_no_match(/\bavailable\b/, response.body)
+    assert_select 'a.filter-chip', text: 'Available'
     assert_select '.dashboard-image-wrap--ready', minimum: 2
   end
 
@@ -134,7 +214,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-printer-card .dashboard-image-wrap--attention', minimum: 2
   end
 
-  test 'dashboard shows unavailable status when PrusaLink is unreachable' do
+  test 'dashboard shows offline status when PrusaLink is unreachable' do
     printer = printers(:prusa_xl)
     printer.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
     jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
@@ -144,7 +224,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
 
-    assert_includes xl_card.text, 'unavailable'
+    assert_includes xl_card.text, 'offline'
     assert_select '.dashboard-printer-card .status-dot.status-danger', minimum: 1
   end
 

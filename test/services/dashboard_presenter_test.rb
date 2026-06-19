@@ -55,6 +55,80 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_equal 'finished', card.last_job.status
   end
 
+  test 'filters cards with stacked status and material filters' do
+    xl = printers(:prusa_xl)
+    mk4 = printers(:prusa_mk4)
+    mini = printers(:prusa_mini)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    mini.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'attention')
+
+    presenter = build_presenter(filters: %w[idle PLA])
+
+    assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'available filter matches reachable idle printers only' do
+    xl = printers(:prusa_xl)
+    mini = printers(:prusa_mini)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    mini.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    presenter = build_presenter(filters: ['available'])
+
+    assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'offline filter matches unreachable printers' do
+    xl = printers(:prusa_xl)
+    mk4 = printers(:prusa_mk4)
+    mini = printers(:prusa_mini)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    mini.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'attention')
+
+    presenter = build_presenter(filters: ['offline'])
+
+    assert_equal([mini.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'my prints filter matches current or last job owner' do
+    xl = printers(:prusa_xl)
+    mk4 = printers(:prusa_mk4)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    jobs(:active_xl).update!(owner: users(:viewer), status: 'printing')
+    jobs(:orphaned_active).update!(owner: users(:other_viewer), status: 'attention')
+
+    presenter = build_presenter(filters: ['my_prints'], current_user: users(:viewer))
+
+    assert_equal([xl.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'attention filter matches reachable printers in attention states' do
+    xl = printers(:prusa_xl)
+    mk4 = printers(:prusa_mk4)
+    xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
+    jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
+    jobs(:orphaned_active).update!(status: 'attention')
+
+    presenter = build_presenter(filters: ['attention'])
+
+    assert_equal([mk4.name], presenter.filtered_cards.map { |card| card.printer.name })
+  end
+
+  test 'material_filters lists loaded filaments in use' do
+    presenter = build_presenter
+
+    assert_equal %w[ASA PETG PLA], presenter.material_filters
+  end
+
   test 'image outline status reflects printer state and availability' do
     printer = printers(:prusa_mini)
     printer.update!(prusalink_key: 'secret', operational_state: 'idle', prusalink_reachable: true)
@@ -106,5 +180,21 @@ class DashboardPresenterTest < ActiveSupport::TestCase
       last_jobs_by_printer: last_jobs,
       recent_events: []
     ).cards.first
+  end
+
+  def build_presenter(filters: [], current_user: nil)
+    printers = Printer.ordered.includes(:printer_heads)
+    active_jobs = Job.active.where(printer_id: printers.map(&:id)).index_by(&:printer_id)
+    last_jobs = Job.where(printer_id: printers.map(&:id)).recent.to_a.group_by(&:printer_id).transform_values(&:first)
+    active_jobs.each_key { |printer_id| last_jobs.delete(printer_id) }
+
+    DashboardPresenter.new(
+      printers: printers,
+      active_jobs_by_printer: active_jobs,
+      last_jobs_by_printer: last_jobs,
+      recent_events: [],
+      filters: filters,
+      current_user: current_user
+    )
   end
 end

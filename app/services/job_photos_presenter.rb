@@ -25,6 +25,10 @@ class JobPhotosPresenter
     progress_photos.any?
   end
 
+  def latest_photo_label
+    job.active? ? 'Current' : 'Job finish'
+  end
+
   def snapshot_photo
     progress_photos.last
   end

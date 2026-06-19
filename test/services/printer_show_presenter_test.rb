@@ -11,6 +11,16 @@ class PrinterShowPresenterTest < ActiveSupport::TestCase
     assert_equal jobs(:active_xl), @presenter.display_job
   end
 
+  test 'job_section_label reflects active and previous jobs' do
+    assert_equal 'Current job', @presenter.job_section_label
+
+    jobs(:active_xl).update!(status: 'finished', ended_at: Time.current)
+    @printer.update!(operational_state: 'idle')
+    presenter = PrinterShowPresenter.new(@printer.reload)
+
+    assert_equal 'Previous job', presenter.job_section_label
+  end
+
   test 'falls back to most recent job when idle' do
     active = jobs(:active_xl)
     active.update!(status: 'finished', ended_at: Time.current)

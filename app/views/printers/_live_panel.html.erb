@@ -18,7 +18,7 @@
   <div class="col-lg-7">
     <div class="card mb-3">
       <div class="card-body">
-        <div class="h-section-label">Current job</div>
+        <div class="h-section-label"><%= presenter.job_section_label %></div>
         <% if current_job %>
           <h2 class="h5 mb-2"><%= link_to current_job.filename, job_path(current_job) %></h2>
           <div class="text-13 text-secondary">

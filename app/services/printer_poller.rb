@@ -328,6 +328,14 @@ class PrinterPoller
     )
 
     CaptureEventPhotoJob.perform_later(event.id) if @printer.camera_configured?
+    enqueue_attention_notification(job, last_status, new_status)
+  end
+
+  def enqueue_attention_notification(job, from_status, to_status)
+    return unless from_status == 'printing' && to_status == 'attention'
+    return if job.owner_id.blank?
+
+    JobAttentionNotificationJob.perform_later(job.id)
   end
 
   def event_type_for(new_status, last_status)

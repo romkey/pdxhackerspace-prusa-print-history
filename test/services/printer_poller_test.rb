@@ -83,7 +83,8 @@ class PrinterPollerTest < ActiveJob::TestCase
 
   test 'records a status_change event when status flips' do
     job = @printer.jobs.create!(filename: 'thing.gcode', status: 'printing',
-                                prusalink_job_id: 'pl-555', started_at: 5.minutes.ago)
+                                prusalink_job_id: 'pl-555', started_at: 5.minutes.ago,
+                                owner: users(:viewer))
     job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 5.minutes.ago)
 
     payloads = {
@@ -94,11 +95,28 @@ class PrinterPollerTest < ActiveJob::TestCase
     ha = stub_home_assistant
 
     assert_enqueued_with(job: CaptureEventPhotoJob) do
-      PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: ha).poll!
+      assert_enqueued_with(job: JobAttentionNotificationJob, args: [job.id]) do
+        PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: ha).poll!
+      end
     end
 
     assert_equal 'attention', job.reload.status
     assert_equal 'attention', job.events.recent.first.event_type
+  end
+
+  test 'does not notify owner when unclaimed print needs attention' do
+    job = @printer.jobs.create!(filename: 'thing.gcode', status: 'printing',
+                                prusalink_job_id: 'pl-555', started_at: 5.minutes.ago)
+    job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 5.minutes.ago)
+
+    payloads = {
+      status: { 'printer' => { 'state' => 'ATTENTION' } },
+      job: { 'id' => 'pl-555', 'file' => { 'display_name' => 'thing.gcode' } }
+    }
+
+    assert_no_enqueued_jobs only: JobAttentionNotificationJob do
+      PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+    end
   end
 
   test 'finalizes job on finished status' do

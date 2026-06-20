@@ -8,6 +8,7 @@ class JobNotificationPresenter
     case @event
     when :finished then "Print finished: #{@job.filename}"
     when :cleared  then cleared_subject
+    when :attention then "Print needs attention: #{@job.filename}"
     end
   end
 
@@ -15,6 +16,7 @@ class JobNotificationPresenter
     case @event
     when :finished then 'Your print has finished.'
     when :cleared  then cleared_intro
+    when :attention then "Your print needs attention on #{@job.printer.name}."
     end
   end
 

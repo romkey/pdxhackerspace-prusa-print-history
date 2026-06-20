@@ -9,6 +9,10 @@ class JobNotificationService
     def notify_print_cleared(job)
       new(job, :cleared).deliver
     end
+
+    def notify_print_attention(job)
+      new(job, :attention).deliver
+    end
   end
 
   def initialize(job, event)
@@ -60,7 +64,11 @@ class JobNotificationService
   end
 
   def mailer_action
-    @event == :finished ? :print_finished : :print_cleared
+    {
+      finished: :print_finished,
+      cleared: :print_cleared,
+      attention: :print_attention
+    }.fetch(@event)
   end
 
   def slack_text

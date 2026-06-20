@@ -20,6 +20,18 @@ class JobNotificationServiceTest < ActiveSupport::TestCase
     ENV.delete('SMTP_SERVER')
   end
 
+  test 'sends attention email when user prefers email and SMTP configured' do
+    ENV['SMTP_SERVER'] = 'smtp.example.com'
+
+    assert_emails 1 do
+      result = JobNotificationService.notify_print_attention(@job)
+
+      assert result.email_sent
+    end
+  ensure
+    ENV.delete('SMTP_SERVER')
+  end
+
   test 'sends cleared slack when user prefers slack and slack id present' do
     ENV['SLACK_API_TOKEN'] = 'xoxb-test'
     @job.owner.update!(notify_via_email: false, notify_via_slack: true, slack_id: 'U123')

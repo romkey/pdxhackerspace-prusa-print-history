@@ -9,6 +9,11 @@ class JobNotificationMailer < ApplicationMailer
     mail(to: job.owner.email, subject: @presenter.subject)
   end
 
+  def print_attention(job)
+    setup_notification(job, event: :attention)
+    mail(to: job.owner.email, subject: @presenter.subject)
+  end
+
   private
 
   def setup_notification(job, event:)

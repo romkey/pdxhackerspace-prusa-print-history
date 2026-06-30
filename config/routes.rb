@@ -5,6 +5,8 @@ Rails.application.routes.draw do
 
   root 'dashboard#index'
 
+  get 'ar', to: 'ar#show', as: :ar
+
   get 'printers.json', to: 'status#printers'
   get 'jobs.json', to: 'status#jobs'
   get 'events.json', to: 'status#events'

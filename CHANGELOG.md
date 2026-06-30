@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-30
+
+### Added
+- Augmented reality printer status view: a new **AR** navbar link opens a full-screen AR.js scene that overlays live status (progress, state, ETA, enclosure/ambient temperatures, material, and active file) on a printer when you point your camera at its marker. Printable markers (`marker-0`–`marker-6`) map to printers in name order.
+
 ## [0.6.12] - 2026-06-15
 
 ### Fixed

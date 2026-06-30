@@ -40,6 +40,10 @@
             <%= link_to 'Events', events_path, class: "nav-link #{'active' if controller_name == 'events'}" %>
           </li>
 
+          <li class="nav-item">
+            <%= link_to 'AR', ar_path, class: "nav-link #{'active' if controller_name == 'ar'}" %>
+          </li>
+
           <% if logged_in? %>
             <li class="nav-item">
               <%= link_to 'My prints', jobs_path(owner: 'me'),

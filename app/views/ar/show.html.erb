@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>AR printer status &middot; <%= app_name %></title>
+    <link rel="stylesheet" href="/ar/css/printer-status.css" />
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.8/aframe/build/aframe-ar.js"></script>
+    <script>
+      window.AR_CONFIG = {
+        statusUrl: "/printers.json",
+        printerRefreshSeconds: 8,
+        printers: <%= raw @printers.map { |p| { id: p.id, name: p.name } }.to_json %>
+      };
+    </script>
+    <script src="/ar/js/ar-printer.js" defer></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      .ar-back {
+        position: fixed;
+        top: 0.6rem;
+        left: 0.6rem;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font: 0.8rem/1 system-ui, sans-serif;
+        text-decoration: none;
+      }
+      .hint {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.75rem 1rem;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font: 0.875rem/1.4 system-ui, sans-serif;
+        text-align: center;
+        z-index: 1;
+        transition: opacity 0.25s ease;
+      }
+      .hint.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="ar-page">
+    <a class="ar-back" href="<%= root_path %>">&larr; Back</a>
+
+    <p class="hint" id="hint">
+      Point your camera at the marker on a printer to see its status.
+    </p>
+
+    <div id="printer-hud" class="phud" aria-live="polite" aria-atomic="true">
+      <div class="phud__panel is-loading">
+        <header class="phud__head">
+          <div class="phud__title">
+            <h1 class="phud__name">Printer</h1>
+            <span class="phud__state is-loading">
+              <span class="phud__state-dot"></span>
+              <span class="phud__state-label">Connecting&hellip;</span>
+            </span>
+          </div>
+          <div class="phud__eta">
+            <span class="phud__eta-label">ETA</span>
+            <span class="phud__eta-value">&mdash;</span>
+          </div>
+        </header>
+
+        <section class="phud__preview">
+          <img class="phud__preview-img" alt="Print preview" hidden />
+          <div class="phud__preview-fallback">
+            <svg viewBox="0 0 120 120" role="img" aria-label="No preview">
+              <rect x="24" y="20" width="72" height="58" rx="6"
+                fill="none" stroke="currentColor" stroke-width="3" />
+              <rect x="38" y="78" width="44" height="22" rx="3"
+                fill="none" stroke="currentColor" stroke-width="3" />
+              <line x1="34" y1="40" x2="86" y2="40" stroke="currentColor"
+                stroke-width="3" stroke-linecap="round" />
+              <line x1="34" y1="52" x2="74" y2="52" stroke="currentColor"
+                stroke-width="3" stroke-linecap="round" />
+              <line x1="34" y1="64" x2="80" y2="64" stroke="currentColor"
+                stroke-width="3" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="phud__file">
+            <span class="phud__file-name">&mdash;</span>
+          </div>
+        </section>
+
+        <section class="phud__metrics">
+          <div class="phud__progress">
+            <svg class="phud__ring" viewBox="0 0 100 100" role="img" aria-label="Progress">
+              <circle class="phud__ring-track" cx="50" cy="50" r="42" />
+              <circle class="phud__ring-fill" cx="50" cy="50" r="42" />
+              <text class="phud__ring-pct" x="50" y="47">&mdash;</text>
+              <text class="phud__ring-sub" x="50" y="61"></text>
+            </svg>
+          </div>
+
+          <div class="phud__gauges">
+            <figure class="phud__gauge phud__gauge--nozzle">
+              <svg viewBox="0 0 100 100" role="img" aria-label="Enclosure temperature">
+                <path class="phud__gauge-track"
+                  d="M 21.716 78.284 A 40 40 0 1 1 78.284 78.284" />
+                <path class="phud__gauge-fill"
+                  d="M 21.716 78.284 A 40 40 0 1 1 78.284 78.284" />
+              </svg>
+              <figcaption class="phud__gauge-caption">
+                <span class="phud__gauge-name">Enclosure</span>
+                <span class="phud__gauge-value">&mdash;</span>
+                <span class="phud__gauge-target"></span>
+              </figcaption>
+            </figure>
+
+            <figure class="phud__gauge phud__gauge--bed">
+              <svg viewBox="0 0 100 100" role="img" aria-label="Ambient temperature">
+                <path class="phud__gauge-track"
+                  d="M 21.716 78.284 A 40 40 0 1 1 78.284 78.284" />
+                <path class="phud__gauge-fill"
+                  d="M 21.716 78.284 A 40 40 0 1 1 78.284 78.284" />
+              </svg>
+              <figcaption class="phud__gauge-caption">
+                <span class="phud__gauge-name">Ambient</span>
+                <span class="phud__gauge-value">&mdash;</span>
+                <span class="phud__gauge-target"></span>
+              </figcaption>
+            </figure>
+          </div>
+
+          <ul class="phud__chips" hidden></ul>
+        </section>
+
+        <footer class="phud__foot">
+          <ul class="phud__errors" hidden></ul>
+        </footer>
+      </div>
+    </div>
+
+    <%# Markers marker-0 … map to the ordered printers below. Regenerate/print %>
+    <%# the marker images from public/ar/markers (marker-0.png … marker-6.png). %>
+    <a-scene
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false; patternRatio: 0.72;"
+      vr-mode-ui="enabled: false"
+      renderer="logarithmicDepthBuffer: true; precision: medium;"
+    >
+      <% @printers.each_with_index do |printer, index| %>
+        <a-marker
+          id="printer-marker-<%= index %>"
+          type="pattern"
+          url="/ar/markers/marker-<%= index %>.patt"
+          size="0.023"
+          data-printer-id="<%= printer.id %>"
+          emitevents="true"
+          smooth="true"
+          smoothCount="5"
+        ></a-marker>
+      <% end %>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      (function () {
+        var hint = document.querySelector("#hint");
+        var markers = document.querySelectorAll("a-marker[data-printer-id]");
+        if (!hint || markers.length === 0) return;
+
+        var activeMarker = null;
+
+        function show(marker) {
+          if (marker === activeMarker) return;
+          activeMarker = marker;
+          if (marker) {
+            hint.classList.add("is-hidden");
+            if (typeof window.setPrinterHudVisible === "function") {
+              window.setPrinterHudVisible(true);
+            }
+            var pid = parseInt(marker.dataset.printerId, 10);
+            if (!Number.isNaN(pid) && typeof window.setActivePrinter === "function") {
+              window.setActivePrinter(pid);
+            }
+          } else {
+            hint.classList.remove("is-hidden");
+            if (typeof window.setPrinterHudVisible === "function") {
+              window.setPrinterHudVisible(false);
+            }
+          }
+        }
+
+        markers.forEach(function (marker) {
+          marker.addEventListener("markerFound", function () {
+            show(marker);
+          });
+          marker.addEventListener("markerLost", function () {
+            if (marker === activeMarker) show(null);
+          });
+        });
+
+        // markerFound / markerLost are unreliable on some devices; the marker
+        // entity's object3D.visible is the per-frame source of truth.
+        function poll() {
+          var visible = null;
+          markers.forEach(function (marker) {
+            if (!visible && marker.object3D && marker.object3D.visible) {
+              visible = marker;
+            }
+          });
+          show(visible);
+          window.requestAnimationFrame(poll);
+        }
+        window.requestAnimationFrame(poll);
+      })();
+    </script>
+  </body>
+</html>

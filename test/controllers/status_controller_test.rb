@@ -46,6 +46,25 @@ class StatusControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta 55.0, xl['job']['progress_percent']
   end
 
+  test 'printers.json exposes a camera snapshot url only when a camera is configured' do
+    get '/printers.json', headers: internal_request_headers
+
+    body = response.parsed_body
+    xl = body.find { |entry| entry['name'] == 'Prusa XL' }
+    mini = body.find { |entry| entry['name'] == 'Prusa Mini' }
+
+    assert_equal camera_printer_path(printers(:prusa_xl)), xl['snapshot_url']
+    assert_nil mini['snapshot_url']
+  end
+
+  test 'printers.json includes a preview_url key' do
+    get '/printers.json', headers: internal_request_headers
+
+    body = response.parsed_body
+
+    assert(body.all? { |entry| entry.key?('preview_url') })
+  end
+
   test 'jobs.json returns at most one hundred jobs' do
     get '/jobs.json', headers: internal_request_headers
 

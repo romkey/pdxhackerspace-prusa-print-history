@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-30
+
+### Added
+- AR printer status view now shows imagery: a **Current / Preview** pill lets you switch between the printer's live camera snapshot (shown by default) and the gcode preview thumbnail from the current or most recent print.
+
+### Changed
+- `/printers.json` now includes `snapshot_url` (camera snapshot, when a camera is configured) and `preview_url` (current/previous print preview image) for each printer.
+
 ## [0.8.0] - 2026-06-30
 
 ### Added

@@ -16,6 +16,10 @@
   var KNOWN_PRINTERS = Array.isArray(config.printers) ? config.printers : [];
   var STATUS_URL = config.statusUrl || "/printers.json";
 
+  // Which image the preview panel shows: "current" (camera snapshot) or
+  // "preview" (the print's gcode thumbnail). Resets to "current" per printer.
+  var previewView = "current";
+
   // Gauge ceilings. This app exposes enclosure/ambient environment temps rather
   // than live nozzle/bed temps, so the two gauges are repurposed accordingly.
   var ENCLOSURE_MAX_C = 60;
@@ -199,7 +203,8 @@
       humidity: toNumber(printer.enclosure_humidity),
       nozzle: enclosure,
       bed: ambient,
-      preview: { available: false },
+      snapshotUrl: printer.snapshot_url || null,
+      previewUrl: printer.preview_url || null,
       errors: [],
       ariaSummary: buildAriaSummary(printer.name, state, progressValue, finishText, remainingText),
     };
@@ -223,7 +228,8 @@
       humidity: null,
       nozzle: null,
       bed: null,
-      preview: { available: false },
+      snapshotUrl: null,
+      previewUrl: null,
       errors: reason ? [reason] : [],
       ariaSummary: (name || "Printer") + ", status unavailable",
     };
@@ -300,6 +306,7 @@
     var next = parseInt(id, 10);
     if (Number.isNaN(next) || next === activePrinterId) return;
     activePrinterId = next;
+    previewView = "current";
     if (!byId[next]) refresh();
   };
 
@@ -334,6 +341,7 @@
         etaValue: q(".phud__eta-value"),
         previewImg: q(".phud__preview-img"),
         previewFallback: q(".phud__preview-fallback"),
+        previewTabs: q(".phud__preview-tabs"),
         fileName: q(".phud__file-name"),
         ringFill: q(".phud__ring-fill"),
         ringPct: q(".phud__ring-pct"),
@@ -383,6 +391,61 @@
     if (figEl) {
       figEl.classList.toggle("is-heating", Boolean(temp && temp.heating));
       figEl.classList.toggle("is-attarget", Boolean(temp && temp.atTarget));
+    }
+  }
+
+  var lastImgSrc = "";
+
+  function imageUrlFor(model, view) {
+    var base = view === "preview" ? model.previewUrl : model.snapshotUrl;
+    if (!base) return null;
+    // Snapshots change over time; bust the cache per refresh. Previews are
+    // stable for a given URL so they stay cached.
+    if (view === "current" && model.fetchedAt) {
+      return base + (base.indexOf("?") === -1 ? "?" : "&") + "ts=" +
+        encodeURIComponent(model.fetchedAt);
+    }
+    return base;
+  }
+
+  function setTabState(view, model) {
+    if (!els.previewTabs) return;
+    var hasAny = Boolean(model.snapshotUrl || model.previewUrl);
+    els.previewTabs.hidden = !hasAny;
+    var buttons = els.previewTabs.querySelectorAll(".phud__preview-tab");
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      var v = btn.getAttribute("data-view");
+      var available = v === "preview" ? Boolean(model.previewUrl) : Boolean(model.snapshotUrl);
+      btn.classList.toggle("is-active", v === view);
+      btn.disabled = !available;
+      btn.setAttribute("aria-selected", v === view ? "true" : "false");
+    }
+  }
+
+  function renderPreview(model) {
+    if (!els.previewImg || !els.previewFallback) return;
+
+    // Fall back to whichever view has an image if the selected one is empty.
+    var view = previewView;
+    if (view === "preview" && !model.previewUrl && model.snapshotUrl) view = "current";
+    if (view === "current" && !model.snapshotUrl && model.previewUrl) view = "preview";
+
+    var src = imageUrlFor(model, view);
+    setTabState(view, model);
+
+    if (src) {
+      if (src !== lastImgSrc) {
+        lastImgSrc = src;
+        els.previewImg.src = src;
+      }
+      els.previewImg.hidden = false;
+      els.previewFallback.hidden = true;
+    } else {
+      lastImgSrc = "";
+      els.previewImg.hidden = true;
+      els.previewImg.removeAttribute("src");
+      els.previewFallback.hidden = false;
     }
   }
 
@@ -450,13 +513,7 @@
 
     els.fileName.textContent = model.filename ? model.filename.display : "No active file";
 
-    // Preview always falls back to the placeholder icon; this app has no
-    // per-job thumbnail endpoint.
-    if (els.previewImg && els.previewFallback) {
-      els.previewImg.hidden = true;
-      els.previewFallback.hidden = false;
-    }
-
+    renderPreview(model);
     renderChips(model);
     renderErrors(model);
   }
@@ -467,6 +524,30 @@
 
   if (hud) {
     initSvgGeometry();
+
+    if (els.previewTabs) {
+      els.previewTabs.addEventListener("click", function (event) {
+        var btn = event.target.closest ? event.target.closest(".phud__preview-tab") : null;
+        if (!btn || btn.disabled) return;
+        var view = btn.getAttribute("data-view");
+        if (view && view !== previewView) {
+          previewView = view;
+          lastImgSrc = "";
+          render();
+        }
+      });
+    }
+
+    // A broken snapshot/preview URL should degrade to the placeholder icon.
+    if (els.previewImg) {
+      els.previewImg.addEventListener("error", function () {
+        els.previewImg.hidden = true;
+        els.previewImg.removeAttribute("src");
+        lastImgSrc = "";
+        if (els.previewFallback) els.previewFallback.hidden = false;
+      });
+    }
+
     setInterval(render, 250);
     render();
   }

@@ -203,6 +203,50 @@
   height: auto;
 }
 
+/* Segmented Current / Preview pill overlaid on the preview panel. The HUD is
+   pointer-events: none while visible, so this control re-enables taps itself. */
+.phud__preview-tabs {
+  position: absolute;
+  left: 50%;
+  bottom: 2.6rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(1, 4, 9, 0.62);
+  border: 1px solid rgba(240, 246, 252, 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.phud__preview-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0.3em 0.85em;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--phud-muted);
+  font: 600 0.66rem/1 system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.phud__preview-tab.is-active {
+  background: rgba(240, 246, 252, 0.16);
+  color: var(--phud-fg);
+}
+
+.phud__preview-tab:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .phud__file {
   position: absolute;
   left: 0;

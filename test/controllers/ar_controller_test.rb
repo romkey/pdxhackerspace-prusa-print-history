@@ -61,6 +61,14 @@ class ArControllerTest < ActionDispatch::IntegrationTest
     assert_match printers(:prusa_xl).name, response.body
   end
 
+  test 'preview panel offers current and preview tabs' do
+    get ar_path
+
+    assert_response :success
+    assert_select '.phud__preview-tabs [data-view="current"]', text: 'Current'
+    assert_select '.phud__preview-tabs [data-view="preview"]', text: 'Preview'
+  end
+
   test 'loads the AR scripts and stylesheet' do
     get ar_path
 

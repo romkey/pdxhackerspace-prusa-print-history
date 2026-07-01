@@ -9,7 +9,7 @@ module StatusExport
     records = Printer.ordered.includes(:printer_heads)
     active_jobs = Job.active
                      .where(printer_id: records.map(&:id))
-                     .includes(:owner, :cleared_by, :tools)
+                     .includes(:owner, :cleared_by, :tools, preview_image_attachment: :blob)
     active_by_printer = active_jobs.index_by(&:printer_id)
 
     records.map do |printer|
@@ -33,9 +33,37 @@ module StatusExport
 
   def printer_as_json(printer, job:, include_email: true)
     printer_attributes(printer).merge(
+      snapshot_url: snapshot_url(printer),
+      preview_url: preview_url(printer, job),
       heads: printer.printer_heads.sort_by(&:tool_index).map { |head| head_as_json(head) },
       job: job ? job_as_json(job, include_email: include_email) : nil
     )
+  end
+
+  def snapshot_url(printer)
+    return nil unless printer.camera_configured?
+
+    url_helpers.camera_printer_path(printer)
+  end
+
+  def preview_url(printer, active_job)
+    job = active_job if job_preview_attached?(active_job)
+    job ||= latest_preview_job(printer)
+    return nil unless job_preview_attached?(job)
+
+    url_helpers.rails_blob_path(job.preview_image, only_path: true)
+  end
+
+  def job_preview_attached?(job)
+    job.present? && job.preview_image.attached?
+  end
+
+  def latest_preview_job(printer)
+    printer.jobs.joins(:preview_image_attachment).reorder(created_at: :desc).first
+  end
+
+  def url_helpers
+    Rails.application.routes.url_helpers
   end
 
   def printer_attributes(printer)
@@ -204,6 +232,7 @@ module StatusExport
   private_class_method :decimal, :timestamp, :user_as_json, :head_as_json, :tool_as_json,
                        :printer_as_json, :printer_attributes, :printer_identity_attributes,
                        :printer_environment_attributes, :printer_connectivity_attributes,
+                       :snapshot_url, :preview_url, :job_preview_attached?, :latest_preview_job, :url_helpers,
                        :job_as_json, :job_attributes, :job_core_attributes, :job_timing_attributes,
                        :job_clearance_attributes, :event_as_json, :printer_summary_as_json
 end

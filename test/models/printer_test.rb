@@ -149,6 +149,7 @@ class PrinterTest < ActiveSupport::TestCase
 
     raw_key = Printer.connection.select_value("SELECT prusalink_key FROM printers WHERE id = #{@xl.id}")
     raw_token = Printer.connection.select_value("SELECT prusa_connect_token FROM printers WHERE id = #{@xl.id}")
+
     assert_not_equal 'legacy-prusalink-key', raw_key
     assert_not_equal 'legacy-connect-token', raw_token
     assert_equal 'legacy-prusalink-key', @xl.reload.prusalink_key

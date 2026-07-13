@@ -103,6 +103,7 @@ class UserTest < ActiveSupport::TestCase
     ActiveRecord::Encryption.config.support_unencrypted_data = original
 
     raw_email = User.connection.select_value("SELECT email FROM users WHERE id = #{user.id}")
+
     assert_not_equal 'legacy@example.com', raw_email
     assert_equal 'legacy@example.com', user.reload.email
     assert_equal 'legacyuser', user.username

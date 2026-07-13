@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-13
+
+### Added
+- User PII (email, name, username, Slack id/handle) is encrypted at rest via Active Record encryption.
+
+### Changed
+- Existing user PII and printer credentials (PrusaLink key, Prusa Connect token) are migrated to encrypted storage on deploy.
+
 ## [0.10.0] - 2026-07-13
 
 ### Added

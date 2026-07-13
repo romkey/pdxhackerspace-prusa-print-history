@@ -18,7 +18,8 @@ class PrintTimeReport
     def by_user
       rows = rows_from_sql(user_report_sql)
       unclaimed = rows.find { |row| row.key == 'unclaimed' } || empty_row('unclaimed', 'Unclaimed')
-      merge_rows(User.alphabetical, rows.reject { |row| row.key == 'unclaimed' }) + [unclaimed]
+      claimed_rows = label_user_rows(rows.reject { |row| row.key == 'unclaimed' })
+      merge_rows(User.in_display_name_order, claimed_rows) + [unclaimed]
     end
 
     def by_filament
@@ -109,15 +110,30 @@ class PrintTimeReport
       SQL
     end
 
+    def label_user_rows(rows)
+      users_by_id = User.where(id: rows.map(&:key)).index_by { |user| user.id.to_s }
+
+      rows.map do |row|
+        user = users_by_id[row.key]
+        Row.new(
+          key: row.key,
+          label: user ? user.display_name : row.label,
+          week_seconds: row.week_seconds,
+          month_seconds: row.month_seconds,
+          all_seconds: row.all_seconds
+        )
+      end
+    end
+
     def user_report_sql
       <<~SQL.squish
         SELECT users.id::text AS key,
-               COALESCE(NULLIF(users.username, ''), users.email) AS label,
+               users.id::text AS label,
                #{period_sums('jobs')}
         FROM jobs
         INNER JOIN users ON users.id = jobs.owner_id
         WHERE #{countable_jobs_clause('jobs')}
-        GROUP BY users.id, users.username, users.email
+        GROUP BY users.id
 
         UNION ALL
 

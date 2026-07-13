@@ -16,6 +16,19 @@ module ActiveSupport
     parallelize(workers: 1)
 
     fixtures :all
+
+    setup do
+      encrypt_sensitive_fixtures!
+    end
+
+    def encrypt_sensitive_fixtures!
+      original = ActiveRecord::Encryption.config.support_unencrypted_data
+      ActiveRecord::Encryption.config.support_unencrypted_data = true
+      User.find_each { |user| user.encrypt && user.save!(validate: false) }
+      Printer.find_each { |printer| printer.encrypt && printer.save!(validate: false) }
+    ensure
+      ActiveRecord::Encryption.config.support_unencrypted_data = original
+    end
   end
 end
 

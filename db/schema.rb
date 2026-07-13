@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -202,19 +202,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_180000) do
   create_table "users", force: :cascade do |t|
     t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
-    t.string "email", null: false
+    t.text "email", null: false
     t.datetime "last_login_at"
-    t.string "name"
+    t.text "name"
     t.boolean "notify_via_email", default: true, null: false
     t.boolean "notify_via_slack", default: true, null: false
     t.string "provider", null: false
-    t.string "slack_handle"
-    t.string "slack_id"
+    t.text "slack_handle"
+    t.text "slack_id"
     t.integer "total_print_seconds", default: 0, null: false
     t.boolean "trained_on_prusa"
     t.string "uid", null: false
     t.datetime "updated_at", null: false
-    t.string "username"
+    t.text "username"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_login_at"], name: "index_users_on_last_login_at"
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true

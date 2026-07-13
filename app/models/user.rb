@@ -1,4 +1,8 @@
 class User < ApplicationRecord
+  encrypts :email, deterministic: true
+  encrypts :slack_id, deterministic: true
+  encrypts :name, :username, :slack_handle
+
   has_many :owned_jobs, class_name: 'Job', foreign_key: :owner_id, dependent: :nullify, inverse_of: :owner
   has_many :cleared_jobs, class_name: 'Job', foreign_key: :cleared_by_id, dependent: :nullify, inverse_of: :cleared_by
 
@@ -11,9 +15,9 @@ class User < ApplicationRecord
   normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
   normalizes :slack_id, with: ->(value) { value.to_s.strip.presence }
 
-  scope :alphabetical, lambda {
-    order(Arel.sql("LOWER(COALESCE(NULLIF(username, ''), email)) ASC"))
-  }
+  def self.in_display_name_order(relation = all)
+    relation.sort_by { |user| user.display_name.to_s.downcase }
+  end
 
   attribute :notify_via_email, :boolean, default: true
   attribute :notify_via_slack, :boolean, default: true

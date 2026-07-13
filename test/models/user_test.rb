@@ -6,6 +6,12 @@ class UserTest < ActiveSupport::TestCase
     @viewer = users(:viewer)
   end
 
+  test 'in_display_name_order sorts by display name' do
+    ordered = User.in_display_name_order
+
+    assert_equal %w[adminuser otherviewer vieweruser], ordered.map(&:username)
+  end
+
   test 'admin flag works' do
     assert_predicate @admin, :admin?
     assert_not @viewer.admin?
@@ -21,6 +27,87 @@ class UserTest < ActiveSupport::TestCase
 
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:email], 'has already been taken'
+  end
+
+  test 'email is encrypted at rest and round-trips in memory' do
+    user = User.create!(email: 'secret@example.com', provider: 'authentik', uid: 'encrypt-email-uid', name: 'Secret')
+
+    raw = User.connection.select_value("SELECT email FROM users WHERE id = #{user.id}")
+
+    assert_not_nil raw
+    assert_not_equal 'secret@example.com', raw, 'value should be encrypted on disk'
+
+    assert_equal 'secret@example.com', user.reload.email
+  end
+
+  test 'slack_id is encrypted at rest and round-trips in memory' do
+    user = User.create!(
+      email: 'slack-encrypt@example.com',
+      provider: 'authentik',
+      uid: 'encrypt-slack-uid',
+      name: 'Slack Encrypt',
+      slack_id: 'USECRET123'
+    )
+
+    raw = User.connection.select_value("SELECT slack_id FROM users WHERE id = #{user.id}")
+
+    assert_not_nil raw
+    assert_not_equal 'USECRET123', raw, 'value should be encrypted on disk'
+
+    assert_equal 'USECRET123', user.reload.slack_id
+  end
+
+  test 'name is encrypted at rest and round-trips in memory' do
+    user = User.create!(
+      email: 'name-encrypt@example.com',
+      provider: 'authentik',
+      uid: 'encrypt-name-uid',
+      name: 'Private Name'
+    )
+
+    raw = User.connection.select_value("SELECT name FROM users WHERE id = #{user.id}")
+
+    assert_not_nil raw
+    assert_not_equal 'Private Name', raw, 'value should be encrypted on disk'
+
+    assert_equal 'Private Name', user.reload.name
+  end
+
+  test 'encrypt migrates existing plaintext user PII' do
+    user = User.create!(
+      email: 'legacy@example.com',
+      provider: 'authentik',
+      uid: 'legacy-encrypt-uid',
+      name: 'Legacy User',
+      username: 'legacyuser',
+      slack_id: 'ULEGACY',
+      slack_handle: 'legacyhandle'
+    )
+
+    User.connection.execute(<<~SQL.squish)
+      UPDATE users
+      SET email = 'legacy@example.com',
+          name = 'Legacy User',
+          username = 'legacyuser',
+          slack_id = 'ULEGACY',
+          slack_handle = 'legacyhandle'
+      WHERE id = #{user.id}
+    SQL
+
+    original = ActiveRecord::Encryption.config.support_unencrypted_data
+    ActiveRecord::Encryption.config.support_unencrypted_data = true
+    legacy = User.find(user.id)
+    legacy.encrypt
+    legacy.save!(validate: false)
+  ensure
+    ActiveRecord::Encryption.config.support_unencrypted_data = original
+
+    raw_email = User.connection.select_value("SELECT email FROM users WHERE id = #{user.id}")
+    assert_not_equal 'legacy@example.com', raw_email
+    assert_equal 'legacy@example.com', user.reload.email
+    assert_equal 'legacyuser', user.username
+    assert_equal 'ULEGACY', user.slack_id
+    assert_equal 'legacyhandle', user.slack_handle
   end
 
   test 'provider + uid is unique' do

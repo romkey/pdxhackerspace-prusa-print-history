@@ -129,6 +129,32 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal :unreachable, @xl.prusalink_connection_status
   end
 
+  test 'encrypt migrates existing plaintext printer credentials' do
+    @xl.update!(prusalink_key: 'legacy-prusalink-key', prusa_connect_token: 'legacy-connect-token')
+
+    Printer.connection.execute(<<~SQL.squish)
+      UPDATE printers
+      SET prusalink_key = 'legacy-prusalink-key',
+          prusa_connect_token = 'legacy-connect-token'
+      WHERE id = #{@xl.id}
+    SQL
+
+    original = ActiveRecord::Encryption.config.support_unencrypted_data
+    ActiveRecord::Encryption.config.support_unencrypted_data = true
+    legacy = Printer.find(@xl.id)
+    legacy.encrypt
+    legacy.save!(validate: false)
+  ensure
+    ActiveRecord::Encryption.config.support_unencrypted_data = original
+
+    raw_key = Printer.connection.select_value("SELECT prusalink_key FROM printers WHERE id = #{@xl.id}")
+    raw_token = Printer.connection.select_value("SELECT prusa_connect_token FROM printers WHERE id = #{@xl.id}")
+    assert_not_equal 'legacy-prusalink-key', raw_key
+    assert_not_equal 'legacy-connect-token', raw_token
+    assert_equal 'legacy-prusalink-key', @xl.reload.prusalink_key
+    assert_equal 'legacy-connect-token', @xl.prusa_connect_token
+  end
+
   test 'prusalink_connection_status is unconfigured without a key' do
     @mini.update!(prusalink_key: nil)
 

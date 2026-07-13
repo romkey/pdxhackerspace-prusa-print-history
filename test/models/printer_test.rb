@@ -47,6 +47,35 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal 'top-secret-key', @xl.reload.prusalink_key
   end
 
+  test 'prusa_connect_token is encrypted at rest and round-trips in memory' do
+    @xl.update!(prusa_connect_token: 'connect-camera-token')
+
+    raw = Printer.connection.select_value("SELECT prusa_connect_token FROM printers WHERE id = #{@xl.id}")
+
+    assert_not_nil raw
+    assert_not_equal 'connect-camera-token', raw, 'value should be encrypted on disk'
+
+    assert_equal 'connect-camera-token', @xl.reload.prusa_connect_token
+  end
+
+  test 'prusa_connect? requires token and fingerprint' do
+    assert_not @mini.prusa_connect?
+
+    @mini.update!(prusa_connect_token: 'camera-token-12345678')
+
+    assert_predicate @mini, :prusa_connect?
+    assert_equal 32, @mini.prusa_connect_fingerprint.length
+  end
+
+  test 'prusa_connect fingerprint persists across token updates' do
+    @mini.update!(prusa_connect_token: 'first-token-1234567890')
+    original = @mini.prusa_connect_fingerprint
+
+    @mini.update!(prusa_connect_token: 'second-token-123456789')
+
+    assert_equal original, @mini.reload.prusa_connect_fingerprint
+  end
+
   test 'prusalink? requires hostname and key' do
     @mini.prusalink_key = nil
 

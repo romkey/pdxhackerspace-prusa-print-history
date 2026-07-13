@@ -15,5 +15,7 @@ class CaptureEventPhotoJob < ApplicationJob
       filename: snapshot[:filename],
       content_type: snapshot[:content_type]
     )
+
+    PrusaConnect::PhotoUpload.enqueue!(event.job.printer, event)
   end
 end

@@ -225,6 +225,10 @@
               <span class="status-dot <%= printer.camera_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
               Camera: <%= printer.camera? ? printer.camera_url : (printer.prusalink? ? 'PrusaLink' : 'none') %>
             </li>
+            <li>
+              <span class="status-dot <%= printer.prusa_connect? ? 'status-success' : 'status-muted' %> me-2"></span>
+              Prusa Connect <%= printer.prusa_connect? ? 'configured' : 'not configured' %>
+            </li>
           </ul>
         </div>
       </div>

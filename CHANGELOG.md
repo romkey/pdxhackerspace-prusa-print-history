@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-13
+
+### Added
+- Prusa Connect camera uploads: configure a per-printer camera token and new photos (progress, idle, and event snapshots) are uploaded automatically, respecting Prusa Connect's 10-second rate limit.
+
 ## [0.9.0] - 2026-06-30
 
 ### Added

@@ -65,6 +65,15 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/PrusaLink/, response.body)
   end
 
+  test 'show displays Prusa Connect integration status to admins' do
+    @printer.update!(prusa_connect_token: 'camera-token-12345678')
+    login_as(users(:admin))
+    get printer_path(@printer)
+
+    assert_response :success
+    assert_match(/Prusa Connect configured/, response.body)
+  end
+
   test 'show always displays ambient temperature when available' do
     @printer.update!(ambient_temp: 21.5, environment_updated_at: 2.minutes.ago)
 
@@ -248,6 +257,17 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/••••/, response.body)
   end
 
+  test 'edit masks stored Prusa Connect token' do
+    @printer.update!(prusa_connect_token: 'super-secret-connect-token')
+    login_as(users(:admin))
+    get edit_printer_path(@printer)
+
+    assert_response :success
+    assert_no_match(/super-secret-connect-token/, response.body)
+    assert_select 'input[type=password][name=?]', 'printer[prusa_connect_token]'
+    assert_match(/••••/, response.body)
+  end
+
   test 'update keeps existing PrusaLink key when field is left blank' do
     @printer.update!(prusalink_key: 'keep-me')
     login_as(users(:admin))
@@ -256,6 +276,16 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to printer_path(@printer)
     assert_equal 'keep-me', @printer.reload.prusalink_key
+  end
+
+  test 'update keeps existing Prusa Connect token when field is left blank' do
+    @printer.update!(prusa_connect_token: 'keep-connect-token')
+    login_as(users(:admin))
+
+    patch printer_path(@printer), params: { printer: { location: 'Lab', prusa_connect_token: '' } }
+
+    assert_redirected_to printer_path(@printer)
+    assert_equal 'keep-connect-token', @printer.reload.prusa_connect_token
   end
 
   test 'new redirects anonymous users to login' do

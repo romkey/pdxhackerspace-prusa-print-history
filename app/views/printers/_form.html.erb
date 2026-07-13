@@ -43,6 +43,22 @@
       <% end %>
     </div>
     <div class="col-md-6">
+      <%= f.label :prusa_connect_token, 'Prusa Connect camera token', class: 'form-label' %>
+      <% if printer.persisted? && printer.prusa_connect? %>
+        <%= f.password_field :prusa_connect_token,
+                             class: 'form-control',
+                             placeholder: '••••••••',
+                             autocomplete: 'new-password',
+                             value: '' %>
+        <div class="form-text">Token is saved. Leave blank to keep, or enter a new token to replace.</div>
+      <% else %>
+        <%= f.password_field :prusa_connect_token,
+                             class: 'form-control',
+                             autocomplete: 'new-password' %>
+        <div class="form-text">Camera token from Prusa Connect. Encrypted at rest. Uploads respect a 10s rate limit.</div>
+      <% end %>
+    </div>
+    <div class="col-md-6">
       <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
       <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
       <div class="form-text">Suffixes <code>_bme680_temperature</code> and <code>_bme680_humidity</code> are appended automatically.</div>

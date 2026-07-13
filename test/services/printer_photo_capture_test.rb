@@ -1,6 +1,8 @@
 require 'test_helper'
 
 class PrinterPhotoCaptureTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @printer = printers(:prusa_xl)
     @job = jobs(:active_xl)
@@ -44,6 +46,34 @@ class PrinterPhotoCaptureTest < ActiveSupport::TestCase
     PrinterCamera.stub(:snapshot, nil) do
       assert_no_difference -> { PhotoCapture.count } do
         PrinterPhotoCapture.capture!(@printer, job: @job)
+      end
+    end
+  end
+
+  test 'enqueues Prusa Connect upload for progress photos when configured' do
+    @printer.update!(prusa_connect_token: 'camera-token-12345678')
+
+    PrinterCamera.stub(:snapshot, @snapshot) do
+      assert_enqueued_with(job: PrusaConnectPhotoUploadJob) do
+        PrinterPhotoCapture.capture!(@printer, job: @job)
+      end
+    end
+  end
+
+  test 'does not enqueue Prusa Connect upload without token' do
+    PrinterCamera.stub(:snapshot, @snapshot) do
+      assert_no_enqueued_jobs only: PrusaConnectPhotoUploadJob do
+        PrinterPhotoCapture.capture!(@printer, job: @job)
+      end
+    end
+  end
+
+  test 'enqueues Prusa Connect upload for idle photos when configured' do
+    @printer.update!(prusa_connect_token: 'camera-token-12345678')
+
+    PrinterCamera.stub(:snapshot, @snapshot) do
+      assert_enqueued_with(job: PrusaConnectPhotoUploadJob) do
+        PrinterPhotoCapture.capture!(@printer, job: nil)
       end
     end
   end

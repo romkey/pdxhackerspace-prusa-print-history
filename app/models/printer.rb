@@ -1,5 +1,8 @@
 class Printer < ApplicationRecord
   encrypts :prusalink_key
+  encrypts :prusa_connect_token
+
+  before_save :ensure_prusa_connect_fingerprint
 
   HA_ENCLOSURE_TEMP_SUFFIX = '_bme680_temperature'.freeze
   HA_HUMIDITY_SUFFIX       = '_bme680_humidity'.freeze
@@ -56,6 +59,10 @@ class Printer < ApplicationRecord
     hostname.present? && prusalink_key.present?
   end
 
+  def prusa_connect?
+    prusa_connect_token.present? && prusa_connect_fingerprint.present?
+  end
+
   def home_assistant?
     ha_base_sensor.present?
   end
@@ -85,5 +92,13 @@ class Printer < ApplicationRecord
     return :unknown unless connection_tracking? && !prusalink_reachable.nil?
 
     prusalink_reachable ? :reachable : :unreachable
+  end
+
+  private
+
+  def ensure_prusa_connect_fingerprint
+    return if prusa_connect_token.blank?
+
+    self.prusa_connect_fingerprint ||= PrusaConnect::Fingerprint.generate
   end
 end

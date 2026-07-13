@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -155,6 +155,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_170000) do
     t.string "model"
     t.string "name", null: false
     t.string "operational_state", default: "unknown", null: false
+    t.string "prusa_connect_fingerprint"
+    t.datetime "prusa_connect_last_uploaded_at"
+    t.text "prusa_connect_token"
     t.datetime "prusalink_checked_at"
     t.text "prusalink_key"
     t.boolean "prusalink_reachable"

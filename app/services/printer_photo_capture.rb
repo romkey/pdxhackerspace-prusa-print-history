@@ -29,6 +29,7 @@ class PrinterPhotoCapture
   def save_progress_capture!(snapshot)
     capture = @printer.photo_captures.create!(job: @job, captured_at: Time.current)
     attach_image!(capture, snapshot)
+    PrusaConnect::PhotoUpload.enqueue!(@printer, capture)
     capture
   end
 
@@ -40,6 +41,7 @@ class PrinterPhotoCapture
 
     capture = @printer.photo_captures.create!(captured_at: Time.current)
     attach_image!(capture, snapshot)
+    PrusaConnect::PhotoUpload.enqueue!(@printer, capture)
     capture
   end
 

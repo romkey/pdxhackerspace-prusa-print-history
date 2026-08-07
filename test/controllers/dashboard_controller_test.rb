@@ -189,6 +189,96 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_not xl_card.text.match?(/\bavailable\b/)
   end
 
+  test 'public dashboard hides the current job filename off the internal network' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'dragon.gcode', progress_percent: 42.0)
+    jobs(:orphaned_active).update!(status: 'finished', ended_at: 1.hour.ago, filename: 'bracket.gcode')
+
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_no_match(/dragon\.gcode/, response.body)
+    assert_no_match(/bracket\.gcode/, response.body)
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), count: 0
+
+    xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
+
+    assert_includes xl_card.text, 'printing'
+  end
+
+  test 'public dashboard hides the last job filename on idle cards off the internal network' do
+    printer = printers(:prusa_mini)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
+    job = Job.create!(
+      printer: printer,
+      filename: 'cube.gcode',
+      status: 'finished',
+      started_at: 2.hours.ago,
+      ended_at: 1.hour.ago
+    )
+
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_no_match(/cube\.gcode/, response.body)
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), count: 0
+
+    mini_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa Mini') }
+
+    assert_includes mini_card.text, 'finished'
+    assert_includes mini_card.text, 'ago'
+  end
+
+  test 'public dashboard keeps the job filename out of preview image alt text' do
+    printer = printers(:prusa_mini)
+    job = Job.create!(
+      printer: printer,
+      filename: 'cube.gcode',
+      status: 'finished',
+      started_at: 2.hours.ago,
+      ended_at: 1.hour.ago
+    )
+    job.preview_image.attach(
+      io: StringIO.new('preview-bytes'),
+      filename: 'cube.png',
+      content_type: 'image/png'
+    )
+
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_no_match(/cube\.gcode/, response.body)
+    assert_select 'img.dashboard-image[alt=?]', 'Preview of the print on Prusa Mini'
+  end
+
+  test 'anonymous visitors on the internal network still see job filenames' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'dragon.gcode', progress_percent: 42.0)
+
+    # No headers: the default integration test IP is inside INTERNAL_NETWORKS.
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), text: 'dragon.gcode'
+  end
+
+  test 'logged-in visitors off the internal network still see job filenames' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'dragon.gcode', progress_percent: 42.0)
+
+    login_as(users(:viewer))
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), text: 'dragon.gcode'
+  end
+
   test 'dashboard job filenames are wrapped to stay within printer columns' do
     stylesheet = Rails.root.join('app/assets/stylesheets/refresh.scss').read
     defined_selectors = stylesheet.scan(/\.([\w-]+)\s*[,{]/).flatten.to_set

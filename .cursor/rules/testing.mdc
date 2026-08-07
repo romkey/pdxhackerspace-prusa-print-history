@@ -47,8 +47,14 @@ The app's behavior depends on both login state and client IP, so tests must cont
 `test_helper.rb` sets `INTERNAL_NETWORKS=127.0.0.1/32`, which makes the default integration
 test IP internal — anonymous requests get the internal-network tier unless told otherwise.
 
-- `internal_request_headers` — an explicitly internal IP
+- omit headers entirely — the default IP is already inside `INTERNAL_NETWORKS`, and this is
+  how most tests exercise the anonymous-internal tier
 - `external_request_headers` — a visitor from outside `INTERNAL_NETWORKS`
+- `internal_request_headers` — **only usable in a test that first sets
+  `ENV['INTERNAL_NETWORKS'] = '192.168.0.0/24'` and calls `InternalNetworks.reset!`**. Its
+  default IP (`192.168.0.50`) is *not* internal under the default `127.0.0.1/32` config, so
+  using it without that setup silently gives you an external request. See
+  `InternalNetworkAccessTest` for the setup it expects.
 - `login_as(user)` / `omniauth_login(user)` — sign in via OmniAuth test mode; admin is
   conveyed through the mocked `is_admin` claim, so use an admin fixture to get admin access
 

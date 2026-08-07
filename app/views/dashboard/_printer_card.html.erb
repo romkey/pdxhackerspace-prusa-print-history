@@ -1,6 +1,9 @@
 <% card = local_assigns.fetch(:card) %>
 <% printer = card.printer %>
 <% current_job = card.current_job %>
+<%# Filenames are print owners' business; anonymous visitors from outside
+    INTERNAL_NETWORKS see only printer state. %>
+<% show_filenames = logged_in_or_internal? %>
 
 <div class="dashboard-printer-card h-100 text-center">
   <h2 class="dashboard-printer-name mb-2">
@@ -24,10 +27,15 @@
 
     <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %>">
       <% if card.preview_attached? %>
+        <% preview_alt = if show_filenames
+                           "Preview of #{card.preview_job.filename}"
+                         else
+                           "Preview of the print on #{printer.name}"
+                         end %>
         <%= link_to job_path(card.preview_job) do %>
           <%= image_tag storage_blob_path(card.preview_job.preview_image),
                         class: 'dashboard-image',
-                        alt: "Preview of #{card.preview_job.filename}" %>
+                        alt: preview_alt %>
         <% end %>
       <% else %>
         <%= image_tag '/images/placeholder-preview.svg',
@@ -43,16 +51,20 @@
 
   <% if card.current_job %>
     <div class="dashboard-job-filename text-13 mb-2">
-      <%= link_to card.current_job.filename, job_path(card.current_job), class: 'fw-medium text-decoration-none' %>
-      <div class="text-12 text-secondary">
+      <% if show_filenames %>
+        <%= link_to card.current_job.filename, job_path(card.current_job), class: 'fw-medium text-decoration-none' %>
+      <% end %>
+      <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
         <%= card.current_job.status %>
       </div>
       <%= render 'jobs/progress', job: card.current_job, wrapper_class: 'mt-2' %>
     </div>
   <% elsif card.idle? && card.last_job %>
     <div class="dashboard-job-filename text-13 mb-2">
-      <%= link_to card.last_job.filename, job_path(card.last_job), class: 'fw-medium text-decoration-none' %>
-      <div class="text-12 text-secondary">
+      <% if show_filenames %>
+        <%= link_to card.last_job.filename, job_path(card.last_job), class: 'fw-medium text-decoration-none' %>
+      <% end %>
+      <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
         <%= card.last_job.status %>
         <% if card.last_job.ended_at %>
           <span title="<%= l(card.last_job.ended_at, format: :precise) %>">

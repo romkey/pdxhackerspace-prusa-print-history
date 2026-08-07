@@ -6,7 +6,8 @@ class ApplicationController < ActionController::Base
 
   stale_when_importmap_changes
 
-  helper_method :current_user, :logged_in?, :admin?, :internal_network?, :can_clear_prints?
+  helper_method :current_user, :logged_in?, :admin?, :internal_network?, :can_clear_prints?,
+                :logged_in_or_internal?
 
   private
 
@@ -32,6 +33,12 @@ class ApplicationController < ActionController::Base
     admin? || internal_network?
   end
 
+  # Everyone except anonymous visitors from outside INTERNAL_NETWORKS, who only ever
+  # see the public dashboard. Mirrors the require_login_or_internal filter.
+  def logged_in_or_internal?
+    logged_in? || internal_network?
+  end
+
   def require_login
     return if logged_in?
 
@@ -50,7 +57,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_login_or_internal
-    return if logged_in? || internal_network?
+    return if logged_in_or_internal?
 
     if request.format.json?
       head :unauthorized

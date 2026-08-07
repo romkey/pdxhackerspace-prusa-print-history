@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Claim (private)** button next to Claim, which claims a print and marks it private. A
   private print hides its filename, owner, progress, preview, and camera photos from everyone
   except its owner and admins — on the dashboard, job and printer pages, the JSON status
-  endpoints, and the printer camera image. Releasing the print makes it public again, and a
-  pickup label printed for a private print shows "Private print" instead of the owner's name.
-  Everything else about the print — printer, status, temperatures, timings — stays visible.
+  endpoints, and the printer camera image. Releasing the print makes it public again. A pickup
+  label printed for a private print carries neither the owner's name nor the filename — just
+  "Private print", the printer, status, and print times. Everything else about the print —
+  printer, status, temperatures, timings — stays visible.
 - **Clear (no receipt)** button on the clear print form, which marks a print cleared and
   successful without sending anything to the label printer. It is available even when no
   label printer is configured, so prints can be cleared on a setup without one.

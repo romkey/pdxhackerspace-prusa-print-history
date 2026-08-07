@@ -32,15 +32,22 @@ class JobLabelPdf
 
   private
 
+  # A private print's label carries neither the owner's name nor the filename; the printer
+  # and the print times are what identify it on the pickup shelf.
   def build_lines
     t = @theme
-    [
-      { size: t[:owner], text: owner_text, bold: true },
-      { size: t[:filename], text: @job.filename.to_s, bold: true, gap_before: SECTION_GAP },
+    lines = [{ size: t[:owner], text: owner_text, bold: true }]
+    lines << filename_line unless @job.private?
+
+    lines + [
       { size: t[:body], text: printer_material_line, gap_before: SECTION_GAP },
       { size: t[:body], text: @job.status.humanize },
       { size: t[:body], text: print_time_label }
     ]
+  end
+
+  def filename_line
+    { size: @theme[:filename], text: @job.filename.to_s, bold: true, gap_before: SECTION_GAP }
   end
 
   def compute_content_width_pt

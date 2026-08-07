@@ -97,14 +97,24 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_not_includes pdf_text, 'Status:'
   end
 
-  test 'keeps the owner name off the label of a private print' do
+  test 'keeps the owner name and filename off the label of a private print' do
     job = jobs(:active_xl)
-    job.update!(owner: users(:viewer), private: true)
+    job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode')
     pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
 
     assert_not_includes pdf_text, users(:viewer).display_name
+    assert_not_includes pdf_text, 'secret.gcode'
     assert_includes pdf_text, 'Private print'
-    assert_includes pdf_text, job.filename
+  end
+
+  test 'private label still identifies the print by printer, status and time' do
+    job = jobs(:active_xl)
+    job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode')
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+
+    assert_includes pdf_text, 'Prusa XL / PLA'
+    assert_includes pdf_text, job.status.humanize
+    assert_operator pdf_text.length, :>, 'Private print'.length
   end
 
   test 'shows unclaimed when job has no owner' do

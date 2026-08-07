@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-07
+
 ### Added
 - **Claim (private)** button next to Claim, which claims a print and marks it private. A
   private print hides its filename, owner, progress, preview, and camera photos from everyone

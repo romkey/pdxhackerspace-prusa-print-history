@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Updated Ruby gem dependencies, including Rails 8.1.3.1, Thruster 0.1.23, and
+  selenium-webdriver 4.46.0.
+
 ## [0.11.0] - 2026-07-13
 
 ### Added

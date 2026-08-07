@@ -97,6 +97,16 @@ class JobLabelPdfTest < ActiveSupport::TestCase
     assert_not_includes pdf_text, 'Status:'
   end
 
+  test 'keeps the owner name off the label of a private print' do
+    job = jobs(:active_xl)
+    job.update!(owner: users(:viewer), private: true)
+    pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)
+
+    assert_not_includes pdf_text, users(:viewer).display_name
+    assert_includes pdf_text, 'Private print'
+    assert_includes pdf_text, job.filename
+  end
+
   test 'shows unclaimed when job has no owner' do
     job = jobs(:orphaned_active)
     pdf_text = extract_pdf_text(JobLabelPdf.new(job, thermal_width_mm: 80).render)

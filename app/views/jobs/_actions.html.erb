@@ -8,6 +8,8 @@
   <div class="d-flex flex-wrap gap-1">
     <% if show_claim %>
       <%= button_to 'Claim', claim_job_path(job), method: :patch, class: 'btn btn-outline-secondary btn-sm' %>
+      <%= button_to 'Claim (private)', claim_job_path(job, private: 1), method: :patch,
+                    class: 'btn btn-outline-secondary btn-sm' %>
     <% end %>
     <% if show_clear %>
       <button type="button"

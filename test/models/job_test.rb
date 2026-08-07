@@ -80,6 +80,39 @@ class JobTest < ActiveSupport::TestCase
     assert_not job.reload.label_reprintable?
   end
 
+  test 'details of a public print are visible to everyone including anonymous viewers' do
+    job = jobs(:active_xl)
+
+    assert_not job.private?
+    assert job.details_visible_to?(nil)
+    assert job.details_visible_to?(users(:other_viewer))
+  end
+
+  test 'details of a private print are hidden from anonymous viewers and other users' do
+    job = jobs(:active_xl)
+    job.update!(owner: users(:viewer), private: true)
+
+    assert_not job.details_visible_to?(nil)
+    assert_not job.details_visible_to?(users(:other_viewer))
+  end
+
+  test 'details of a private print are visible to its owner and to admins' do
+    job = jobs(:active_xl)
+    job.update!(owner: users(:viewer), private: true)
+
+    assert job.details_visible_to?(users(:viewer))
+    assert job.details_visible_to?(users(:admin))
+  end
+
+  test 'private print with no owner is visible to admins only' do
+    job = jobs(:active_xl)
+    job.update!(owner: nil, private: true)
+
+    assert job.details_visible_to?(users(:admin))
+    assert_not job.details_visible_to?(users(:viewer))
+    assert_not job.details_visible_to?(nil)
+  end
+
   test 'clearable? requires uncleared active or finished job' do
     assert jobs(:active_xl).clearable?
     jobs(:active_xl).update!(cleared_at: Time.current, clear_outcome: 'success')

@@ -24,8 +24,25 @@ module JobsHelper
       job.estimated_finish_at > job.started_at
   end
 
+  PRIVATE_FILENAME_LABEL = 'Private print'.freeze
+  PRIVATE_OWNER_LABEL = 'Private'.freeze
+
+  # Single choke point for progress: the _progress partial and every caller of it
+  # already ask this first, so private prints never render a progress bar.
   def job_progress_visible?(job)
+    return false unless job_details_visible?(job)
+
     job_progress_timeline?(job) || job.progress_percent.present?
+  end
+
+  def job_filename_label(job)
+    job_details_visible?(job) ? job.filename : PRIVATE_FILENAME_LABEL
+  end
+
+  def job_owner_label(job)
+    return PRIVATE_OWNER_LABEL unless job_details_visible?(job)
+
+    job.owner&.display_name || '—'
   end
 
   def job_progress_bar_percent(job)

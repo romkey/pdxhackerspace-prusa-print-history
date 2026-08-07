@@ -153,6 +153,37 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'STORED-BYTES', response.body
   end
 
+  test 'camera endpoint is refused while another users private print is on the bed' do
+    attach_private_print_capture
+
+    login_as(users(:other_viewer))
+    get camera_printer_path(@printer)
+
+    assert_response :forbidden
+  end
+
+  test 'camera endpoint is refused for anonymous internal viewers during a private print' do
+    attach_private_print_capture
+
+    get camera_printer_path(@printer)
+
+    assert_response :forbidden
+  end
+
+  test 'camera endpoint serves a private print to its owner and to admins' do
+    attach_private_print_capture
+
+    login_as(users(:viewer))
+    get camera_printer_path(@printer)
+
+    assert_response :success
+
+    login_as(users(:admin))
+    get camera_printer_path(@printer)
+
+    assert_response :success
+  end
+
   test 'camera endpoint proxies configured camera URL when no stored photo' do
     snapshot = {
       io: StringIO.new('JPEG-BYTES'),
@@ -342,5 +373,16 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
       delete printer_path(@printer)
     end
     assert_redirected_to printers_path
+  end
+
+  private
+
+  # Makes the printer's active job private and gives it a stored camera photo.
+  def attach_private_print_capture
+    job = jobs(:active_xl)
+    job.update!(owner: users(:viewer), private: true)
+    capture = @printer.photo_captures.create!(job: job, captured_at: Time.current)
+    capture.image.attach(io: StringIO.new('STORED'), filename: 's.jpg', content_type: 'image/jpeg')
+    job
   end
 end

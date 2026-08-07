@@ -16,6 +16,20 @@ module ApplicationHelper
     FLASH_CLASSES.fetch(flash_type.to_s, 'info')
   end
 
+  # View-side adapter for Job#details_visible_to?.
+  def job_details_visible?(job)
+    job.nil? || job.details_visible_to?(job_visibility_viewer)
+  end
+
+  # Turbo Stream broadcasts (PrinterLiveBroadcaster) render with no request and therefore no
+  # viewer. That channel is shared by every subscriber, so a private print must be redacted
+  # for all of them -- the owner still sees the full panel on load, just not in live updates.
+  def job_visibility_viewer
+    return nil unless respond_to?(:current_user)
+
+    current_user
+  end
+
   def app_version
     @app_version ||= Rails.root.join('VERSION').read.strip
   rescue Errno::ENOENT

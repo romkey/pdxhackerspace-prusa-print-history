@@ -1,4 +1,4 @@
-<% if photos.photos? %>
+<% if job_details_visible?(job) && photos.photos? %>
   <div class="<%= local_assigns[:wrapper_class] if local_assigns[:wrapper_class].present? %>">
     <div class="h-section-label">Print photos</div>
 

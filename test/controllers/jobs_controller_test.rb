@@ -264,6 +264,120 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:other_viewer).id, @job.reload.owner_id
   end
 
+  test 'claim marks the job public' do
+    @job.update!(owner: nil, private: true)
+    login_as(users(:viewer))
+
+    patch claim_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_equal users(:viewer).id, @job.reload.owner_id
+    assert_not @job.private?
+  end
+
+  test 'claim private marks the job private and owned' do
+    @job.update!(owner: nil, private: false)
+    login_as(users(:viewer))
+
+    patch claim_job_path(@job, private: 1)
+
+    assert_redirected_to job_path(@job)
+    assert_equal users(:viewer).id, @job.reload.owner_id
+    assert @job.private?
+    assert_match(/private/i, flash[:notice])
+  end
+
+  test 'releasing a private print makes it public again' do
+    @job.update!(owner: users(:viewer), private: true)
+    login_as(users(:viewer))
+
+    delete claim_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_nil @job.reload.owner_id
+    assert_not @job.private?
+  end
+
+  test 'jobs index hides filename and owner of another users private print' do
+    @job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode')
+    login_as(users(:other_viewer))
+
+    get jobs_path
+
+    assert_response :success
+    assert_no_match(/secret\.gcode/, response.body)
+
+    # The owner's name legitimately appears on their other, public jobs, so check the
+    # private job's own row rather than the whole page.
+    row = css_select('tbody tr').find { |tr| tr.text.include?('Private print') }
+
+    assert row, 'expected a row for the private print'
+    assert_not_includes row.text, users(:viewer).display_name
+    assert_includes row.text, 'Private'
+  end
+
+  test 'jobs index shows a private print in full to its owner' do
+    @job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode')
+    login_as(users(:viewer))
+
+    get jobs_path
+
+    assert_response :success
+    assert_match(/secret\.gcode/, response.body)
+  end
+
+  test 'jobs index shows a private print in full to admins' do
+    @job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode')
+    login_as(users(:admin))
+
+    get jobs_path
+
+    assert_response :success
+    assert_match(/secret\.gcode/, response.body)
+  end
+
+  test 'job show hides filename, owner, progress, preview and photos of a private print' do
+    @job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode', progress_percent: 42.0)
+    @job.preview_image.attach(io: StringIO.new('preview'), filename: 'p.png', content_type: 'image/png')
+    capture = @job.photo_captures.create!(printer: @job.printer, captured_at: Time.current)
+    capture.image.attach(io: StringIO.new('photo'), filename: 'c.jpg', content_type: 'image/jpeg')
+    login_as(users(:other_viewer))
+
+    get job_path(@job)
+
+    assert_response :success
+    assert_no_match(/secret\.gcode/, response.body)
+    assert_no_match(/#{Regexp.escape(users(:viewer).display_name)}/, response.body)
+    assert_select 'h1', text: 'Private print'
+    assert_select '.progress-bar', count: 0
+    assert_select '.h-section-label', text: 'Print photos', count: 0
+    assert_match(/This print is private/, response.body)
+  end
+
+  test 'job show shows a private print in full to its owner' do
+    @job.update!(owner: users(:viewer), private: true, filename: 'secret.gcode', progress_percent: 42.0)
+    login_as(users(:viewer))
+
+    get job_path(@job)
+
+    assert_response :success
+    assert_select 'h1', text: 'secret.gcode'
+    assert_select '.progress-bar', minimum: 1
+    assert_match(/visible only to you and admins/i, response.body)
+  end
+
+  test 'claim private button is offered on unclaimed jobs' do
+    @job.update!(owner: nil)
+    login_as(users(:viewer))
+
+    get job_path(@job)
+
+    assert_response :success
+    assert_select 'form[action=?] button[type=submit]', claim_job_path(@job), text: 'Claim'
+    assert_select 'form[action=?] button[type=submit]', claim_job_path(@job, private: 1),
+                  text: 'Claim (private)'
+  end
+
   test 'clear_print requires sign-in or admin off the internal network' do
     post clear_print_job_path(@job), params: { outcome: 'success' }, headers: external_request_headers
 

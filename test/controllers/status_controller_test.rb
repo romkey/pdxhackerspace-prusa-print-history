@@ -97,6 +97,79 @@ class StatusControllerTest < ActionDispatch::IntegrationTest
     assert entry['owner']['email'].present?
   end
 
+  test 'jobs.json redacts a private print for other viewers' do
+    @job.update!(filename: 'secret.gcode', owner: users(:viewer), private: true)
+
+    login_as(users(:other_viewer))
+    get '/jobs.json', headers: external_request_headers
+
+    entry = response.parsed_body.find { |row| row['id'] == @job.id }
+
+    assert entry
+    assert entry['private']
+    assert_nil entry['filename']
+    assert_nil entry['progress_percent']
+    assert_nil entry['owner']
+    assert_equal @job.status, entry['status']
+  end
+
+  test 'jobs.json redacts a private print for anonymous internal viewers' do
+    @job.update!(filename: 'secret.gcode', owner: users(:viewer), private: true)
+
+    get '/jobs.json', headers: internal_request_headers
+
+    entry = response.parsed_body.find { |row| row['id'] == @job.id }
+
+    assert entry
+    assert_nil entry['filename']
+    assert_nil entry['owner']
+  end
+
+  test 'jobs.json shows a private print in full to its owner and to admins' do
+    @job.update!(filename: 'secret.gcode', owner: users(:viewer), private: true)
+
+    login_as(users(:viewer))
+    get '/jobs.json', headers: external_request_headers
+    entry = response.parsed_body.find { |row| row['id'] == @job.id }
+
+    assert_equal 'secret.gcode', entry['filename']
+    assert_equal users(:viewer).display_name, entry.dig('owner', 'display_name')
+
+    login_as(users(:admin))
+    get '/jobs.json', headers: external_request_headers
+    entry = response.parsed_body.find { |row| row['id'] == @job.id }
+
+    assert_equal 'secret.gcode', entry['filename']
+  end
+
+  test 'printers.json drops snapshot and preview urls for a private print' do
+    @job.update!(filename: 'secret.gcode', owner: users(:viewer), private: true)
+    @job.preview_image.attach(io: StringIO.new('preview'), filename: 'p.png', content_type: 'image/png')
+    @job.printer.update!(camera_url: 'http://camera.example/snapshot')
+
+    get '/printers.json', headers: internal_request_headers
+
+    entry = response.parsed_body.find { |row| row['id'] == @job.printer_id }
+
+    assert entry
+    assert_nil entry['snapshot_url']
+    assert_nil entry['preview_url']
+    assert_nil entry.dig('job', 'filename')
+  end
+
+  test 'events.json redacts the job of a private print' do
+    @job.update!(filename: 'secret.gcode', owner: users(:viewer), private: true)
+    @job.events.create!(event_type: 'attention', to_status: 'attention', occurred_at: Time.current)
+
+    get '/events.json', headers: internal_request_headers
+
+    entry = response.parsed_body.find { |row| row.dig('job', 'id') == @job.id }
+
+    assert entry
+    assert_nil entry.dig('job', 'filename')
+    assert_nil entry.dig('job', 'owner')
+  end
+
   test 'events.json returns at most one hundred events' do
     get '/events.json', headers: internal_request_headers
 

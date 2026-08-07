@@ -33,6 +33,15 @@ class Job < ApplicationRecord
 
   after_commit :sync_owner_print_time_totals, on: %i[create update]
 
+  # Filename, owner, progress, preview, and photos of a private print are visible only to
+  # its owner and to admins. Everything else about the print stays public.
+  def details_visible_to?(user)
+    return true unless private?
+    return false if user.nil?
+
+    user.admin? || owner_id == user.id
+  end
+
   def active?
     ACTIVE_STATUSES.include?(status)
   end

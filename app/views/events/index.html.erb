@@ -50,7 +50,7 @@
               <td class="text-secondary text-13"><%= event_row_detail(event).presence || '—' %></td>
               <td>
                 <% if job %>
-                  <%= link_to job.filename, job_path(job), class: 'fw-medium text-decoration-none' %>
+                  <%= link_to job_filename_label(job), job_path(job), class: 'fw-medium text-decoration-none' %>
                 <% else %>
                   <span class="text-secondary">—</span>
                 <% end %>

@@ -31,13 +31,16 @@ class JobsController < ApplicationController
   end
 
   def claim
-    @job.update!(owner: current_user)
-    redirect_to @job, notice: 'Claimed.'
+    private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?
+    @job.update!(owner: current_user, private: private_claim)
+    redirect_to @job, notice: private_claim ? 'Claimed as private.' : 'Claimed.'
   end
 
   def unclaim
     if admin? || @job.owner_id == current_user.id
-      @job.update!(owner: nil)
+      # A private print with no owner would be visible to admins only and to nobody else,
+      # with no way back, so releasing always makes the print public again.
+      @job.update!(owner: nil, private: false)
       redirect_to @job, notice: 'Released.'
     else
       head :forbidden

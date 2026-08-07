@@ -118,6 +118,8 @@ class JobLabelPdf
   end
 
   def owner_text
+    return 'Private print' if @job.private?
+
     @job.owner&.display_name || 'Unclaimed'
   end
 

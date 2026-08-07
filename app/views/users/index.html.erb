@@ -64,7 +64,7 @@
                 <% if claimed_jobs.any? %>
                   <% claimed_jobs.each_with_index do |job, index| %>
                     <% if index.positive? %><span class="text-secondary">, </span><% end %>
-                    <%= link_to job.filename, job_path(job), class: 'text-decoration-none' %>
+                    <%= link_to job_filename_label(job), job_path(job), class: 'text-decoration-none' %>
                   <% end %>
                 <% else %>
                   <span class="text-secondary">—</span>

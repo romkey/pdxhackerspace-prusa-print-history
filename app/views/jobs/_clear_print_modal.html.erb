@@ -11,7 +11,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div class="text-13 text-secondary mb-3"><%= job.filename %></div>
+        <div class="text-13 text-secondary mb-3"><%= job_filename_label(job) %></div>
         <%= render 'jobs/clear_print_forms',
                    job: job,
                    label_printers: label_printers,

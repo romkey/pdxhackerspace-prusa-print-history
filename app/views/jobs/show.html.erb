@@ -5,7 +5,7 @@
         <%= link_to 'Jobs', jobs_path, class: 'text-decoration-none' %> /
         <%= link_to @job.printer.name, printer_path(@job.printer), class: 'text-decoration-none' %>
       </div>
-      <h1 class="h-page-title mb-0"><%= @job.filename %></h1>
+      <h1 class="h-page-title mb-0"><%= job_filename_label(@job) %></h1>
       <div class="text-13 text-secondary mt-1">
         <span class="badge text-bg-secondary-subtle"><%= @job.status %></span>
         <% if @job.started_at %>&middot; started <%= l(@job.started_at, format: :short) %><% end %>
@@ -45,8 +45,13 @@
       <div class="card mb-3">
         <div class="card-body">
           <div class="h-section-label">Owner</div>
-          <% if @job.owner %>
+          <% if !job_details_visible?(@job) %>
+            <div class="text-secondary">This print is private.</div>
+          <% elsif @job.owner %>
             <div class="fw-medium"><%= @job.owner.display_name %></div>
+            <% if @job.private? %>
+              <div class="text-13 text-secondary mt-1">Private — visible only to you and admins.</div>
+            <% end %>
           <% else %>
             <div class="text-secondary">No owner.</div>
           <% end %>
@@ -55,6 +60,8 @@
             <div class="mt-3 d-flex gap-2">
               <% if @job.owner.nil? || @job.owner_id != current_user.id %>
                 <%= button_to 'Claim', claim_job_path(@job), method: :patch, class: 'btn btn-outline-secondary btn-sm' %>
+                <%= button_to 'Claim (private)', claim_job_path(@job, private: 1), method: :patch,
+                              class: 'btn btn-outline-secondary btn-sm' %>
               <% end %>
               <% if @job.owner_id == current_user.id %>
                 <%= button_to 'Release', claim_job_path(@job), method: :delete, class: 'btn btn-outline-secondary btn-sm' %>

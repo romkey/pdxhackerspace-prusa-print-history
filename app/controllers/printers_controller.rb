@@ -12,13 +12,11 @@ class PrintersController < ApplicationController
   end
 
   def camera
-    capture = @printer.photo_captures.reverse_chronological.includes(image_attachment: :blob).first
-    if capture&.image&.attached?
-      send_data capture.image.download,
-                type: capture.image.content_type,
-                disposition: 'inline',
-                filename: capture.image.filename.to_s
-      return
+    # The stored captures and the live snapshot both show whatever is on the bed.
+    return head :forbidden unless job_details_visible?(@printer.latest_job)
+
+    if (capture = stored_capture)
+      return send_capture(capture)
     end
 
     snapshot = PrinterCamera.snapshot(@printer)
@@ -59,6 +57,18 @@ class PrintersController < ApplicationController
   end
 
   private
+
+  def stored_capture
+    capture = @printer.photo_captures.reverse_chronological.includes(image_attachment: :blob).first
+    capture if capture&.image&.attached?
+  end
+
+  def send_capture(capture)
+    send_data capture.image.download,
+              type: capture.image.content_type,
+              disposition: 'inline',
+              filename: capture.image.filename.to_s
+  end
 
   def set_printer
     @printer = Printer.find(params.expect(:id))

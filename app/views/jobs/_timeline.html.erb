@@ -8,7 +8,7 @@
       <span><%= job_timeline_end_label(timeline) %></span>
     </div>
 
-    <div class="job-timeline__bar" role="img" aria-label="Print status timeline for <%= job.filename %>">
+    <div class="job-timeline__bar" role="img" aria-label="Print status timeline for <%= job_filename_label(job) %>">
       <% timeline.segments.each do |segment| %>
         <div class="job-timeline__segment <%= segment.css_class %>"
              style="left: <%= segment.left_percent %>%; width: <%= segment.width_percent %>%;"

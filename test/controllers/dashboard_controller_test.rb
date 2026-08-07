@@ -279,6 +279,60 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select '.dashboard-job-filename a[href=?]', job_path(job), text: 'dragon.gcode'
   end
 
+  test 'dashboard hides filename, preview and camera photo of another users private print' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'secret.gcode', progress_percent: 42.0,
+                owner: users(:viewer), private: true)
+    job.preview_image.attach(io: StringIO.new('preview'), filename: 'p.png', content_type: 'image/png')
+    capture = job.photo_captures.create!(printer: printer, captured_at: Time.current)
+    capture.image.attach(io: StringIO.new('photo'), filename: 'c.jpg', content_type: 'image/jpeg')
+
+    login_as(users(:other_viewer))
+    get root_path
+
+    assert_response :success
+    assert_no_match(/secret\.gcode/, response.body)
+
+    xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
+
+    assert_includes xl_card.text, 'printing'
+    assert_empty xl_card.css('.progress-bar')
+    assert_equal 2, xl_card.css('img.dashboard-image-placeholder').size
+  end
+
+  test 'dashboard shows a private print in full to its owner' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'secret.gcode', progress_percent: 42.0,
+                owner: users(:viewer), private: true)
+
+    login_as(users(:viewer))
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), text: 'secret.gcode'
+
+    xl_card = css_select('.dashboard-printer-card').find { |node| node.text.include?('Prusa XL') }
+
+    assert_not_empty xl_card.css('.progress-bar')
+  end
+
+  test 'dashboard shows a private print in full to admins' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'printing')
+    job = jobs(:active_xl)
+    job.update!(status: 'printing', filename: 'secret.gcode', owner: users(:viewer), private: true)
+
+    login_as(users(:admin))
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-job-filename a[href=?]', job_path(job), text: 'secret.gcode'
+  end
+
   test 'dashboard job filenames are wrapped to stay within printer columns' do
     stylesheet = Rails.root.join('app/assets/stylesheets/refresh.scss').read
     defined_selectors = stylesheet.scan(/\.([\w-]+)\s*[,{]/).flatten.to_set

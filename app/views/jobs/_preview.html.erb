@@ -1,4 +1,4 @@
-<% if job.preview_image.attached? %>
+<% if job_details_visible?(job) && job.preview_image.attached? %>
   <div class="<%= local_assigns[:wrapper_class] if local_assigns[:wrapper_class].present? %>">
     <div class="text-12 text-secondary mb-1">Print preview</div>
     <%= image_tag storage_blob_path(job.preview_image), class: 'img-fluid rounded border', alt: "Preview of #{job.filename}" %>

@@ -39,6 +39,12 @@ class ApplicationController < ActionController::Base
     logged_in? || internal_network?
   end
 
+  # Controller-side adapter for Job#details_visible_to?. Views use the ApplicationHelper
+  # version instead, which also copes with rendering outside a request.
+  def job_details_visible?(job)
+    job.nil? || job.details_visible_to?(current_user)
+  end
+
   def require_login
     return if logged_in?
 

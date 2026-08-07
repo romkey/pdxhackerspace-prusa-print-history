@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_07_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_190000) do
     t.datetime "finished_notified_at"
     t.bigint "owner_id"
     t.bigint "printer_id", null: false
+    t.boolean "private", default: false, null: false
     t.decimal "progress_percent", precision: 5, scale: 2
     t.string "prusalink_job_id"
     t.datetime "started_at"
@@ -80,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_190000) do
     t.index ["owner_id"], name: "index_jobs_on_owner_id"
     t.index ["printer_id", "prusalink_job_id"], name: "idx_jobs_on_printer_and_prusalink_job_id", unique: true, where: "(prusalink_job_id IS NOT NULL)"
     t.index ["printer_id"], name: "index_jobs_on_printer_id"
+    t.index ["private"], name: "index_jobs_on_private"
     t.index ["started_at"], name: "index_jobs_on_started_at"
     t.index ["status"], name: "index_jobs_on_status"
   end

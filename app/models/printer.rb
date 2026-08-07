@@ -71,6 +71,12 @@ class Printer < ApplicationRecord
     jobs.where(status: %w[printing paused attention error]).order(started_at: :desc).first
   end
 
+  # The job whose photos the printer's camera is currently showing: the active one, or
+  # whatever was printed most recently and may still be sitting on the bed.
+  def latest_job
+    current_job || jobs.recent.first
+  end
+
   def display_status
     job_status = current_job&.status
     if environment_tracking? && operational_state.present? && operational_state != 'unknown'

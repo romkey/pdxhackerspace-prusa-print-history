@@ -20,10 +20,10 @@
       <div class="card-body">
         <div class="h-section-label"><%= presenter.job_section_label %></div>
         <% if current_job %>
-          <h2 class="h5 mb-2"><%= link_to current_job.filename, job_path(current_job) %></h2>
+          <h2 class="h5 mb-2"><%= link_to job_filename_label(current_job), job_path(current_job) %></h2>
           <div class="text-13 text-secondary">
             <%= current_job.status %>
-            <% if current_job.owner %>&middot; owner <%= current_job.owner.display_name %><% end %>
+            <% if !job_details_visible?(current_job) %>&middot; private<% elsif current_job.owner %>&middot; owner <%= current_job.owner.display_name %><% end %>
             <% if current_job.started_at %>&middot; started <%= time_ago_in_words(current_job.started_at) %> ago<% end %>
           </div>
 
@@ -63,7 +63,7 @@
           <% if display_job %>
             <div class="text-13 text-secondary mt-2">
               Last job:
-              <%= link_to display_job.filename, job_path(display_job), class: 'text-decoration-none' %>
+              <%= link_to job_filename_label(display_job), job_path(display_job), class: 'text-decoration-none' %>
               <% if display_job.ended_at %>
                 finished <%= time_ago_in_words(display_job.ended_at) %> ago
               <% end %>
@@ -128,9 +128,9 @@
             <tbody>
               <% presenter.recent_jobs.each do |job| %>
                 <tr>
-                  <td><%= link_to job.filename, job_path(job) %></td>
+                  <td><%= link_to job_filename_label(job), job_path(job) %></td>
                   <td class="text-secondary"><%= job.status %></td>
-                  <td class="text-secondary"><%= job.owner&.display_name || '—' %></td>
+                  <td class="text-secondary"><%= job_owner_label(job) %></td>
                   <td class="text-secondary text-13" title="<%= job.started_at && l(job.started_at, format: :precise) %>">
                     <%= job.started_at ? "#{time_ago_in_words(job.started_at)} ago" : '—' %>
                   </td>

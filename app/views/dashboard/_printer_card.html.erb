@@ -2,8 +2,10 @@
 <% printer = card.printer %>
 <% current_job = card.current_job %>
 <%# Filenames are print owners' business; anonymous visitors from outside
-    INTERNAL_NETWORKS see only printer state. %>
-<% show_filenames = logged_in_or_internal? %>
+    INTERNAL_NETWORKS see only printer state. A private print hides its filename,
+    preview, and camera photos from everyone but its owner and admins. %>
+<% job_visible = job_details_visible?(card.preview_job) %>
+<% show_filenames = logged_in_or_internal? && job_visible %>
 
 <div class="dashboard-printer-card h-100 text-center">
   <h2 class="dashboard-printer-name mb-2">
@@ -12,7 +14,7 @@
 
   <div class="dashboard-images mb-2">
     <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %> mb-2">
-      <% if card.snapshot_attached? %>
+      <% if job_visible && card.snapshot_attached? %>
         <%= link_to printer_path(printer) do %>
           <%= image_tag storage_blob_path(card.snapshot.image),
                         class: 'dashboard-image',
@@ -26,7 +28,7 @@
     </div>
 
     <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %>">
-      <% if card.preview_attached? %>
+      <% if job_visible && card.preview_attached? %>
         <% preview_alt = if show_filenames
                            "Preview of #{card.preview_job.filename}"
                          else

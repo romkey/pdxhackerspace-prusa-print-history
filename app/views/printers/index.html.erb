@@ -34,7 +34,7 @@
               <td>
                 <% job = printer.current_job %>
                 <% if job %>
-                  <%= link_to job.filename, job_path(job), class: 'text-decoration-none' %>
+                  <%= link_to job_filename_label(job), job_path(job), class: 'text-decoration-none' %>
                   <span class="text-secondary text-13"><%= job.status %></span>
                 <% else %>
                   <%= render 'shared/printer_status', printer: printer %>

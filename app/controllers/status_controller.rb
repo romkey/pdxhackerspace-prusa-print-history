@@ -16,6 +16,6 @@ class StatusController < ApplicationController
   private
 
   def export_options
-    { include_email: logged_in? }
+    { include_email: logged_in?, viewer: current_user }
   end
 end

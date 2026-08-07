@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class JobsHelperTest < ActionView::TestCase
+  include ApplicationHelper
   include JobsHelper
 
   setup do

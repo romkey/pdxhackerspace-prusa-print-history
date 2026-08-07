@@ -5,7 +5,7 @@ module StatusExport
 
   module_function
 
-  def printers(include_email: true)
+  def printers(include_email: true, viewer: nil)
     records = Printer.ordered.includes(:printer_heads)
     active_jobs = Job.active
                      .where(printer_id: records.map(&:id))
@@ -13,43 +13,49 @@ module StatusExport
     active_by_printer = active_jobs.index_by(&:printer_id)
 
     records.map do |printer|
-      printer_as_json(printer, job: active_by_printer[printer.id], include_email: include_email)
+      printer_as_json(printer, job: active_by_printer[printer.id], include_email: include_email, viewer: viewer)
     end
   end
 
-  def jobs(limit: RECENT_JOBS_LIMIT, include_email: true)
+  def jobs(limit: RECENT_JOBS_LIMIT, include_email: true, viewer: nil)
     Job.recent
        .includes(:printer, :owner, :cleared_by, :tools)
        .limit(limit)
-       .map { |job| job_as_json(job, include_printer: true, include_email: include_email) }
+       .map { |job| job_as_json(job, include_printer: true, include_email: include_email, viewer: viewer) }
   end
 
-  def events(limit: RECENT_EVENTS_LIMIT, include_email: true)
+  def events(limit: RECENT_EVENTS_LIMIT, include_email: true, viewer: nil)
     JobEvent.recent
             .includes(job: %i[printer owner tools])
             .limit(limit)
-            .map { |event| event_as_json(event, include_email: include_email) }
+            .map { |event| event_as_json(event, include_email: include_email, viewer: viewer) }
   end
 
-  def printer_as_json(printer, job:, include_email: true)
+  def printer_as_json(printer, job:, include_email: true, viewer: nil)
     printer_attributes(printer).merge(
-      snapshot_url: snapshot_url(printer),
-      preview_url: preview_url(printer, job),
+      snapshot_url: snapshot_url(printer, viewer: viewer),
+      preview_url: preview_url(printer, job, viewer: viewer),
       heads: printer.printer_heads.sort_by(&:tool_index).map { |head| head_as_json(head) },
-      job: job ? job_as_json(job, include_email: include_email) : nil
+      job: job ? job_as_json(job, include_email: include_email, viewer: viewer) : nil
     )
   end
 
-  def snapshot_url(printer)
+  def visible?(job, viewer)
+    job.nil? || job.details_visible_to?(viewer)
+  end
+
+  def snapshot_url(printer, viewer: nil)
     return nil unless printer.camera_configured?
+    return nil unless visible?(printer.latest_job, viewer)
 
     url_helpers.camera_printer_path(printer)
   end
 
-  def preview_url(printer, active_job)
+  def preview_url(printer, active_job, viewer: nil)
     job = active_job if job_preview_attached?(active_job)
     job ||= latest_preview_job(printer)
     return nil unless job_preview_attached?(job)
+    return nil unless visible?(job, viewer)
 
     url_helpers.rails_blob_path(job.preview_image, only_path: true)
   end
@@ -111,30 +117,32 @@ module StatusExport
     }
   end
 
-  def job_as_json(job, include_printer: false, include_email: true)
-    payload = job_attributes(job, include_email: include_email)
+  def job_as_json(job, include_printer: false, include_email: true, viewer: nil)
+    payload = job_attributes(job, include_email: include_email, viewer: viewer)
     payload[:printer] = printer_summary_as_json(job.printer) if include_printer
     payload
   end
 
-  def job_attributes(job, include_email: true)
-    job_core_attributes(job)
+  def job_attributes(job, include_email: true, viewer: nil)
+    visible = visible?(job, viewer)
+    job_core_attributes(job, visible: visible)
       .merge(job_timing_attributes(job))
       .merge(job_clearance_attributes(job))
       .merge(
-        owner: user_as_json(job.owner, include_email: include_email),
+        owner: visible ? user_as_json(job.owner, include_email: include_email) : nil,
         cleared_by: user_as_json(job.cleared_by, include_email: include_email),
         tools: job.tools.sort_by(&:tool_index).map { |tool| tool_as_json(tool) }
       )
   end
 
-  def job_core_attributes(job)
+  def job_core_attributes(job, visible: true)
     {
       id: job.id,
       printer_id: job.printer_id,
-      filename: job.filename,
+      private: job.private?,
+      filename: visible ? job.filename : nil,
       status: job.status,
-      progress_percent: decimal(job.progress_percent),
+      progress_percent: visible ? decimal(job.progress_percent) : nil,
       prusalink_job_id: job.prusalink_job_id,
       total_filament_grams: decimal(job.total_filament_grams),
       created_at: timestamp(job.created_at),
@@ -162,7 +170,7 @@ module StatusExport
     }
   end
 
-  def event_as_json(event, include_email: true)
+  def event_as_json(event, include_email: true, viewer: nil)
     {
       id: event.id,
       event_type: event.event_type,
@@ -172,7 +180,7 @@ module StatusExport
       occurred_at: timestamp(event.occurred_at),
       created_at: timestamp(event.created_at),
       updated_at: timestamp(event.updated_at),
-      job: job_as_json(event.job, include_email: include_email)
+      job: job_as_json(event.job, include_email: include_email, viewer: viewer)
     }
   end
 

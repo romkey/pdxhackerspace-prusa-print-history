@@ -3,8 +3,9 @@ class JobClearPrintService
 
   class Error < StandardError; end
 
-  ClearRequest = Data.define(:job, :cleared_by, :outcome, :label_printer, :failure_reason, :failure_detail)
-  REQUEST_DEFAULTS = { label_printer: nil, failure_reason: nil, failure_detail: nil }.freeze
+  ClearRequest = Data.define(:job, :cleared_by, :outcome, :label_printer, :failure_reason, :failure_detail,
+                             :print_label)
+  REQUEST_DEFAULTS = { label_printer: nil, failure_reason: nil, failure_detail: nil, print_label: true }.freeze
 
   def self.call(**attributes)
     new(ClearRequest.new(**REQUEST_DEFAULTS, **attributes)).call
@@ -17,13 +18,14 @@ class JobClearPrintService
     @label_printer = request.label_printer
     @failure_reason = request.failure_reason
     @failure_detail = request.failure_detail
+    @print_label = request.print_label
   end
 
   def call
     validate!
 
     cups_job_id = nil
-    cups_job_id = print_label if success?
+    cups_job_id = print_label! if success? && @print_label
 
     @job.update!(clear_attributes)
     notification = JobNotificationService.notify_print_cleared(@job)
@@ -69,7 +71,7 @@ class JobClearPrintService
     }
   end
 
-  def print_label
+  def print_label!
     JobLabelPrintService.call(job: @job, label_printer: @label_printer)
   rescue JobLabelPrintService::Error => e
     raise Error, e.message

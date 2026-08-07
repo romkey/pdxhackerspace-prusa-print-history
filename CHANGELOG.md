@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Clear (no receipt)** button on the clear print form, which marks a print cleared and
+  successful without sending anything to the label printer. It is available even when no
+  label printer is configured, so prints can be cleared on a setup without one.
+
 ### Changed
 - The public dashboard no longer shows print filenames to anonymous visitors from outside the
   internal network. Printer state, status, progress, temperatures, and photos are unchanged.

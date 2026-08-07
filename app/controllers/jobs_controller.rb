@@ -92,20 +92,13 @@ class JobsController < ApplicationController
     end
 
     outcome = params[:outcome].to_s
-    if outcome == 'success' && LabelPrinter.default.nil?
+    print_label = outcome == 'success' && params[:skip_label].blank?
+    if print_label && LabelPrinter.default.nil?
       redirect_to @job, alert: 'No label printer configured.'
       return
     end
 
-    result = JobClearPrintService.call(
-      job: @job,
-      cleared_by: current_user,
-      outcome:,
-      label_printer: label_printer_for_clear,
-      failure_reason: params[:failure_reason],
-      failure_detail: params[:failure_detail]
-    )
-
+    result = perform_clear_print(outcome, print_label)
     redirect_to @job, notice: clear_notice(result, outcome)
   rescue JobClearPrintService::Error, CupsService::PrintError => e
     redirect_to @job, alert: "Clear print failed: #{e.message}"
@@ -113,13 +106,32 @@ class JobsController < ApplicationController
 
   private
 
+  def perform_clear_print(outcome, print_label)
+    JobClearPrintService.call(
+      job: @job,
+      cleared_by: current_user,
+      outcome:,
+      label_printer: label_printer_for_clear,
+      failure_reason: params[:failure_reason],
+      failure_detail: params[:failure_detail],
+      print_label:
+    )
+  end
+
   def clear_notice(result, outcome)
-    parts = [outcome == 'success' ? 'Print cleared and label sent.' : 'Print marked failed.']
+    parts = [clear_outcome_notice(result, outcome)]
     parts << "Label job #{result.cups_job_id}." if result.cups_job_id.present?
     parts << 'Owner notified by email.' if result.notification.email_sent
     parts << 'Owner notified on Slack.' if result.notification.slack_sent
     parts << "Notifications: #{result.notification.errors.join('; ')}." if result.notification.errors.any?
     parts.join(' ')
+  end
+
+  def clear_outcome_notice(result, outcome)
+    return 'Print marked failed.' unless outcome == 'success'
+    return 'Print cleared and label sent.' if result.cups_job_id.present?
+
+    'Print cleared without a receipt.'
   end
 
   def label_printer_for_clear

@@ -24,6 +24,13 @@
     <p class="text-13 text-secondary mb-3">Configure a label printer to print pickup labels on success.</p>
   <% end %>
 
+  <%# Same successful outcome as above, but nothing is sent to the label printer. %>
+  <%= form_with url: clear_print_job_path(job), method: :post, local: true, class: 'mb-3' do %>
+    <%= hidden_field_tag :outcome, 'success' %>
+    <%= hidden_field_tag :skip_label, '1' %>
+    <%= submit_tag 'Clear (no receipt)', class: 'btn btn-outline-secondary btn-sm' %>
+  <% end %>
+
   <%= form_with url: clear_print_job_path(job), method: :post, local: true do %>
     <%= hidden_field_tag :outcome, 'failed' %>
     <div class="mb-2">

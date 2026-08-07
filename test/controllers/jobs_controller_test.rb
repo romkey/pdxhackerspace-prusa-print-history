@@ -304,6 +304,71 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/failed/i, flash[:notice])
   end
 
+  test 'admin can clear print without printing a receipt' do
+    login_as(users(:admin))
+    captured = nil
+    JobClearPrintService.stub(:call, lambda { |**kwargs|
+      captured = kwargs
+      JobClearPrintService::Result.new(
+        cups_job_id: nil,
+        notification: JobNotificationService::Result.new(email_sent: false, slack_sent: false, errors: [])
+      )
+    }) do
+      post clear_print_job_path(@job), params: { outcome: 'success', skip_label: '1' }
+    end
+
+    assert_redirected_to job_path(@job)
+    assert_equal 'success', captured[:outcome]
+    assert_not captured[:print_label]
+    assert_match(/without a receipt/i, flash[:notice])
+    assert_no_match(/Label job/, flash[:notice])
+  end
+
+  test 'clearing a print with a receipt still asks for the label to be printed' do
+    login_as(users(:admin))
+    captured = nil
+    JobClearPrintService.stub(:call, lambda { |**kwargs|
+      captured = kwargs
+      JobClearPrintService::Result.new(
+        cups_job_id: 'DYMO-2',
+        notification: JobNotificationService::Result.new(email_sent: false, slack_sent: false, errors: [])
+      )
+    }) do
+      post clear_print_job_path(@job), params: { outcome: 'success' }
+    end
+
+    assert_redirected_to job_path(@job)
+    assert captured[:print_label]
+    assert_match(/label sent/i, flash[:notice])
+  end
+
+  test 'clear print without a receipt works when no label printer is configured' do
+    LabelPrinter.delete_all
+    login_as(users(:admin))
+
+    JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
+                                                         email_sent: false, slack_sent: false, errors: []
+                                                       )) do
+      post clear_print_job_path(@job), params: { outcome: 'success', skip_label: '1' }
+    end
+
+    assert_redirected_to job_path(@job)
+    assert_nil flash[:alert]
+    assert @job.reload.cleared?
+    assert_equal 'success', @job.clear_outcome
+  end
+
+  test 'clear print with a receipt is still refused when no label printer is configured' do
+    LabelPrinter.delete_all
+    login_as(users(:admin))
+
+    post clear_print_job_path(@job), params: { outcome: 'success' }
+
+    assert_redirected_to job_path(@job)
+    assert_match(/no label printer configured/i, flash[:alert])
+    assert_not @job.reload.cleared?
+  end
+
   test 'clear_print rejected for pending job' do
     job = jobs(:finished)
     job.update!(status: 'pending', ended_at: nil, cleared_at: nil)
@@ -320,6 +385,17 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     get job_path(@job)
 
     assert_select 'input[type=submit][value=?]', 'Successful, print label'
+    assert_select 'input[type=submit][value=?]', 'Clear (no receipt)'
+    assert_select 'input[type=submit][value=?]', 'Failed'
+  end
+
+  test 'show still offers clear without a receipt when no label printer is configured' do
+    LabelPrinter.delete_all
+    login_as(users(:admin))
+    get job_path(@job)
+
+    assert_select 'input[type=submit][value=?]', 'Successful, print label', count: 0
+    assert_select 'input[type=submit][value=?]', 'Clear (no receipt)'
     assert_select 'input[type=submit][value=?]', 'Failed'
   end
 

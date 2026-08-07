@@ -28,6 +28,44 @@ class JobClearPrintServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'clears successful print without sending a label when print_label is false' do
+    JobLabelPrintService.stub(:call, ->(**) { flunk('should not have printed a label') }) do
+      JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
+                                                           email_sent: false, slack_sent: false, errors: []
+                                                         )) do
+        result = JobClearPrintService.call(
+          job: @job,
+          cleared_by: @admin,
+          outcome: 'success',
+          label_printer: @printer,
+          print_label: false
+        )
+
+        assert_nil result.cups_job_id
+        assert_equal 'success', @job.reload.clear_outcome
+        assert_equal @admin, @job.cleared_by
+        assert @job.cleared_at.present?
+      end
+    end
+  end
+
+  test 'clears successful print without a label when no label printer is available' do
+    JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
+                                                         email_sent: false, slack_sent: false, errors: []
+                                                       )) do
+      result = JobClearPrintService.call(
+        job: @job,
+        cleared_by: @admin,
+        outcome: 'success',
+        label_printer: nil,
+        print_label: false
+      )
+
+      assert_nil result.cups_job_id
+      assert_equal 'success', @job.reload.clear_outcome
+    end
+  end
+
   test 'clears failed print without label' do
     JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
                                                          email_sent: false, slack_sent: false, errors: []

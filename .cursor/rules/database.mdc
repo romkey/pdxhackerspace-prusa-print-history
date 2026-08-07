@@ -6,24 +6,44 @@ alwaysApply: false
 
 # Database and Migrations
 
-- **Database:** PostgreSQL 16
-- **Adapter:** `pg` gem with connection via `DATABASE_URL` or individual `DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD` env vars
+- **Database:** PostgreSQL 18
+- **Adapter:** `pg` gem, connected via `DATABASE_URL` or the individual
+  `DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD`/`DB_NAME` env vars
+- Migrations run automatically on container start (`bin/docker-entrypoint` → `db:prepare`),
+  so a migration that ships in a release must be safe to apply to a live production database.
 
 ## Migration Conventions
 
 - Always provide a reversible migration or implement both `up` and `down` methods
-- Use `add_index` for columns used in `WHERE`, `ORDER BY`, or `JOIN` clauses
+- Use `add_index` for columns used in `WHERE`, `ORDER BY`, or `JOIN` clauses. Time-series
+  tables (`telemetry_readings`, `job_events`, `photo_captures`, `printer_events`) are always
+  read scoped-and-ordered — index the `[parent_id, occurred_at]` pair, not just the FK.
 - Use `add_reference` with `foreign_key: true` for associations
 - Prefer `change_column_null` over allowing nullable columns by default — be explicit
-- Use PostgreSQL-specific types when beneficial: `citext` for case-insensitive text, `jsonb` for JSON data, `uuid` for external IDs
-- Add `NOT NULL` constraints with defaults for new required columns on existing tables to avoid downtime
+- Use PostgreSQL-specific types when beneficial: `citext` for case-insensitive text, `jsonb`
+  for JSON payloads, `uuid` for external IDs
+- Add `NOT NULL` constraints with defaults for new required columns on existing tables to
+  avoid downtime
+- **Encrypted columns** (`users.email`, `users.name`, `printers.prusalink_key`, …) must be
+  `text`, never a length-limited type — ciphertext is much longer than plaintext. A migration
+  that starts encrypting an existing column needs a data backfill that re-saves each record;
+  see the encryption migration from v0.11.0 for the pattern.
 
 ```ruby
 # ✅ Safe addition of a required column to an existing table
-class AddStatusToMembers < ActiveRecord::Migration[8.0]
+class AddOperationalStateToPrinters < ActiveRecord::Migration[8.1]
   def change
-    add_column :members, :status, :string, null: false, default: 'active'
-    add_index :members, :status
+    add_column :printers, :operational_state, :string, null: false, default: 'unknown'
+    add_index :printers, :operational_state
   end
 end
 ```
+
+## Model-Side Notes
+
+- New status/state columns should have their allowed values as a frozen constant on the model
+  (`Job::STATUSES`, `Printer::OPERATIONAL_STATES`) with an `inclusion` validation, matching
+  the existing convention.
+- `Printer` guards a few features with `column_names.include?(...)` checks
+  (`environment_tracking?`, `connection_tracking?`) so the app boots against a database that
+  hasn't migrated yet. Keep that pattern in mind when removing columns.

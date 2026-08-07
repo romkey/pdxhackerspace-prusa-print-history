@@ -1,6 +1,6 @@
 ---
 description: Sidekiq and ActiveJob queue configuration rules to prevent double-prefixed queue names
-globs: config/**/production.rb, config/initializers/sidekiq.rb, app/jobs/**/*.rb
+globs: config/application.rb, config/environments/*.rb, config/initializers/sidekiq.rb, config/schedule.yml, app/jobs/**/*.rb
 alwaysApply: false
 ---
 
@@ -8,7 +8,8 @@ alwaysApply: false
 
 ## No ActiveJob queue_name_prefix
 
-NEVER add `config.active_job.queue_name_prefix` in any environment config.
+The adapter is set once in `config/application.rb` (`config.active_job.queue_adapter = :sidekiq`).
+NEVER add `config.active_job.queue_name_prefix` there or in any environment config.
 It interacts badly with sidekiq-cron's `active_job: true` option, causing
 the prefix to be applied twice and creating ghost queues like
 `prefix_prefix_default`.
@@ -17,7 +18,7 @@ This app uses a dedicated Redis instance — queue namespacing is unnecessary.
 
 ```ruby
 # BAD — causes double-prefixed queues with sidekiq-cron
-config.active_job.queue_name_prefix = "member_manager_production"
+config.active_job.queue_name_prefix = 'prusa_print_history_production'
 
 # GOOD — no prefix, plain queue names
 config.active_job.queue_adapter = :sidekiq
@@ -38,5 +39,16 @@ config.queues = %w[default mailers]
 
 ## sidekiq-cron jobs
 
-All cron jobs must use `active_job: true`. Do not set an explicit `queue:`
-on cron entries — let the job class's `queue_as` determine the queue.
+Cron entries live in `config/schedule.yml`, loaded by the Sidekiq server initializer.
+All cron jobs must use `active_job: true`. Do not set an explicit `queue:` on cron entries —
+let the job class's `queue_as` determine the queue.
+
+## Fan-out shape
+
+Recurring work over the printer fleet uses a two-level pattern: a cron-scheduled
+`FanOut*Job` that enqueues one per-printer job (`PrinterPollJob`,
+`PrinterPhotoCaptureJob`). Keep it that way — a single cron job that loops over every
+printer inline serializes slow HTTP calls and lets one unreachable printer stall the rest.
+
+Per-printer jobs should `discard_on ActiveRecord::RecordNotFound` (a printer can be deleted
+between fan-out and execution) and take IDs, not objects, as arguments.

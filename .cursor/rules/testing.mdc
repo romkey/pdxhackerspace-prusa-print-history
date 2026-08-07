@@ -8,26 +8,62 @@ alwaysApply: false
 
 - **Framework:** Minitest 5 with Rails test helpers
 - **Fixtures:** YAML fixtures in `test/fixtures/`; `fixtures :all` is set in `test_helper.rb`
-- **Parallelization:** Tests run in parallel by processor count
-- **Run tests:** `docker compose -f docker-compose.test.yml run --rm test` (creates DB, loads schema, runs suite)
+- **Job adapter:** `ActiveJob::Base.queue_adapter = :test` — assert on enqueued jobs rather
+  than letting them run
+- **Run tests:** `docker compose -f docker-compose.test.yml run --rm test` (creates the DB,
+  loads the schema, runs the suite). Append `bin/rails test <path>[:line]` for a subset.
 
 ## Conventions
 
-- Place model tests in `test/models/`, controller tests in `test/controllers/`, service tests in `test/services/`
+- Mirror `app/` under `test/`: model tests in `test/models/`, controller tests in
+  `test/controllers/`, service tests in `test/services/` (with `prusa_link/`,
+  `prusa_connect/`, `home_assistant/`, `slack/` subdirectories), jobs in `test/jobs/`,
+  `lib/` code in `test/lib/`
 - Use `assert_*` methods, not RSpec-style `expect`
 - Use `setup` and `teardown` methods for test lifecycle, not `before`/`after`
-- System tests use Capybara with Selenium Chrome — place in `test/system/`
-- Stub external API calls (Authentik, Slack, Google Sheets, Recharge, PayPal) in tests — never hit real APIs
+- There are no system tests yet; the Capybara + Selenium Chrome gems are available if one is
+  needed, and such tests belong in `test/system/`
+
+## Never hit a real external service
+
+Stub PrusaLink, Prusa Connect, Home Assistant, Slack, CUPS, and Authentik. Most services take
+an injectable client for exactly this reason — prefer passing a fake over stubbing at the HTTP
+layer:
+
+```ruby
+poller = PrinterPoller.new(printer, prusalink: fake_client, home_assistant: fake_ha)
+PrinterPhotoCapture.capture!(printer, client: fake_camera_client)
+```
+
+## Encrypted fixtures
+
+Fixtures are written in plaintext and re-encrypted by `encrypt_sensitive_fixtures!`, a global
+`setup` hook in `test_helper.rb`. **If you add Active Record encryption to another model, add
+it to that hook** or its fixtures will fail to decrypt.
+
+## Authorization tiers in integration tests
+
+The app's behavior depends on both login state and client IP, so tests must control both.
+`test_helper.rb` sets `INTERNAL_NETWORKS=127.0.0.1/32`, which makes the default integration
+test IP internal — anonymous requests get the internal-network tier unless told otherwise.
+
+- `internal_request_headers` — an explicitly internal IP
+- `external_request_headers` — a visitor from outside `INTERNAL_NETWORKS`
+- `login_as(user)` / `omniauth_login(user)` — sign in via OmniAuth test mode; admin is
+  conveyed through the mocked `is_admin` claim, so use an admin fixture to get admin access
+
+A test that changes `ENV['INTERNAL_NETWORKS']` must call `InternalNetworks.reset!`; the
+integration `teardown` restores the default.
 
 ```ruby
 # ✅ Standard test structure
-class MemberTest < ActiveSupport::TestCase
+class JobTest < ActiveSupport::TestCase
   setup do
-    @member = members(:active_member)
+    @job = jobs(:active_xl)
   end
 
-  test 'should be valid with required attributes' do
-    assert @member.valid?
+  test 'is clearable while printing and not yet cleared' do
+    assert @job.clearable?
   end
 end
 ```

@@ -1,22 +1,57 @@
 ---
-description: Core Rails project conventions for MemberManager
+description: Core Rails project conventions for Prusa Print History
 alwaysApply: true
 ---
 
-# MemberManager Project Conventions
+# Prusa Print History Project Conventions
 
-- **Stack:** Rails 8.1, Ruby 3.3.11, PostgreSQL 16, Redis 7, Sidekiq 7
-- **Frontend:** Bootstrap 5.3 via cssbundling-rails, Stimulus, Turbo, importmap-rails
-- **Auth:** OmniAuth with OpenID Connect (Authentik)
-- **Testing:** Minitest with fixtures, Capybara + Selenium for system tests
-- **Linting:** RuboCop with rubocop-rails plugin — run via `docker compose -f docker-compose.lint.yml run --rm rubocop` (build image with `docker compose -f docker-compose.lint.build.yml build rubocop` when needed)
-- **Local dev:** Use compose files: `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.lint.yml` (see README)
-- **CI:** GitHub Actions builds and tests on push/PR to `main`; releases push to `ghcr.io` on version tags
+Rails app that tracks the print history of a fleet of Prusa 3D printers. It polls PrusaLink
+for job and telemetry data, layers in Home Assistant environment readings, captures camera
+photos, and serves it behind a viewer-aware UI.
+
+- **Stack:** Rails 8.1, Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8 + sidekiq-cron
+- **Frontend:** Bootstrap 5.3.3 via cssbundling-rails (Sass/Yarn), Stimulus, Turbo,
+  importmap-rails, Propshaft, Chartkick
+- **Auth:** OmniAuth + OpenID Connect (Authentik), plus an optional local admin password login
+- **Testing:** Minitest with fixtures; Capybara + Selenium available for system tests
+- **Linting:** RuboCop with rails/performance/minitest plugins — see `docker-ci.mdc`
+- **Local dev:** Docker Compose, one file per stack (`docker-compose.dev.yml`, `.test.yml`,
+  `.lint.yml`, `.server.yml`)
+- **CI:** GitHub Actions runs RuboCop + tests on every push and PR; `v*` tags build and push
+  the production image to `ghcr.io`
 
 ## Key Architectural Patterns
 
-- Service objects live in `app/services/` for external API integrations (Authentik, Google Sheets, Slack, Recharge, PayPal)
-- Background jobs use Sidekiq with sidekiq-cron; use plain queue names (no `queue_name_prefix`)
-- Pagination uses Pagy with Bootstrap nav helpers
-- PDF generation uses Prawn
-- Environment config via dotenv-rails (`.env` files)
+- **Polling pipeline is the core.** `FanOutPrinterPollsJob` (cron, every minute) enqueues a
+  `PrinterPollJob` per printer, which runs `PrinterPoller`. That service talks to
+  `PrusaLink::Client`, maps Prusa states to app statuses, updates the `Job` row, syncs
+  `PrinterHead`/`Tool` rows, appends `TelemetryReading`s, records `JobEvent`s on transitions,
+  merges Home Assistant sensor values, and calls `PrinterLiveBroadcaster` to push a Turbo
+  Stream update. `FanOutPrinterPhotoCapturesJob` is the same fan-out shape for camera
+  snapshots, which are mirrored to Prusa Connect by `PrusaConnectPhotoUploadJob`.
+- **Service objects** live in `app/services/`. Three flavors: external API clients
+  (`PrusaLink::`, `PrusaConnect::`, `HomeAssistant::`, `Slack::Messenger`, `CupsService`),
+  presenters that assemble view data (`DashboardPresenter`, `PrinterShowPresenter`,
+  `JobTimeline*`, `JobTelemetryCharts`, `JobPhotosPresenter`), and workflows
+  (`JobClearPrintService`, `JobNotificationService`, `PrintTimeAccounting`, `PrintTimeReport`,
+  `JobLabelPdf`). Keep controllers and models thin.
+- **Authorization has four tiers and uses no gem.** `ApplicationController` provides
+  `current_user`, `logged_in?`, `admin?`, `internal_network?`, `can_clear_prints?` plus the
+  `require_login`, `require_admin`, `require_login_or_internal`, and
+  `require_admin_or_internal` filters. `internal_network?` is IP-based via
+  `lib/internal_networks.rb` and the `INTERNAL_NETWORKS` CIDR list. Admin comes from
+  Authentik's `is_admin` OIDC claim. `AdminConstraint` gates the mounted Sidekiq Web UI.
+- **PII and credentials are encrypted at rest** with Active Record encryption: `User` encrypts
+  email/name/username/slack_id/slack_handle, `Printer` encrypts `prusalink_key` and
+  `prusa_connect_token`. Attributes that get looked up (`email`, `slack_id`) use
+  `deterministic: true`. Adding a new encrypted model means updating
+  `encrypt_sensitive_fixtures!` in `test/test_helper.rb`.
+- **App-level config lives in the `settings` key/value table.** `Setting::KEYS` is a validated
+  whitelist; add a key there plus the paired `Setting.foo` / `Setting.foo=` accessors.
+  Deployment/secret config comes from the environment via dotenv-rails (`.env`).
+- **Background jobs** use Sidekiq with sidekiq-cron (`config/schedule.yml`); plain queue names,
+  never a `queue_name_prefix` — see `sidekiq-queues.mdc`.
+- **Denormalized print totals:** `Job` has an `after_commit` calling
+  `PrintTimeAccounting.sync_users_for_job!` when status, duration, or owner changes. Anything
+  that mutates those columns outside the model must keep that path intact.
+- Pagination uses Pagy with Bootstrap nav helpers. Label PDFs use Prawn and are sent to CUPS.

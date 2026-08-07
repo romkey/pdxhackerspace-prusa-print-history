@@ -10,15 +10,25 @@ Keep `README.md` as the authoritative project overview. Update it when:
 
 - Dependencies or system requirements change (Ruby, Node, PostgreSQL, Redis versions)
 - Setup steps change (new env vars, new services, Docker changes)
-- Major architectural decisions are made (new service integrations, auth changes)
+- Major architectural decisions are made (new integrations, auth changes)
+- The access tiers change — the README's tier table is the canonical summary of who can see
+  and do what
+
+Any new environment variable must be added to **both** `.env.example` (with a comment) and the
+README's required-environment section if it is required for a fresh install.
 
 ## Required Sections
 
-1. **Project overview** — what MemberManager does
-2. **Requirements** — Ruby, Node, PostgreSQL, Redis versions
-3. **Setup** — clone, env config, Docker Compose, database setup
-4. **Running locally** — `docker compose -f docker-compose.dev.yml up`, accessing the app
-5. **Testing** — `docker compose -f docker-compose.test.yml run --rm test`
-6. **Linting** — `docker compose -f docker-compose.lint.yml run --rm rubocop`
-7. **Deployment** — GitHub Actions CI/CD, Docker image releases
-8. **Architecture** — key directories, service objects, background jobs
+1. **Project overview** — what Prusa Print History does
+2. **Access tiers** — anonymous / anonymous-on-internal-network / logged-in / admin
+3. **Requirements** — Ruby, Node, PostgreSQL, Redis, Docker versions
+4. **Stack** — the layer/choice table
+5. **Required environment** — encryption keys, Home Assistant, Authentik, local admin,
+   timezone, SMTP, Slack
+6. **Local development** — `docker compose -f docker-compose.dev.yml up` and the `tools` profile
+7. **Testing** — `docker compose -f docker-compose.test.yml run --rm test`
+8. **Linting** — `docker compose -f docker-compose.lint.yml run --rm rubocop`
+9. **Production** — `docker-compose.server.yml`, automatic migrations on container start
+10. **CI / CD** — the two workflows
+11. **Versioning** — `VERSION`, semver, tagging
+12. **Project layout**

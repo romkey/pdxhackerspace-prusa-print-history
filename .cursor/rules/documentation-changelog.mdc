@@ -27,7 +27,7 @@ Follow [Keep a Changelog](https://keepachangelog.com/) conventions:
 ### Removed
 - Removed feature description
 
-## [v1.2.0] - 2026-03-09
+## [0.11.0] - 2026-07-13
 
 ### Added
 - ...
@@ -35,8 +35,12 @@ Follow [Keep a Changelog](https://keepachangelog.com/) conventions:
 
 ## Rules
 
-- New entries go under `[Unreleased]` until a version tag is pushed
-- When releasing, rename `[Unreleased]` to `[vX.Y.Z] - YYYY-MM-DD` and add a fresh `[Unreleased]` section
+- New entries go under `[Unreleased]` as the change lands
+- When releasing, rename `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`, add a fresh `[Unreleased]`
+  heading, bump `VERSION` to match, then push and tag `vX.Y.Z` (see `deployment-rules.mdc`).
+  The heading uses the bare version; the git tag carries the `v` prefix.
 - Write entries from the user's perspective, not implementation details
 - Group related changes under one bullet rather than listing every file touched
+- Call out anything that requires operator action on upgrade — a new required environment
+  variable, a data migration, a changed default — even if the user-facing effect is small
 - Reference GitHub issue/PR numbers where applicable

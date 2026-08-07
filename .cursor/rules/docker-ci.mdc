@@ -1,6 +1,6 @@
 ---
 description: Docker and GitHub Actions CI/CD conventions
-globs: "{Dockerfile,docker-compose.*.yml,.github/workflows/**}"
+globs: "{Dockerfile,Dockerfile.*,docker-compose.*.yml,.github/workflows/**}"
 alwaysApply: false
 ---
 
@@ -8,37 +8,53 @@ alwaysApply: false
 
 ## Docker
 
-- **Base image:** `ruby:3.3.11-slim` with multi-stage build
-- **Node:** Installed via nodenv (Node 24.x) for asset compilation
+- **Base image:** `ruby:3.3.11-slim`, multi-stage build (`Dockerfile`)
+- **Node:** Node 24.x (see `.node-version`) for asset compilation
 - **Yarn:** Use `yarn install --frozen-lockfile` — never modify `yarn.lock` in Docker builds
 - **Assets:** Precompiled with `SECRET_KEY_BASE_DUMMY=1`
-- **Runtime:** Non-root `rails` user; entrypoint at `bin/docker-entrypoint`
+- **Runtime:** Non-root `rails` user; entrypoint at `bin/docker-entrypoint`, which runs
+  `db:prepare` unless `SKIP_DB_MIGRATE=true`
+- `Dockerfile.dev` is a thin dev/test image with bind-mounted source; `Dockerfile.rubocop`
+  is a lint-only image with rubocop and its plugins
 
 ## docker-compose (split stacks)
 
-Use `-f docker-compose.<stack>.yml`; each stack sets a top-level `name:` so volumes and networks do not collide across stacks.
+Use `-f docker-compose.<stack>.yml`; each stack sets a top-level `name:` so volumes and
+networks do not collide across stacks. Services run Postgres 18 and Redis 8.
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.dev.yml` | Local dev: Postgres + Redis + `web` + `sidekiq` (bind-mounted app). Postgres container `membermanager-dev-postgres`, host DB port `5432`. |
-| `docker-compose.test.yml` | Tests: thin Ruby image, bind-mounted app, cached Bundler volume; Postgres + Redis + `test` service. |
-| `docker-compose.test.build.yml` | Same as test stack but forces a rebuild of the thin test image. |
-| `docker-compose.lint.yml` | RuboCop (quick): prebuilt `member_manager_rubocop:latest`, bind-mounted app; no Postgres service. |
-| `docker-compose.lint.build.yml` | Same as lint stack but **includes** a `build:` for `Dockerfile.rubocop`. |
-| `docker-compose.server.yml` | Prod/staging-style: **no** Postgres service; set `DATABASE_URL` (or DB\_\* ) for external DB. Includes Redis for Sidekiq unless `REDIS_URL` points elsewhere. |
+| `docker-compose.dev.yml` | Local dev: Postgres + Redis + `web` + `css` watcher + `sidekiq`, app bind-mounted at `/rails`. Postgres on host port `${POSTGRES_HOST_PORT:-5442}`. `tools` profile adds `migrate`, `console`, `shell`. |
+| `docker-compose.test.yml` | Tests: `prusa-print-history-dev:latest` image, bind-mounted app, cached Bundler + node_modules volumes; Postgres (tmpfs) + Redis + `test` service. |
+| `docker-compose.test.build.yml` | Same as the test stack but forces a rebuild of the thin test image. |
+| `docker-compose.lint.yml` | RuboCop (quick): prebuilt `prusa-print-history-rubocop:latest`, source bind-mounted at `/workspace`; no Postgres. |
+| `docker-compose.lint.build.yml` | Same as the lint stack but **includes** a `build:` for `Dockerfile.rubocop`. |
+| `docker-compose.server.yml` | Prod/staging-style: **no** Postgres service; set `DATABASE_URL` (or `DB_*`) for an external DB. Includes Redis for Sidekiq unless `REDIS_URL` points elsewhere. Image defaults to `ghcr.io/romkey/prusa-print-history:latest`. |
 
+Common commands:
+
+- **Dev stack:** `docker compose -f docker-compose.dev.yml up`
 - **Dev migrate:** `docker compose -f docker-compose.dev.yml --profile tools run --rm migrate`
-- **Tests:** `docker compose -f docker-compose.test.yml run --rm test` — installs changed gems into the cached bundle volume and recreates the test DB before each run
+- **Console / shell:** `docker compose -f docker-compose.dev.yml --profile tools run --rm console` (or `shell`)
+- **Tests:** `docker compose -f docker-compose.test.yml run --rm test` — installs changed gems
+  into the cached bundle volume and recreates the test DB before each run
+- **A subset:** append a command, e.g.
+  `docker compose -f docker-compose.test.yml run --rm test bin/rails test test/services/printer_poller_test.rb:42`
 - **Tests (image rebuild):** `docker compose -f docker-compose.test.build.yml run --rm test`
-- **Lint (quick):** `docker compose -f docker-compose.lint.yml run --rm rubocop` — refresh image with `docker compose -f docker-compose.lint.build.yml build rubocop` when needed
-- **Lint (full build):** `docker compose -f docker-compose.lint.build.yml run --rm rubocop`
+- **Lint (quick):** `docker compose -f docker-compose.lint.yml run --rm rubocop` — refresh the
+  image with `docker compose -f docker-compose.lint.build.yml build rubocop` when needed
+- **Lint autocorrect:** `docker compose -f docker-compose.lint.yml run --rm rubocop --auto-correct`
 - **Server migrate:** `docker compose -f docker-compose.server.yml --profile tools run --rm migrate`
 
-Dev/test bind-mount the repo at `/rails`; test images should not copy application code. Lint bind-mounts at `/workspace`; server uses the built image only.
+Dev/test bind-mount the repo at `/rails`; test images must not copy application code. Lint
+bind-mounts at `/workspace`; the server stack uses the built image only.
 
 ## GitHub Actions
 
-- **ci.yml:** Runs on push/PR to `main`; sets up PostgreSQL 16 and Redis 7 as service containers; runs `bin/rails test`
-- **release.yml:** Triggered by `v*` tags; runs tests then builds and pushes Docker image to `ghcr.io`
-- Uses `ruby/setup-ruby` with bundler-cache and `actions/setup-node` with yarn cache
-- Concurrency: cancels in-progress runs for the same ref
+- **ci.yml:** Runs on every push to any branch (tags excluded) and every PR. Two jobs: `lint`
+  builds the RuboCop image and runs it, and `test` runs `bin/rails test` against PostgreSQL 18
+  and Redis 8 service containers.
+- **release.yml:** Triggered by `v*` tags; builds `linux/amd64` and `linux/arm64` images and
+  pushes them to `ghcr.io/romkey/prusa-print-history` with `vX.Y.Z`, `vX.Y`, `vX`, and
+  `latest` tags.
+- Concurrency: `ci.yml` cancels in-progress runs for the same ref; `release.yml` does not.

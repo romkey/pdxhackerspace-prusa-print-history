@@ -6,22 +6,42 @@ alwaysApply: false
 
 # Views and Bootstrap
 
-- **Bootstrap 5.3** — use Bootstrap utility classes and components; avoid custom CSS when a utility class exists
-- **Icons:** Use `bootstrap-icons` font classes (e.g., `<i class="bi bi-pencil"></i>`)
-- **Layout:** Application layout uses a Bootstrap navbar; views use the grid system (`container`, `row`, `col-*`)
-- **Flash messages:** Styled with `bootstrap_class_for` helper from `ApplicationHelper`
-- **Pagination:** Use `pagy_bootstrap_nav` helper
+- **Bootstrap 5.3.3**, compiled from Sass by cssbundling-rails
+  (`app/assets/stylesheets/application.bootstrap.scss` → `app/assets/builds/application.css`).
+  Use Bootstrap utility classes and components; avoid custom CSS when a utility exists.
+- **Color mode:** `$color-mode-type: media-query` — the app follows the OS light/dark
+  preference. There is no `data-bs-theme` attribute and no theme toggle. Never hardcode a
+  color that only reads correctly in one mode; use Bootstrap CSS variables (`var(--bs-body-bg)`,
+  `var(--bs-secondary-color)`, `text-body`, `text-secondary`) so both modes work.
+- **Custom classes** live in `app/assets/stylesheets/refresh.scss` — keep it small and
+  additive. See `ui.mdc` for the class inventory and the design rules.
+- **Icons:** Use `bootstrap-icons` font classes (e.g. `<i class="bi bi-pencil"></i>`)
+- **Layout:** `app/views/layouts/application.html.erb` with a shared navbar/footer/flash under
+  `app/views/shared/`; views use the grid system (`container`, `row`, `col-*`)
+- **Flash messages:** styled via the `bootstrap_class_for` helper in `ApplicationHelper`
+- **Pagination:** use Pagy's Bootstrap nav helper
+- **Charts:** Chartkick helpers, with series assembled in a presenter (`JobTelemetryCharts`),
+  not in the template
 
 ## Component Patterns
 
-- Modals: Use `bootstrap.Modal` JS API with Stimulus controllers
-- Tabs: Use `bootstrap.Tab` JS API
-- Tooltips: Initialize via `bootstrap.Tooltip`
-- Forms: Use Bootstrap form classes (`form-control`, `form-label`, `form-select`, `form-check`)
+- Modals: `bootstrap.Modal` JS API driven from Stimulus controllers
+  (`app/javascript/controllers/`)
+- Tabs / tooltips: `bootstrap.Tab`, `bootstrap.Tooltip`
+- Forms: Bootstrap form classes (`form-control`, `form-label`, `form-select`, `form-check`)
+- Live printer state arrives as Turbo Stream broadcasts from `PrinterLiveBroadcaster`, which
+  re-renders `printers/_live_panel` and `printers/_prusalink_status_dot` into targets named by
+  `dom_id(printer, :live)` and `dom_id(printer, :prusalink_status)`. If you rename those
+  partials or targets, update the broadcaster too — the pairing is not checked at boot.
 
 ## ERB Conventions
 
-- Use partials for repeated UI elements; prefix with underscore
+- Use partials for repeated UI elements; prefix with an underscore
 - Prefer `link_to` and `button_to` helpers over raw `<a>` and `<form>` tags
 - Use Turbo Frames and Turbo Streams for dynamic updates instead of custom JS
-- Keep view logic in helpers or presenters, not in templates
+- Keep view logic in helpers (`app/helpers/`) or presenters (`app/services/*_presenter.rb`),
+  not in templates
+- Gate content on the authorization helpers exposed by `ApplicationController` —
+  `logged_in?`, `admin?`, `internal_network?`, `can_clear_prints?` — rather than re-deriving
+  permission checks in the view. Hiding a control in the view is not authorization; the
+  controller must also enforce it.

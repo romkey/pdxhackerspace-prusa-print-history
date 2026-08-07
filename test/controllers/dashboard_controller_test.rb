@@ -44,7 +44,9 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     login_as(users(:viewer))
     get root_path
 
+    assert_select 'button[data-bs-target=?]', "##{dom_id(job, :claim_modal)}", text: 'Claim'
     assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(job), 'post', text: 'Claim'
+    assert_select 'form[action=?] button[type=submit]', claim_job_path(job, private: 1), text: 'Claim (private)'
     assert_select 'button[data-bs-target=?]', "##{dom_id(job, :clear_print_modal)}", text: 'Clear'
   end
 
@@ -58,6 +60,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     login_as(users(:viewer))
     get root_path
 
+    assert_select 'button[data-bs-target=?]', "##{dom_id(job, :claim_modal)}", text: 'Claim'
     assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(job), 'post', text: 'Claim'
     assert_select 'button[data-bs-target=?]', "##{dom_id(job, :clear_print_modal)}", text: 'Clear'
   end

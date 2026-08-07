@@ -1,0 +1,35 @@
+<% job = local_assigns.fetch(:job) %>
+
+<div class="modal fade" id="<%= dom_id(job, :claim_modal) %>" tabindex="-1"
+     aria-labelledby="<%= dom_id(job, :claim_modal_label) %>" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="<%= dom_id(job, :claim_modal_label) %>">Claim print</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-13 text-secondary mb-3"><%= job_filename_label(job) %></div>
+
+        <div class="d-grid gap-3">
+          <div>
+            <%= button_to 'Claim', claim_job_path(job), method: :patch,
+                          class: 'btn btn-outline-secondary btn-sm' %>
+            <div class="text-13 text-secondary mt-1">
+              The filename, your name, progress, and photos stay visible to everyone.
+            </div>
+          </div>
+
+          <div>
+            <%= button_to 'Claim (private)', claim_job_path(job, private: 1), method: :patch,
+                          class: 'btn btn-outline-secondary btn-sm' %>
+            <div class="text-13 text-secondary mt-1">
+              Only you and admins will see the filename, your name, progress, and photos. The
+              pickup label will not carry your name or the filename.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -28,6 +28,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     login_as(users(:viewer))
     get jobs_path
 
+    assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :claim_modal)}", text: 'Claim'
     assert_select 'form[action=?][method=?] button[type=submit]', claim_job_path(@job), 'post', text: 'Claim'
     assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :clear_print_modal)}", text: 'Clear'
   end
@@ -366,16 +367,31 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/visible only to you and admins/i, response.body)
   end
 
-  test 'claim private button is offered on unclaimed jobs' do
+  test 'claim opens a modal offering both public and private claims' do
     @job.update!(owner: nil)
     login_as(users(:viewer))
 
     get job_path(@job)
 
     assert_response :success
-    assert_select 'form[action=?] button[type=submit]', claim_job_path(@job), text: 'Claim'
-    assert_select 'form[action=?] button[type=submit]', claim_job_path(@job, private: 1),
-                  text: 'Claim (private)'
+    # One trigger button, and both options live inside the modal it opens.
+    assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :claim_modal)}", text: 'Claim'
+    assert_select "##{dom_id(@job, :claim_modal)}" do
+      assert_select 'form[action=?] button[type=submit]', claim_job_path(@job), text: 'Claim'
+      assert_select 'form[action=?] button[type=submit]', claim_job_path(@job, private: 1),
+                    text: 'Claim (private)'
+    end
+  end
+
+  test 'claim modal is not rendered for a job the user already owns' do
+    @job.update!(owner: users(:viewer))
+    login_as(users(:viewer))
+
+    get job_path(@job)
+
+    assert_response :success
+    assert_select "##{dom_id(@job, :claim_modal)}", count: 0
+    assert_select 'form[action=?] button[type=submit]', claim_job_path(@job), text: 'Release'
   end
 
   test 'clear_print requires sign-in or admin off the internal network' do

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Claim** now opens a modal offering a normal claim or a private one, each with a short
+  explanation, instead of showing two buttons side by side. Clear already worked this way.
+
 ## [0.12.0] - 2026-08-07
 
 ### Added

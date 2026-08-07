@@ -7,9 +7,12 @@
 <% if show_claim || show_clear %>
   <div class="d-flex flex-wrap gap-1">
     <% if show_claim %>
-      <%= button_to 'Claim', claim_job_path(job), method: :patch, class: 'btn btn-outline-secondary btn-sm' %>
-      <%= button_to 'Claim (private)', claim_job_path(job, private: 1), method: :patch,
-                    class: 'btn btn-outline-secondary btn-sm' %>
+      <button type="button"
+              class="btn btn-outline-secondary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#<%= dom_id(job, :claim_modal) %>">
+        Claim
+      </button>
     <% end %>
     <% if show_clear %>
       <button type="button"
@@ -20,6 +23,9 @@
       </button>
     <% end %>
   </div>
+  <% if show_claim %>
+    <%= render 'jobs/claim_modal', job: job %>
+  <% end %>
   <% if show_clear %>
     <%= render 'jobs/clear_print_modal',
                job: job,

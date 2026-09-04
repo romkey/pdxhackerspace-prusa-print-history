@@ -1,5 +1,5 @@
 # Polls PrusaLink and Home Assistant, updates jobs, and broadcasts live UI updates.
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class PrinterPoller
   PRUSA_TO_STATUS = {
     'PRINTING' => 'printing',
@@ -396,4 +396,3 @@ class PrinterPoller
     meta['filament used [g]'] || meta['filament_used_g']
   end
 end
-# rubocop:enable Metrics/ClassLength

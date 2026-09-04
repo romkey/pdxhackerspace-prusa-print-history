@@ -1,6 +1,6 @@
 module PrusaLink
   # Normalizes nozzle/material/high-flow data from every PrusaLink source we know about.
-  # rubocop:disable Metrics/ModuleLength
+  # rubocop:disable-next Metrics/ModuleLength
   module PrintMetadata
     DEFAULT_NOZZLE_MM = 0.4
 
@@ -167,7 +167,7 @@ module PrusaLink
       (tool_data['index'] || index).to_i
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:disable-next Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def meta_tool_count(meta)
       return 0 if meta.blank?
 
@@ -189,7 +189,6 @@ module PrusaLink
 
       [array_sizes.max || 0, suffix_indices.max.to_i + 1, list_count, 0].max
     end
-    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def filament_list_count(raw)
       return 0 if raw.blank?
@@ -214,7 +213,7 @@ module PrusaLink
       nil
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable-next Metrics/CyclomaticComplexity
     def suffix_value(meta, bases, tool_index)
       suffixes = [tool_index.zero? ? '' : " #{tool_index + 1}", "[#{tool_index}]"]
       suffixes.each do |suffix|
@@ -231,7 +230,6 @@ module PrusaLink
 
       nil
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
 
     def array_keys_for(bases)
       case bases
@@ -264,5 +262,4 @@ module PrusaLink
       string.present? && string != '---'
     end
   end
-  # rubocop:enable Metrics/ModuleLength
 end

@@ -1,4 +1,4 @@
-# rubocop:disable Metrics/ModuleLength
+# rubocop:disable-next Metrics/ModuleLength
 module StatusExport
   RECENT_JOBS_LIMIT = 100
   RECENT_EVENTS_LIMIT = 100
@@ -244,4 +244,3 @@ module StatusExport
                        :job_as_json, :job_attributes, :job_core_attributes, :job_timing_attributes,
                        :job_clearance_attributes, :event_as_json, :printer_summary_as_json
 end
-# rubocop:enable Metrics/ModuleLength

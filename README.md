@@ -1,5 +1,13 @@
 # Prusa Print History
 
+[![CI](https://img.shields.io/github/actions/workflow/status/romkey/pdxhackerspace-prusa-print-history/ci.yml?label=CI)](https://github.com/romkey/pdxhackerspace-prusa-print-history/actions/workflows/ci.yml)
+[![Lint](https://img.shields.io/github/actions/workflow/status/romkey/pdxhackerspace-prusa-print-history/ci.yml?label=lint)](https://github.com/romkey/pdxhackerspace-prusa-print-history/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/actions/workflow/status/romkey/pdxhackerspace-prusa-print-history/release.yml?label=release)](https://github.com/romkey/pdxhackerspace-prusa-print-history/actions/workflows/release.yml)
+[![Version](https://img.shields.io/github/v/tag/romkey/pdxhackerspace-prusa-print-history?label=version&sort=semver)](https://github.com/romkey/pdxhackerspace-prusa-print-history/releases)
+[![Ruby](https://img.shields.io/badge/Ruby-3.3.11-red?logo=ruby&logoColor=white)](https://www.ruby-lang.org/)
+[![Rails](https://img.shields.io/badge/Rails-8.1-red?logo=rubyonrails&logoColor=white)](https://rubyonrails.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Rails application that tracks and reports the printing history of multiple
 Prusa 3D printers. It polls PrusaLink for job + temperature data, layers
 in enclosure / humidity / ambient readings from Home Assistant, grabs a

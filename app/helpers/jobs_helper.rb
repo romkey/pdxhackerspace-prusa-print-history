@@ -1,5 +1,5 @@
 module JobsHelper
-  JOBS_FILTER_PARAMS = %i[status printer_id owner started_after started_before].freeze
+  JOBS_FILTER_PARAMS = { status: [], printer_id: nil, owner: nil, started_after: nil, started_before: nil }.freeze
 
   def jobs_active_statuses
     Array(params[:status]).map(&:to_s).select { |s| Job::STATUSES.include?(s) }
@@ -37,7 +37,7 @@ module JobsHelper
   end
 
   def jobs_filter_params
-    params.permit(*JOBS_FILTER_PARAMS).to_h.symbolize_keys.reject { |_, v| v.blank? }
+    params.permit(JOBS_FILTER_PARAMS).to_h.symbolize_keys.compact_blank
   end
 
   def job_timeline_start_label(timeline)

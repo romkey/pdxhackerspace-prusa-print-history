@@ -8,17 +8,7 @@ class JobsController < ApplicationController
   def index
     scope = base_scope.includes(:printer, :owner, :preview_image_attachment,
                                 photo_captures: { image_attachment: :blob }).recent
-    scope = scope.where(printer_id: params[:printer_id]) if params[:printer_id].present?
-    scope = scope.where(owner_id: current_user.id) if params[:owner] == 'me' && logged_in?
-
-    if params[:status].present?
-      statuses = Array(params[:status]) & Job::STATUSES
-      scope = scope.where(status: statuses) if statuses.any?
-    end
-
-    scope = scope.where('started_at >= ?', params[:started_after].to_time) if params[:started_after].present?
-    scope = scope.where('started_at <= ?', params[:started_before].to_time) if params[:started_before].present?
-
+    scope = apply_filters(scope)
     @printers = Printer.ordered
     @pagy, @jobs = pagy(scope, limit: 25)
     @label_printers = LabelPrinter.ordered
@@ -150,6 +140,26 @@ class JobsController < ApplicationController
     return LabelPrinter.find_by(id: printer_id) if printer_id
 
     LabelPrinter.default
+  end
+
+  def apply_filters(scope)
+    scope = scope.where(printer_id: params[:printer_id]) if params[:printer_id].present?
+    scope = scope.where(owner_id: current_user.id) if params[:owner] == 'me' && logged_in?
+    scope = filter_by_status(scope)
+    filter_by_date(scope)
+  end
+
+  def filter_by_date(scope)
+    scope = scope.where(started_at: params.expect(:started_after).to_time..) if params[:started_after].present?
+    scope = scope.where(started_at: ..params.expect(:started_before).to_time) if params[:started_before].present?
+    scope
+  end
+
+  def filter_by_status(scope)
+    return scope if params[:status].blank?
+
+    statuses = Array(params[:status]) & Job::STATUSES
+    statuses.any? ? scope.where(status: statuses) : scope
   end
 
   def base_scope

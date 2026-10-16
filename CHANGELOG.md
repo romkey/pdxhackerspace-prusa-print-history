@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Printer (one chip per printer, shown when there are multiple), Who ("My prints", when logged in),
   and Date range (started-after / started-before datetime pickers). Active filters stack freely;
   an active-filter count with a "Clear all" link appears in the page subtitle when any filter is on.
+- **Manual release trigger** — the Release workflow can now be run from the GitHub Actions UI
+  (Actions → Release → Run workflow) with a `bump` input (`patch` / `minor` / `major`, default
+  `patch`); it bumps `VERSION`, inserts a dated entry in `CHANGELOG.md`, commits, and tags
+  automatically.
 
 ## [0.12.1] - 2026-08-07
 

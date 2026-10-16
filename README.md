@@ -177,10 +177,13 @@ reverse proxy at that.
 - `.github/workflows/ci.yml` — runs on every push to any branch (tags
   excluded) and every PR; runs RuboCop and the full test suite against
   Postgres 18 + Redis 8 services.
-- `.github/workflows/release.yml` — triggered by `v*` tags; builds the
+- `.github/workflows/release.yml` — triggered by `v*` tags **or manually**
+  via the GitHub Actions UI (Actions → Release → Run workflow); builds the
   production image for `linux/amd64` and `linux/arm64` and pushes it to
   `ghcr.io/<owner>/prusa-print-history` with `vX.Y.Z`, `vX.Y`, `vX`, and
-  `latest` tags.
+  `latest` tags. The manual trigger accepts a `bump` input (`patch` / `minor`
+  / `major`, default `patch`) and automatically updates `VERSION`,
+  `CHANGELOG.md`, and creates the git tag.
 
 ## Versioning
 

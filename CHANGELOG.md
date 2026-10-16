@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Jobs page filters** — a filter bar groups filters into Status (all job statuses, stackable),
+  Printer (one chip per printer, shown when there are multiple), Who ("My prints", when logged in),
+  and Date range (started-after / started-before datetime pickers). Active filters stack freely;
+  an active-filter count with a "Clear all" link appears in the page subtitle when any filter is on.
+
 ## [0.12.1] - 2026-08-07
 
 ### Changed

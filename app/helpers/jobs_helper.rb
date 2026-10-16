@@ -1,4 +1,45 @@
 module JobsHelper
+  JOBS_FILTER_PARAMS = { status: [], printer_id: nil, owner: nil, started_after: nil, started_before: nil }.freeze
+
+  def jobs_active_statuses
+    Array(params[:status]).map(&:to_s).select { |s| Job::STATUSES.include?(s) }
+  end
+
+  def jobs_toggle_status_path(status_value)
+    active = jobs_active_statuses
+    new_statuses = active.include?(status_value) ? active - [status_value] : active + [status_value]
+    jobs_path(jobs_filter_params.merge(status: new_statuses.presence))
+  end
+
+  def jobs_toggle_printer_path(printer_id)
+    current = params[:printer_id].to_s
+    new_id = current == printer_id.to_s ? nil : printer_id
+    jobs_path(jobs_filter_params.merge(printer_id: new_id))
+  end
+
+  def jobs_toggle_owner_path
+    new_owner = params[:owner] == 'me' ? nil : 'me'
+    jobs_path(jobs_filter_params.merge(owner: new_owner))
+  end
+
+  def jobs_filter_chip_class(active)
+    active ? 'filter-chip active' : 'filter-chip'
+  end
+
+  def jobs_active_filter_count
+    count = 0
+    count += jobs_active_statuses.size
+    count += 1 if params[:printer_id].present?
+    count += 1 if params[:owner] == 'me'
+    count += 1 if params[:started_after].present?
+    count += 1 if params[:started_before].present?
+    count
+  end
+
+  def jobs_filter_params
+    params.permit(JOBS_FILTER_PARAMS).to_h.symbolize_keys.compact_blank
+  end
+
   def job_timeline_start_label(timeline)
     return '—' unless timeline.start_at
 

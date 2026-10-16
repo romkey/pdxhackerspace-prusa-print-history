@@ -1,0 +1,69 @@
+<div class="card mb-3">
+  <div class="card-body py-3">
+
+    <%# Status group %>
+    <div class="h-section-label mb-2">Status</div>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <% Job::STATUSES.each do |status| %>
+        <%= link_to status.humanize,
+                    jobs_toggle_status_path(status),
+                    class: jobs_filter_chip_class(jobs_active_statuses.include?(status)) %>
+      <% end %>
+    </div>
+
+    <%# Printer group — only shown when there are multiple printers %>
+    <% if printers.size > 1 %>
+      <div class="h-section-label mb-2">Printer</div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <% printers.each do |printer| %>
+          <%= link_to printer.name,
+                      jobs_toggle_printer_path(printer.id),
+                      class: jobs_filter_chip_class(params[:printer_id].to_s == printer.id.to_s) %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Owner group — only shown when logged in %>
+    <% if logged_in? %>
+      <div class="h-section-label mb-2">Who</div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <%= link_to 'My prints',
+                    jobs_toggle_owner_path,
+                    class: jobs_filter_chip_class(params[:owner] == 'me') %>
+      </div>
+    <% end %>
+
+    <%# Date range group %>
+    <div class="h-section-label mb-2">Date range</div>
+    <%= form_with url: jobs_path, method: :get, local: true, class: 'd-flex flex-wrap align-items-center gap-2' do |f| %>
+      <%# Preserve other active filters as hidden inputs %>
+      <% jobs_active_statuses.each do |s| %>
+        <%= hidden_field_tag 'status[]', s %>
+      <% end %>
+      <%= hidden_field_tag :printer_id, params[:printer_id] if params[:printer_id].present? %>
+      <%= hidden_field_tag :owner, params[:owner] if params[:owner] == 'me' %>
+
+      <div class="d-flex align-items-center gap-1">
+        <%= f.label :started_after, 'From', class: 'text-13 text-secondary mb-0' %>
+        <%= f.datetime_local_field :started_after,
+              value: params[:started_after],
+              class: 'form-control form-control-sm',
+              style: 'width: auto' %>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <%= f.label :started_before, 'To', class: 'text-13 text-secondary mb-0' %>
+        <%= f.datetime_local_field :started_before,
+              value: params[:started_before],
+              class: 'form-control form-control-sm',
+              style: 'width: auto' %>
+      </div>
+      <%= f.submit 'Apply', class: 'btn btn-outline-secondary btn-sm' %>
+      <% if params[:started_after].present? || params[:started_before].present? %>
+        <%= link_to 'Clear dates',
+                    jobs_path(jobs_filter_params.except(:started_after, :started_before)),
+                    class: 'btn btn-outline-secondary btn-sm' %>
+      <% end %>
+    <% end %>
+
+  </div>
+</div>

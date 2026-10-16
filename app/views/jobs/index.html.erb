@@ -6,9 +6,15 @@
       </h1>
       <div class="text-13 text-secondary mt-1">
         <%= pluralize(@pagy.count, 'job') %>
+        <% if jobs_active_filter_count > 0 %>
+          · <%= pluralize(jobs_active_filter_count, 'filter') %> active
+          · <%= link_to 'Clear all', jobs_path, class: 'text-decoration-none' %>
+        <% end %>
       </div>
     </div>
   </div>
+
+  <%= render 'jobs/filters', printers: @printers %>
 
   <% if @jobs.any? %>
     <% show_actions_column = @jobs.any? { |job| job_show_claim_button?(job) || job_show_clear_button?(job) } %>

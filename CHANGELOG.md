@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-17
+
 ### Added
 - **Jobs page filters** — a filter bar groups filters into Status (all job statuses, stackable),
   Printer (one chip per printer, shown when there are multiple), Who ("My prints", when logged in),

@@ -260,7 +260,7 @@ GEM
       nio4r (~> 2.0)
     raabro (1.5.0)
     racc (1.8.1)
-    rack (3.2.6)
+    rack (3.2.7)
     rack-oauth2 (2.3.0)
       activesupport
       attr_required
@@ -338,7 +338,7 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
-    sidekiq (8.1.6)
+    sidekiq (8.1.7)
       connection_pool (>= 3.0.0)
       json (>= 2.16.0)
       logger (>= 1.7.0)

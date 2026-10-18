@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Pushing a `vX.Y.Z` tag now builds and publishes the Docker image again (the build jobs were being
+  skipped since the manual release trigger was added).
+
 ## [0.12.3] - 2026-10-18
 
 ### Changed

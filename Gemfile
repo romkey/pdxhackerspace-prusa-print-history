@@ -7,7 +7,7 @@ gem 'rails', '~> 8.1.3'
 gem 'pg', '~> 1.5'
 gem 'propshaft'
 gem 'puma', '>= 6.0'
-gem 'redis', '~> 5.4'
+gem 'redis', '~> 6.0'
 
 gem 'cssbundling-rails'
 gem 'importmap-rails'

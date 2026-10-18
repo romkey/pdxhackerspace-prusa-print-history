@@ -19,5 +19,8 @@
   },
   "browserslist": [
     "defaults"
-  ]
+  ],
+  "resolutions": {
+    "nodemon/chokidar": "^4.0.3"
+  }
 }

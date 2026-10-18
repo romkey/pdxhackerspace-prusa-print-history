@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Cancelling a release run now actually stops the image build and publish.
 
+### Security
+- Dev-time CSS watcher no longer pulls in the vulnerable `braces` package (forced `chokidar` 4 under
+  `nodemon`).
+
 ## [0.12.4] - 2026-10-18
 
 ### Fixed

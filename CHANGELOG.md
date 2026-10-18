@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-10-18
+
+### Changed
+- Updated Ruby to 3.4.11 (including Docker images and the release workflow) and refreshed gem and
+  JS dependencies (Rails 8.1.4, Sidekiq 8.1.7, pg 1.7.0, and others).
+
 ## [0.12.2] - 2026-10-17
 
 ### Added

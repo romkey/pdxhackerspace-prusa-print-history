@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Cancelling a release run now actually stops the image build and publish.
+
 ## [0.12.4] - 2026-10-18
 
 ### Fixed

@@ -39,7 +39,7 @@ group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
 
   gem 'bundler-audit', require: false
-  gem 'minitest', '~> 5.20'
+  gem 'minitest', '~> 6.0'
 end
 
 group :development do

@@ -157,7 +157,7 @@ jobs:
             type=gha,mode=max,scope=${{ matrix.platform_slug }}
             type=registry,ref=${{ steps.image.outputs.name }}:buildcache-${{ matrix.platform_slug }},mode=max
           build-args: |
-            RUBY_VERSION=3.3.11
+            RUBY_VERSION=3.4.11
 
       - name: Export digest
         run: |

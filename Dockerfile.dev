@@ -5,7 +5,7 @@
 # the image only carries system packages and Node so the host's edits show
 # up instantly without rebuilding.
 
-ARG RUBY_VERSION=3.3.11
+ARG RUBY_VERSION=3.4.11
 FROM docker.io/library/ruby:$RUBY_VERSION-slim
 
 ENV LANG=C.UTF-8 \
@@ -37,7 +37,7 @@ RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Match the bundler version in Gemfile.lock's "BUNDLED WITH" line. The
-# version of bundler that ships with Ruby 3.3.11 is in the 2.5.x line,
+# version of bundler that ships with Ruby 3.4.11 is in the 2.6+ line,
 # so we don't need to install anything additional.
 
 WORKDIR /rails

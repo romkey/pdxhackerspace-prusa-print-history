@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-19
+
 ### Changed
 - Test suite now runs on Minitest 6 (with the `minitest-mock` gem that Rails still requires).
 - Upgraded pagination to Pagy 43; the jobs and events pagers look and behave the same (page size 25,

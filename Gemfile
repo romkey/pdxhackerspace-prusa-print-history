@@ -18,7 +18,7 @@ gem 'sidekiq', '~> 8.0'
 gem 'sidekiq-cron', '~> 2.0'
 
 gem 'dotenv-rails', '~> 3.1'
-gem 'pagy', '~> 9.0'
+gem 'pagy', '~> 43.0'
 
 gem 'omniauth', '~> 2.1'
 gem 'omniauth_openid_connect', '~> 0.8'

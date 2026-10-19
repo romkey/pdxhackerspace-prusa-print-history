@@ -10,7 +10,7 @@ class JobsController < ApplicationController
                                 photo_captures: { image_attachment: :blob }).recent
     scope = apply_filters(scope)
     @printers = Printer.ordered
-    @pagy, @jobs = pagy(scope, limit: 25)
+    @pagy, @jobs = pagy(:offset, scope, limit: 25)
     @label_printers = LabelPrinter.ordered
     @default_label_printer = LabelPrinter.default
   end

@@ -1,5 +1,4 @@
 module ApplicationHelper
-  include Pagy::Frontend
   include Chartkick::Helper
 
   FLASH_CLASSES = {

@@ -6,7 +6,7 @@
 # are linted directly. We don't pin versions here — RuboCop releases are
 # frequent and we want every container build to pick up the latest cops.
 
-ARG RUBY_VERSION=3.4.11
+ARG RUBY_VERSION=4.0.7
 FROM docker.io/library/ruby:$RUBY_VERSION-slim
 
 ENV LANG=C.UTF-8 \

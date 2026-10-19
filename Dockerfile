@@ -5,7 +5,7 @@
 # Build:  docker build -t prusa-print-history .
 # Run:    docker compose -f docker-compose.server.yml up -d
 
-ARG RUBY_VERSION=3.4.11
+ARG RUBY_VERSION=4.0.7
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 WORKDIR /rails

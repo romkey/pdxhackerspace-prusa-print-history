@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Test suite now runs on Minitest 6 (with the `minitest-mock` gem that Rails still requires).
+
+### Changed
 - Upgraded Ruby to 4.0.7 (Docker images, CI, release workflow, RuboCop target) with refreshed gems and Bundler 4.
 
 ### Fixed

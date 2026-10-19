@@ -226,7 +226,10 @@ GEM
       tzinfo
       validate_url
       webfinger (~> 2.0)
-    pagy (9.4.0)
+    pagy (43.8.1)
+      json
+      uri
+      yaml
     pdf-core (0.10.0)
     pg (1.7.0)
     pg (1.7.0-aarch64-linux)
@@ -379,6 +382,7 @@ GEM
     websocket-extensions (0.1.5)
     xpath (3.2.0)
       nokogiri (~> 1.8)
+    yaml (0.4.0)
     zeitwerk (2.8.3)
 
 PLATFORMS
@@ -408,7 +412,7 @@ DEPENDENCIES
   omniauth (~> 2.1)
   omniauth-rails_csrf_protection (~> 2.0)
   omniauth_openid_connect (~> 0.8)
-  pagy (~> 9.0)
+  pagy (~> 43.0)
   pg (~> 1.5)
   prawn (~> 2.5)
   propshaft

@@ -4,7 +4,8 @@ class EventsController < ApplicationController
   def index
     listing = EventListing.new(filters: params[:filter])
     @active_filters = listing.filters
-    @pagy = Pagy.new(count: listing.total_count, page: params[:page], limit: EventListing::PAGE_SIZE, request:)
+    @pagy = Pagy::Offset.new(count: listing.total_count, page: params[:page], limit: EventListing::PAGE_SIZE,
+                             request: Pagy::Request.new(request:))
     @events = listing.results(page: @pagy.page)
   end
 end

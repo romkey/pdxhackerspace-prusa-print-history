@@ -1,4 +1,2 @@
-require 'pagy/extras/bootstrap'
-
-Pagy::DEFAULT[:limit] = 25
-Pagy::DEFAULT[:size]  = 7
+Pagy::OPTIONS[:limit] = 25
+Pagy::OPTIONS.freeze

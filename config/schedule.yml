@@ -19,3 +19,9 @@ home_assistant_health:
   class: 'HomeAssistantHealthJob'
   active_job: true
   description: 'Check Home Assistant reachability and update the settings panel'
+
+data_retention_cleanup:
+  cron: '30 3 * * *'
+  class: 'DataRetentionCleanupJob'
+  active_job: true
+  description: 'Delete old images and, if enabled, old job history per the retention settings'

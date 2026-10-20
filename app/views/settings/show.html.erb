@@ -48,6 +48,33 @@
 
         <hr class="my-4">
 
+        <div class="h-section-label">Data retention</div>
+        <p class="text-13 text-secondary mb-3">
+          A nightly job deletes camera photos and preview images older than this. Job history
+          (jobs, events and telemetry) is only deleted when enabled below; active jobs are never removed.
+        </p>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <%= label_tag 'settings[image_retention_months]', 'Keep images for (months)', class: 'form-label' %>
+            <%= number_field_tag 'settings[image_retention_months]', @image_retention_months,
+                                 class: 'form-control', min: 1 %>
+          </div>
+          <div class="col-md-4">
+            <%= label_tag 'settings[job_history_retention_months]', 'Keep job history for (months)', class: 'form-label' %>
+            <%= number_field_tag 'settings[job_history_retention_months]', @job_history_retention_months,
+                                 class: 'form-control', min: 1 %>
+          </div>
+          <div class="col-md-4">
+            <div class="form-check">
+              <%= hidden_field_tag 'settings[delete_job_history]', '0', id: nil %>
+              <%= check_box_tag 'settings[delete_job_history]', '1', @delete_job_history, class: 'form-check-input' %>
+              <%= label_tag 'settings[delete_job_history]', 'Delete old job history', class: 'form-check-label' %>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
         <div class="h-section-label">Prusa training notice</div>
         <p class="text-13 text-secondary mb-3">
           Shown as a warning when a member signs in via Authentik without Prusa in their

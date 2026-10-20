@@ -5,6 +5,9 @@ class Setting < ApplicationRecord
   DEFAULT_PRUSA_TRAINED_ACCOUNT_MESSAGE =
     'If you have already been trained on the Prusa printers, please ask an admin to add Prusa to your account.'.freeze
 
+  DEFAULT_IMAGE_RETENTION_MONTHS = 3
+  DEFAULT_JOB_HISTORY_RETENTION_MONTHS = 12
+
   KEYS = %w[
     default_ambient_sensor
     dashboard_heading
@@ -13,6 +16,9 @@ class Setting < ApplicationRecord
     footer_link_url
     prusa_untrained_message
     prusa_trained_account_message
+    image_retention_months
+    delete_job_history
+    job_history_retention_months
     ha_last_polled_at
     ha_last_error
     ha_last_status
@@ -90,6 +96,35 @@ class Setting < ApplicationRecord
     set(:prusa_trained_account_message, value.to_s.strip)
   end
 
+  def self.image_retention_months
+    positive_integer_for(:image_retention_months, DEFAULT_IMAGE_RETENTION_MONTHS)
+  end
+
+  def self.image_retention_months=(value)
+    set(:image_retention_months, value.presence)
+  end
+
+  def self.delete_job_history?
+    fetch(:delete_job_history) == 'true'
+  end
+
+  def self.delete_job_history=(value)
+    set(:delete_job_history, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false')
+  end
+
+  def self.job_history_retention_months
+    positive_integer_for(:job_history_retention_months, DEFAULT_JOB_HISTORY_RETENTION_MONTHS)
+  end
+
+  def self.job_history_retention_months=(value)
+    set(:job_history_retention_months, value.presence)
+  end
+
+  def self.positive_integer_for(key, default)
+    number = fetch(key).to_i
+    number.positive? ? number : default
+  end
+
   def self.message_for(key, default)
     record = find_by(key: key.to_s)
     return default if record.nil?
@@ -113,5 +148,5 @@ class Setting < ApplicationRecord
     nil
   end
 
-  private_class_method :message_for, :parse_time
+  private_class_method :message_for, :positive_integer_for, :parse_time
 end

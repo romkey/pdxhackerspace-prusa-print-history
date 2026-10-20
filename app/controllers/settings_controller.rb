@@ -9,20 +9,23 @@ class SettingsController < ApplicationController
     @footer_text        = Setting.footer_text
     @footer_link_label  = Setting.footer_link_label
     @footer_link_url    = Setting.footer_link_url
+    @image_retention_months = Setting.image_retention_months
+    @delete_job_history = Setting.delete_job_history?
+    @job_history_retention_months = Setting.job_history_retention_months
     @prusa_untrained_message = Setting.prusa_untrained_message
     @prusa_trained_account_message = Setting.prusa_trained_account_message
   end
 
+  SETTING_FIELDS = %i[
+    default_ambient_sensor dashboard_heading footer_text footer_link_label footer_link_url
+    image_retention_months delete_job_history job_history_retention_months
+    prusa_untrained_message prusa_trained_account_message
+  ].freeze
+
   def update
     settings = params[:settings] || {}
 
-    Setting.default_ambient_sensor = settings[:default_ambient_sensor]
-    Setting.dashboard_heading = settings[:dashboard_heading]
-    Setting.footer_text = settings[:footer_text]
-    Setting.footer_link_label = settings[:footer_link_label]
-    Setting.footer_link_url = settings[:footer_link_url]
-    Setting.prusa_untrained_message = settings[:prusa_untrained_message]
-    Setting.prusa_trained_account_message = settings[:prusa_trained_account_message]
+    SETTING_FIELDS.each { |field| Setting.public_send("#{field}=", settings[field]) }
     redirect_to settings_path, notice: 'Settings saved.'
   end
 end

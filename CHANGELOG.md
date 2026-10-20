@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- A nightly cleanup job deletes camera photos and preview images older than a configurable age
+  (default 3 months). Admins can also opt in to deleting finished job history older than a
+  configurable age (default 12 months) under Settings → Data retention.
+
 ## [0.13.0] - 2026-10-19
 
 ### Changed

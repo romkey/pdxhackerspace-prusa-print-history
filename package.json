@@ -21,6 +21,6 @@
     "defaults"
   ],
   "resolutions": {
-    "nodemon/chokidar": "^5.0.0"
+    "nodemon/chokidar": "^6.0.0"
   }
 }

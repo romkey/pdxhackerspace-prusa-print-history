@@ -4,7 +4,7 @@
 [![Lint](https://img.shields.io/github/actions/workflow/status/romkey/pdxhackerspace-prusa-print-history/ci.yml?label=lint)](https://github.com/romkey/pdxhackerspace-prusa-print-history/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/actions/workflow/status/romkey/pdxhackerspace-prusa-print-history/release.yml?label=release)](https://github.com/romkey/pdxhackerspace-prusa-print-history/actions/workflows/release.yml)
 [![Version](https://img.shields.io/github/v/tag/romkey/pdxhackerspace-prusa-print-history?label=version&sort=semver)](https://github.com/romkey/pdxhackerspace-prusa-print-history/releases)
-[![Ruby](https://img.shields.io/badge/Ruby-3.3.11-red?logo=ruby&logoColor=white)](https://www.ruby-lang.org/)
+[![Ruby](https://img.shields.io/badge/Ruby-4.0.9-red?logo=ruby&logoColor=white)](https://www.ruby-lang.org/)
 [![Rails](https://img.shields.io/badge/Rails-8.1-red?logo=rubyonrails&logoColor=white)](https://rubyonrails.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -23,8 +23,8 @@ viewer-aware UI:
 
 ## Requirements
 
-- Ruby 3.3.11
-- Node 24.x (for Bootstrap / Sass build)
+- Ruby 4.0.9
+- Node 26.x (for Bootstrap / Sass build)
 - PostgreSQL 18
 - Redis 8 (Sidekiq + ActiveJob)
 - Docker + Docker Compose v2

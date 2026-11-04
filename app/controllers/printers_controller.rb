@@ -105,7 +105,7 @@ class PrintersController < ApplicationController
 
   def printer_params
     permitted = params.expect(printer: %i[name location model hostname
-                                          prusalink_key prusa_connect_token
+                                          prusalink_key prusa_connect_token prusa_connect_uuid
                                           ha_base_sensor camera_url])
     permitted[:prusalink_key] = nil if permitted[:prusalink_key].blank? && action_name == 'update'
     permitted.delete(:prusalink_key) if permitted[:prusalink_key].blank? && action_name == 'update'

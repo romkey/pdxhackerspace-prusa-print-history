@@ -3,6 +3,7 @@ class SettingsController < ApplicationController
 
   def show
     @printers           = Printer.ordered
+    @prusa_connect      = PrusaConnectCredential.current
     @home_assistant     = Setting.home_assistant_health
     @ambient_sensor     = Setting.default_ambient_sensor
     @dashboard_heading  = Setting.dashboard_heading

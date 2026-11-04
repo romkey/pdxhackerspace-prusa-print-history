@@ -328,7 +328,14 @@ class PrinterPoller
     )
 
     CaptureEventPhotoJob.perform_later(event.id) if @printer.camera_configured?
+    enqueue_connect_error_sync(event, new_status)
     enqueue_attention_notification(job, last_status, new_status)
+  end
+
+  def enqueue_connect_error_sync(event, new_status)
+    return unless %w[error attention].include?(new_status) && @printer.prusa_connect_api?
+
+    PrusaConnectErrorSyncJob.set(wait: 15.seconds).perform_later(event.id)
   end
 
   def enqueue_attention_notification(job, from_status, to_status)

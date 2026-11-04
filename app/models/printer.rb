@@ -63,6 +63,10 @@ class Printer < ApplicationRecord
     prusa_connect_token.present? && prusa_connect_fingerprint.present?
   end
 
+  def prusa_connect_api?
+    prusa_connect_uuid.present? && PrusaConnectCredential.current&.configured? == true
+  end
+
   def home_assistant?
     ha_base_sensor.present?
   end

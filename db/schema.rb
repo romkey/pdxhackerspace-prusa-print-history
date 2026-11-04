@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_07_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_10_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_150000) do
     t.datetime "occurred_at", null: false
     t.string "to_status"
     t.datetime "updated_at", null: false
+    t.jsonb "connect_detail"
     t.index ["job_id", "occurred_at"], name: "index_job_events_on_job_id_and_occurred_at"
     t.index ["job_id"], name: "index_job_events_on_job_id"
   end
@@ -164,7 +165,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_150000) do
     t.text "prusalink_key"
     t.boolean "prusalink_reachable"
     t.datetime "updated_at", null: false
+    t.string "prusa_connect_uuid"
     t.index ["name"], name: "index_printers_on_name", unique: true
+    t.index ["prusa_connect_uuid"], name: "index_printers_on_prusa_connect_uuid"
+  end
+
+  create_table "prusa_connect_credentials", force: :cascade do |t|
+    t.text "refresh_token"
+    t.text "access_token"
+    t.datetime "access_token_expires_at"
+    t.datetime "last_synced_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "settings", force: :cascade do |t|

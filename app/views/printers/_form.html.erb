@@ -59,6 +59,11 @@
       <% end %>
     </div>
     <div class="col-md-6">
+      <%= f.label :prusa_connect_uuid, 'Prusa Connect printer UUID', class: 'form-label' %>
+      <%= f.text_field :prusa_connect_uuid, class: 'form-control', placeholder: '00000000-0000-0000-0000-000000000000' %>
+      <div class="form-text">Optional. From the printer's Connect URL. Lets the app read detailed error reasons (needs the Prusa Connect account on the Settings page).</div>
+    </div>
+    <div class="col-md-6">
       <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
       <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
       <div class="form-text">Suffixes <code>_bme680_temperature</code> and <code>_bme680_humidity</code> are appended automatically.</div>

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Error and attention events can now carry the explanation Prusa Connect shows for them (printer state
+  reason, failure tags, and Connect notifications), appended to the event in the job timeline. Admins paste
+  a Prusa account refresh token under Settings → Prusa Connect account and set each printer's Connect UUID.
+  This uses Connect's unofficial web API, so it is best-effort and never affects polling.
 - Admins can submit a job from a printer's page: choose a `.gcode` or `.bgcode` file and it is
   uploaded to the printer's USB storage and started. Refused unless the printer is idle.
 - Admins can pause, resume, or stop the current print from a printer's page. The controls are

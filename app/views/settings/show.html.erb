@@ -94,6 +94,40 @@
     </div>
   </div>
 
+  <div class="card mb-3" id="prusa-connect-account">
+    <div class="card-body">
+      <div class="h-section-label">Prusa Connect account</div>
+      <p class="text-secondary text-13">
+        Lets the app read detailed error reasons from Prusa Connect. Log in once with a tool such as
+        <code>prusactl auth login</code>, then paste the refresh token here. It is encrypted at rest and replaced
+        automatically when Prusa rotates it. Set each printer's Connect UUID on its edit page.
+      </p>
+      <% if @prusa_connect&.configured? %>
+        <div class="d-flex align-items-center gap-2">
+          <span class="status-dot <%= @prusa_connect.last_error.present? ? 'status-danger' : 'status-success' %>"></span>
+          <span class="fw-medium"><%= @prusa_connect.last_error.present? ? 'Needs attention' : 'Token saved' %></span>
+          <% if @prusa_connect.last_synced_at %>
+            <span class="text-13 text-secondary">Last used <%= time_ago_in_words(@prusa_connect.last_synced_at) %> ago</span>
+          <% end %>
+        </div>
+        <% if @prusa_connect.last_error.present? %>
+          <div class="alert alert-warning mt-2 text-13"><%= @prusa_connect.last_error %></div>
+        <% end %>
+      <% end %>
+      <%= form_with url: prusa_connect_credential_path, method: :patch, local: true, class: 'mt-2' do %>
+        <%= label_tag :refresh_token, 'Refresh token', class: 'form-label' %>
+        <%= password_field_tag :refresh_token, nil, class: 'form-control', autocomplete: 'new-password' %>
+        <div class="mt-2 d-flex gap-2">
+          <%= submit_tag 'Save token', class: 'btn btn-outline-secondary' %>
+          <% if @prusa_connect&.configured? %>
+            <%= button_to 'Remove', prusa_connect_credential_path, method: :delete, class: 'btn btn-outline-danger',
+                          form: { data: { turbo_confirm: 'Remove the saved Prusa Connect token?' } } %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <div class="card mb-3" id="ha-health">
     <div class="card-body">
       <div class="h-section-label">Home Assistant health</div>

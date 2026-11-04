@@ -77,6 +77,19 @@ for the full list; the values you must set on a fresh install are:
 - `SLACK_API_TOKEN` — bot token with `chat:write`, `files:write`, and `im:write`;
   used to DM claimants who opt in and have a Slack user ID on their profile.
 
+## Prusa Connect error details (optional)
+
+Besides uploading camera snapshots, the app can read the explanation Prusa Connect shows for a failed
+print. This uses Connect's unofficial, reverse-engineered web API (see
+[prusa-connect-sdk-client](https://github.com/dcode/python-prusa-connect-sdk-client)), so it may break
+without notice and is strictly best-effort.
+
+1. Log in once with a tool that speaks Prusa's OAuth flow (e.g. `prusactl auth login`) and copy the refresh token.
+2. Paste it under **Settings → Prusa Connect account** (stored encrypted; rotated automatically).
+3. Set each printer's **Prusa Connect printer UUID** on its edit page.
+
+Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
+
 ## Local development
 
 The dev stack runs Postgres, Redis, the Rails web server, a CSS watcher,

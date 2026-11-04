@@ -54,6 +54,7 @@ Rails.application.routes.draw do
   end
 
   resource :settings, only: %i[show update]
+  resource :prusa_connect_credential, only: %i[update destroy], path: 'settings/prusa_connect'
 
   get    '/login',                   to: 'sessions#new',          as: :login
   post   '/login/local',             to: 'sessions#create_local', as: :local_login

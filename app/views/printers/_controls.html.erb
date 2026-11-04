@@ -1,0 +1,26 @@
+<div class="card mb-3">
+  <div class="card-body d-flex align-items-center gap-2 py-2">
+    <div class="h-section-label mb-0 me-2">Controls</div>
+    <%= button_to pause_printer_path(printer), method: :post,
+                  class: 'btn btn-outline-secondary btn-sm', form: { class: 'd-inline' } do %>
+      <i class="bi bi-pause-fill"></i> Pause
+    <% end %>
+    <%= button_to resume_printer_path(printer), method: :post,
+                  class: 'btn btn-outline-secondary btn-sm', form: { class: 'd-inline' } do %>
+      <i class="bi bi-play-fill"></i> Resume
+    <% end %>
+    <div class="dropdown ms-auto">
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown"
+              aria-expanded="false" aria-label="More controls">&hellip;</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <%= button_to stop_printer_path(printer), method: :post,
+                        class: 'dropdown-item text-danger',
+                        form: { data: { turbo_confirm: "Stop the current print on #{printer.name}? This cannot be undone." } } do %>
+            Stop print
+          <% end %>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

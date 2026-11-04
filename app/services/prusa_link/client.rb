@@ -66,7 +66,32 @@ module PrusaLink
       nil
     end
 
+    def pause_job(job_id)
+      send_command(Net::HTTP::Put, "/api/v1/job/#{job_id}/pause")
+    end
+
+    def resume_job(job_id)
+      send_command(Net::HTTP::Put, "/api/v1/job/#{job_id}/resume")
+    end
+
+    def stop_job(job_id)
+      send_command(Net::HTTP::Delete, "/api/v1/job/#{job_id}")
+    end
+
     private
+
+    def send_command(request_class, path)
+      uri = URI.join("http://#{@printer.hostname}", path)
+      request = request_class.new(uri)
+      request['X-Api-Key'] = @printer.prusalink_key
+
+      response = perform(uri, request)
+      return true if response.is_a?(Net::HTTPSuccess)
+
+      raise Error, "PrusaLink #{request.method} #{path} failed: #{response.code} #{response.message}"
+    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+      raise Error, "PrusaLink #{request.method} #{path} failed: #{e.class} #{e.message}"
+    end
 
     def binary_get(path)
       uri = URI.join("http://#{@printer.hostname}", path)

@@ -36,6 +36,11 @@
     <% end %>
   </div>
 
+  <%# Admin-only, and deliberately outside the live panel: that panel is broadcast to every viewer. %>
+  <% if admin? && @printer.prusalink? %>
+    <%= render 'printers/controls', printer: @printer %>
+  <% end %>
+
   <%= turbo_stream_from @printer %>
 
   <div id="<%= dom_id(@printer, :live) %>">

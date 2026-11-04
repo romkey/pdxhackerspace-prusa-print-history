@@ -14,6 +14,9 @@ Rails.application.routes.draw do
   resources :printers do
     member do
       get :camera
+      post :pause
+      post :resume
+      post :stop
     end
     resources :jobs, only: %i[index]
   end

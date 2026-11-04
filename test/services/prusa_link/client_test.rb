@@ -75,6 +75,24 @@ module PrusaLink
       end
     end
 
+    test 'upload_file PUTs the stream with print-after-upload' do
+      stub_http(StubResponse.ok('')) do |captured|
+        @client.upload_file(StringIO.new('G28'), filename: 'my part.gcode', size: 3)
+        request = captured[:request]
+
+        assert_equal 'PUT /api/v1/files/usb/my%20part.gcode', "#{request.method} #{request.path}"
+        assert_equal '?1', request['Print-After-Upload']
+        assert_equal 'abc-123', request['X-Api-Key']
+        assert_equal '3', request['Content-Length']
+      end
+    end
+
+    test 'upload_file raises on failure' do
+      stub_http(StubResponse.new(Net::HTTPConflict, '409')) do
+        assert_raises(Error) { @client.upload_file(StringIO.new('x'), filename: 'a.gcode', size: 1) }
+      end
+    end
+
     test 'control commands raise on failure' do
       stub_http(StubResponse.new(Net::HTTPConflict, '409')) do
         assert_raises(Error) { @client.pause_job(7) }

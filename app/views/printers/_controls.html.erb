@@ -9,6 +9,15 @@
                   class: 'btn btn-outline-secondary btn-sm', form: { class: 'd-inline' } do %>
       <i class="bi bi-play-fill"></i> Resume
     <% end %>
+    <%= form_with url: submit_printer_path(printer), multipart: true, class: 'd-inline-flex gap-2 ms-3',
+                  data: { turbo: false } do |f| %>
+      <%= f.file_field :gcode, accept: '.gcode,.bgcode', required: true, class: 'form-control form-control-sm',
+                       'aria-label': 'G-code file' %>
+      <%= f.button class: 'btn btn-primary btn-sm text-nowrap',
+                   data: { turbo_confirm: "Upload this file and start printing on #{printer.name}?" } do %>
+        <i class="bi bi-upload"></i> Print
+      <% end %>
+    <% end %>
     <div class="dropdown ms-auto">
       <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown"
               aria-expanded="false" aria-label="More controls">&hellip;</button>

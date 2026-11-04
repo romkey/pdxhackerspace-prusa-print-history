@@ -1,7 +1,7 @@
 class PrintersController < ApplicationController
   before_action :require_login_or_internal, only: %i[index show camera]
-  before_action :require_admin, only: %i[new create edit update destroy pause resume stop]
-  before_action :set_printer, only: %i[show edit update destroy camera pause resume stop]
+  before_action :require_admin, only: %i[new create edit update destroy pause resume stop submit]
+  before_action :set_printer, only: %i[show edit update destroy camera pause resume stop submit]
 
   def index
     @printers = Printer.ordered
@@ -26,6 +26,16 @@ class PrintersController < ApplicationController
               type: snapshot[:content_type],
               disposition: 'inline',
               filename: snapshot[:filename]
+  end
+
+  def submit
+    file = params[:gcode]
+    return redirect_to @printer, alert: 'Choose a G-code file to print.' unless file.respond_to?(:tempfile)
+
+    name = PrinterControl.new(@printer).submit(file)
+    redirect_to @printer, notice: "Submitted #{name} to #{@printer.name}."
+  rescue PrinterControl::NotAllowed, PrusaLink::Error => e
+    redirect_to @printer, alert: e.message
   end
 
   def pause

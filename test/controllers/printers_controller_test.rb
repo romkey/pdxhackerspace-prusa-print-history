@@ -448,4 +448,48 @@ class PrinterControlsAccessTest < ActionDispatch::IntegrationTest
 
     assert_equal 'nope', flash[:alert]
   end
+
+  test 'submit form is shown to admins only' do
+    login_as(users(:admin))
+    get printer_path(@printer)
+
+    assert_select 'form[action=?]', submit_printer_path(@printer)
+  end
+
+  test 'non-admins cannot submit jobs' do
+    post submit_printer_path(@printer)
+
+    assert_redirected_to login_path
+
+    login_as(users(:viewer))
+    post submit_printer_path(@printer)
+
+    assert_response :forbidden
+  end
+
+  test 'admin submit hands the file to the printer control' do
+    login_as(users(:admin))
+    received = nil
+    fake = Object.new
+    fake.define_singleton_method(:submit) do |file|
+      received = file
+      'part.gcode'
+    end
+    file = fixture_file_upload('sample.gcode', 'text/plain')
+    PrinterControl.stub(:new, fake) do
+      post submit_printer_path(@printer), params: { gcode: file }
+    end
+
+    assert_not_nil received
+    assert_redirected_to printer_path(@printer)
+    assert_match(/part.gcode/, flash[:notice])
+  end
+
+  test 'admin submit without a file shows an alert' do
+    login_as(users(:admin))
+    post submit_printer_path(@printer)
+
+    assert_redirected_to printer_path(@printer)
+    assert flash[:alert].present?
+  end
 end

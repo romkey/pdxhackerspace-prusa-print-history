@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Admins can pause, resume, or stop the current print from a printer's page. The controls are
+  never shown to non-admins, and the printer's own state is checked before any command is sent.
+
 ## [0.13.1] - 2026-10-20
 
 ### Added

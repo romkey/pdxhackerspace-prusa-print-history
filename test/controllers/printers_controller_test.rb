@@ -386,3 +386,66 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     job
   end
 end
+
+class PrinterControlsAccessTest < ActionDispatch::IntegrationTest
+  setup do
+    @printer = printers(:prusa_xl)
+    @printer.update!(prusalink_key: 'k')
+  end
+
+  test 'controls are hidden from anonymous and non-admin viewers' do
+    get printer_path(@printer)
+
+    assert_select 'form[action=?]', pause_printer_path(@printer), count: 0
+
+    login_as(users(:viewer))
+    get printer_path(@printer)
+
+    assert_select 'form[action=?]', pause_printer_path(@printer), count: 0
+  end
+
+  test 'controls are shown to admins' do
+    login_as(users(:admin))
+    get printer_path(@printer)
+
+    assert_select 'form[action=?]', pause_printer_path(@printer)
+    assert_select 'form[action=?]', stop_printer_path(@printer)
+  end
+
+  test 'non-admins cannot post control actions, even on the internal network' do
+    post pause_printer_path(@printer)
+
+    assert_redirected_to login_path
+
+    login_as(users(:viewer))
+    %i[pause_printer_path resume_printer_path stop_printer_path].each do |helper|
+      post public_send(helper, @printer)
+
+      assert_response :forbidden
+    end
+  end
+
+  test 'admin pause calls the printer control' do
+    login_as(users(:admin))
+    called = false
+    fake = Object.new
+    fake.define_singleton_method(:pause) { called = true }
+    PrinterControl.stub(:new, fake) do
+      post pause_printer_path(@printer)
+    end
+
+    assert called
+    assert_redirected_to printer_path(@printer)
+  end
+
+  test 'admin sees a flash when the command is not allowed' do
+    login_as(users(:admin))
+    fake = Object.new
+    fake.define_singleton_method(:stop) { raise PrinterControl::NotAllowed, 'nope' }
+    PrinterControl.stub(:new, fake) do
+      post stop_printer_path(@printer)
+    end
+
+    assert_equal 'nope', flash[:alert]
+  end
+end

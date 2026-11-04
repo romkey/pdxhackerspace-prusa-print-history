@@ -1,7 +1,7 @@
 class PrintersController < ApplicationController
   before_action :require_login_or_internal, only: %i[index show camera]
-  before_action :require_admin, only: %i[new create edit update destroy]
-  before_action :set_printer, only: %i[show edit update destroy camera]
+  before_action :require_admin, only: %i[new create edit update destroy pause resume stop]
+  before_action :set_printer, only: %i[show edit update destroy camera pause resume stop]
 
   def index
     @printers = Printer.ordered
@@ -26,6 +26,18 @@ class PrintersController < ApplicationController
               type: snapshot[:content_type],
               disposition: 'inline',
               filename: snapshot[:filename]
+  end
+
+  def pause
+    run_control(:pause, 'Pause requested')
+  end
+
+  def resume
+    run_control(:resume, 'Resume requested')
+  end
+
+  def stop
+    run_control(:stop, 'Stop requested')
   end
 
   def new
@@ -57,6 +69,13 @@ class PrintersController < ApplicationController
   end
 
   private
+
+  def run_control(action, success)
+    PrinterControl.new(@printer).public_send(action)
+    redirect_to @printer, notice: "#{success} for #{@printer.name}."
+  rescue PrinterControl::NotAllowed, PrusaLink::Error => e
+    redirect_to @printer, alert: e.message
+  end
 
   def stored_capture
     capture = @printer.photo_captures.reverse_chronological.includes(image_attachment: :blob).first

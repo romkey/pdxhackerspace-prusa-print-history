@@ -60,6 +60,27 @@ module PrusaLink
       end
     end
 
+    test 'pause, resume and stop use the job endpoints' do
+      stub_http(StubResponse.ok('')) do |captured|
+        @client.pause_job(7)
+
+        assert_equal 'PUT /api/v1/job/7/pause', "#{captured[:request].method} #{captured[:request].path}"
+        @client.resume_job(7)
+
+        assert_equal 'PUT /api/v1/job/7/resume', "#{captured[:request].method} #{captured[:request].path}"
+        @client.stop_job(7)
+
+        assert_equal 'DELETE /api/v1/job/7', "#{captured[:request].method} #{captured[:request].path}"
+        assert_equal 'abc-123', captured[:request]['X-Api-Key']
+      end
+    end
+
+    test 'control commands raise on failure' do
+      stub_http(StubResponse.new(Net::HTTPConflict, '409')) do
+        assert_raises(Error) { @client.pause_job(7) }
+      end
+    end
+
     test 'translates network errors to Error' do
       Net::HTTP.stub(:start, ->(*_args, **_kwargs, &_block) { raise Errno::ECONNREFUSED }) do
         err = assert_raises(Error) { @client.status }

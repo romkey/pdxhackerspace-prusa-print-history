@@ -28,12 +28,17 @@ class PrinterControl
     job = @client.job
     raise NotAllowed, "#{@printer.name} has no active job to #{verb}." if job.blank? || job['id'].blank?
 
-    state = job['state'].to_s.upcase
-    state = @client.status.dig('printer', 'state').to_s.upcase if state.blank?
+    state = current_state(job)
     raise NotAllowed, "Can't #{verb} while #{@printer.name} is #{state.downcase.presence || 'unknown'}." \
       unless allowed_states.include?(state)
 
     yield job['id']
     PrinterPollJob.perform_later(@printer.id)
+  end
+
+  def current_state(job)
+    state = job['state'].to_s.upcase
+    state = @client.status.dig('printer', 'state').to_s.upcase if state.blank?
+    state
   end
 end

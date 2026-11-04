@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (default 3 months). Admins can also opt in to deleting finished job history older than a
   configurable age (default 12 months) under Settings → Data retention.
 
+### Changed
+- Upgraded Ruby to 4.0.9 in the release workflow and Node to 26.13.0 in the Docker images, and refreshed
+  remaining gems and JavaScript dependencies to their latest versions.
+
 ## [0.13.0] - 2026-10-19
 
 ### Changed

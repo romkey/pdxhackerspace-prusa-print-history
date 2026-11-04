@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       post :pause
       post :resume
       post :stop
+      post :submit
     end
     resources :jobs, only: %i[index]
   end

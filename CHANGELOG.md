@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Admins can submit a job from a printer's page: choose a `.gcode` or `.bgcode` file and it is
+  uploaded to the printer's USB storage and started. Refused unless the printer is idle.
 - Admins can pause, resume, or stop the current print from a printer's page. The controls are
   never shown to non-admins, and the printer's own state is checked before any command is sent.
 

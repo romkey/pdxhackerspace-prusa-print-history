@@ -7,6 +7,8 @@ module PrusaLink
 
   class Client
     DEFAULT_TIMEOUT = 5
+    UPLOAD_TIMEOUT = 300
+    UPLOAD_STORAGE = 'usb'.freeze
 
     attr_reader :printer
 
@@ -78,6 +80,27 @@ module PrusaLink
       send_command(Net::HTTP::Delete, "/api/v1/job/#{job_id}")
     end
 
+    # Uploads a G-code file to the printer's storage and, when +print+ is true, starts it.
+    # +io+ is streamed, so large files are never read into memory.
+    def upload_file(io, filename:, size:, storage: UPLOAD_STORAGE, print: true)
+      path = "/api/v1/files/#{storage}/#{ERB::Util.url_encode(filename)}"
+      uri = URI.join("http://#{@printer.hostname}", path)
+      request = Net::HTTP::Put.new(uri)
+      request['X-Api-Key'] = @printer.prusalink_key
+      request['Content-Type'] = 'application/octet-stream'
+      request['Content-Length'] = size.to_s
+      request['Overwrite'] = '?1'
+      request['Print-After-Upload'] = '?1' if print
+      request.body_stream = io
+
+      response = perform(uri, request, read_timeout: UPLOAD_TIMEOUT)
+      return true if response.is_a?(Net::HTTPSuccess)
+
+      raise Error, "PrusaLink PUT #{path} failed: #{response.code} #{response.message}"
+    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+      raise Error, "PrusaLink PUT #{path} failed: #{e.class} #{e.message}"
+    end
+
     private
 
     def send_command(request_class, path)
@@ -140,11 +163,11 @@ module PrusaLink
       raise Error, "PrusaLink GET #{path} failed: #{e.class} #{e.message}"
     end
 
-    def perform(uri, request)
+    def perform(uri, request, read_timeout: @timeout)
       Net::HTTP.start(uri.hostname, uri.port,
                       use_ssl: uri.scheme == 'https',
                       open_timeout: @timeout,
-                      read_timeout: @timeout) do |http|
+                      read_timeout: read_timeout) do |http|
         http.request(request)
       end
     end

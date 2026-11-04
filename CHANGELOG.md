@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-04
+
 ### Added
 - Error and attention events can now carry the explanation Prusa Connect shows for them (printer state
   reason, failure tags, and Connect notifications), appended to the event in the job timeline. Admins paste

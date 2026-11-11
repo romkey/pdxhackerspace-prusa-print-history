@@ -166,6 +166,7 @@ class BambuLanProtocolTest < ActiveSupport::TestCase
     assert_operator argv.index('-analyzeduration'), :<, argv.index('-i')
     assert_operator argv.index('-probesize'), :<, argv.index('-i')
     assert_equal '65536', argv[argv.index('-probesize') + 1]
+    assert_not_includes argv, '-tls_verify'
   end
 
   test 'keeps a P2S camera frame when ffmpeg writes one and then times out' do

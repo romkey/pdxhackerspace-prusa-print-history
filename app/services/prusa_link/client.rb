@@ -97,8 +97,6 @@ module PrusaLink
       return true if response.is_a?(Net::HTTPSuccess)
 
       raise Error, "PrusaLink PUT #{path} failed: #{response.code} #{response.message}"
-    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
-      raise Error, "PrusaLink PUT #{path} failed: #{e.class} #{e.message}"
     end
 
     private
@@ -112,8 +110,6 @@ module PrusaLink
       return true if response.is_a?(Net::HTTPSuccess)
 
       raise Error, "PrusaLink #{request.method} #{path} failed: #{response.code} #{response.message}"
-    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
-      raise Error, "PrusaLink #{request.method} #{path} failed: #{e.class} #{e.message}"
     end
 
     def binary_get(path)
@@ -131,8 +127,6 @@ module PrusaLink
       else
         raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
       end
-    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
-      raise Error, "PrusaLink GET #{path} failed: #{e.class} #{e.message}"
     end
 
     def camera_unavailable?(error)
@@ -159,8 +153,6 @@ module PrusaLink
       else
         raise Error, "PrusaLink GET #{path} failed: #{response.code} #{response.message}"
       end
-    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
-      raise Error, "PrusaLink GET #{path} failed: #{e.class} #{e.message}"
     end
 
     def perform(uri, request, read_timeout: @timeout)
@@ -170,6 +162,8 @@ module PrusaLink
                       read_timeout: read_timeout) do |http|
         http.request(request)
       end
+    rescue SystemCallError, SocketError, Timeout::Error, IOError => e
+      raise Error, "PrusaLink #{request.method} #{uri.request_uri} failed: #{e.class} #{e.message}"
     end
 
     def split_storage_path(storage_path)

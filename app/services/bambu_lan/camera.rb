@@ -46,9 +46,13 @@ module BambuLan
     # Default ffmpeg probing waits for about 5 MB. The P2S stream is ~1 Mbps,
     # so that is longer than the capture timeout and the process is killed
     # before a frame is written, with an empty error log.
+    #
+    # Debian's ffmpeg does not accept -tls_verify on an RTSPS input ("Option
+    # tls_verify not found") and rejects the stream before connecting. Its TLS
+    # backend does not verify the printer's self-signed certificate by default.
     def ffmpeg_argv(path)
       ['ffmpeg', '-hide_banner', '-loglevel', 'warning', '-rtsp_transport', 'tcp', '-timeout', '8000000',
-       '-tls_verify', '0', '-analyzeduration', '500000', '-probesize', '65536', '-i', stream_url,
+       '-analyzeduration', '500000', '-probesize', '65536', '-i', stream_url,
        '-an', '-frames:v', '1', '-q:v', '5', '-y', path]
     end
 

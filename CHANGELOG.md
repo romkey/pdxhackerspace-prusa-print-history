@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- P2S camera snapshots no longer pass ffmpeg a flag it rejects, so the stream can
+  actually be opened.
+- An offline printer no longer fills the Sidekiq log. A connection failure is
+  recorded once, and retries do not keep contacting a printer that was just
+  confirmed down.
+
 ## [0.15.4] - 2026-11-11
 
 ### Fixed

@@ -106,6 +106,13 @@ module PrusaLink
       end
     end
 
+    test 'translates host unreachable to Error instead of raising it' do
+      Net::HTTP.stub(:start, ->(*_args, **_kwargs, &_block) { raise Errno::EHOSTUNREACH }) do
+        err = assert_raises(Error) { @client.status }
+        assert_match(/EHOSTUNREACH/, err.message)
+      end
+    end
+
     test 'download returns binary body for thumbnail paths' do
       stub_http(StubResponse.ok('PNG-BYTES')) do |captured|
         body = @client.download('/api/thumbnails/local/foo.gcode.orig.png')

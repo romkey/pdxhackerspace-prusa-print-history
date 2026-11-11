@@ -246,6 +246,26 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_in_delta 21.11, @printer.ambient_temp.to_f, 0.01
   end
 
+  test 'does not contact a printer that was just confirmed down' do
+    @printer.update!(prusalink_reachable: false, prusalink_checked_at: Time.current)
+    prusalink = Object.new
+
+    prusalink.define_singleton_method(:status) { flunk 'should not poll' }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_not @printer.reload.prusalink_reachable
+  end
+
+  test 'polls again once a down printer has waited out the recheck interval' do
+    @printer.update!(prusalink_reachable: false, prusalink_checked_at: 2.minutes.ago)
+    payloads = { status: { 'printer' => { 'state' => 'READY' } }, job: nil }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    assert @printer.reload.prusalink_reachable
+  end
+
   test 'marks PrusaLink unreachable when polling fails' do
     PrusaLink::Client.new(@printer)
 

@@ -15,6 +15,7 @@ class PrinterPoller
   }.freeze
 
   IDLE_STATES = %w[IDLE READY].freeze
+  UNREACHABLE_RECHECK = 50.seconds
 
   EVENT_TYPE_FOR_STATUS = {
     'paused' => 'paused',
@@ -32,8 +33,16 @@ class PrinterPoller
 
   def poll!
     return unless @printer.connection_configured?
+    return if recently_unreachable?
 
-    status_payload = @client.status
+    poll_status!(@client.status)
+  rescue PrinterConnection::Error => e
+    note_unreachable(e)
+  end
+
+  private
+
+  def poll_status!(status_payload)
     record_prusalink_reachable!
     info_payload     = safe_info
     legacy_payload   = safe_legacy_printer
@@ -50,13 +59,14 @@ class PrinterPoller
     )
 
     handle_job_poll(status_payload, job_payload, mapped_status, head_entries)
-  rescue PrinterConnection::Error => e
-    record_prusalink_unreachable!
-    broadcast_live_update
-    Rails.logger.warn("PrinterPoller failed for printer ##{@printer.id}: #{e.message}")
   end
 
-  private
+  def note_unreachable(error)
+    already_down = @printer.prusalink_reachable == false
+    record_prusalink_unreachable!
+    broadcast_live_update
+    Rails.logger.warn("PrinterPoller failed for #{@printer.name}: #{error.message}") unless already_down
+  end
 
   def handle_idle_poll(status_payload)
     finalize_active_jobs!(status_payload: status_payload)
@@ -231,6 +241,14 @@ class PrinterPoller
       enclosure_humidity: humidity_sensor_value(@printer.humidity_sensor),
       environment_updated_at: Time.current
     )
+  end
+
+  def recently_unreachable?
+    return false unless @printer.connection_tracking?
+    return false unless @printer.prusalink_reachable == false
+
+    checked_at = @printer.prusalink_checked_at
+    checked_at.present? && checked_at > UNREACHABLE_RECHECK.ago
   end
 
   def record_prusalink_reachable!

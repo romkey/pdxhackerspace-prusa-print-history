@@ -37,7 +37,7 @@ gem 'mqtt', '~> 0.6'
 gem 'prawn', '~> 2.5'
 gem 'rexml'
 gem 'ruby-vips', '~> 2.2'
-gem 'rubyzip', '~> 2.3'
+gem 'rubyzip', '~> 3.4'
 
 group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'

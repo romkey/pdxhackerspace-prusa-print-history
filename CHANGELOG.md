@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.8] - 2026-11-11
+
 ### Fixed
 - Cancelling a Bambu print ends that job. The next print no longer stays on
   Attention while the printer is actually printing.

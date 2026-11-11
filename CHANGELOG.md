@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Bambu print previews are fetched when the printer reports the internal gcode
+  path instead of the project file. The lookup is logged with the path it tried.
+- Camera photos record their dimensions. The image library binding is installed.
+
 ## [0.15.5] - 2026-11-11
 
 ### Fixed

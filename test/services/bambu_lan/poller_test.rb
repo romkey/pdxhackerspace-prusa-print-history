@@ -33,6 +33,18 @@ class BambuLanPollerTest < ActiveJob::TestCase
     assert_predicate @printer.reload, :prusalink_reachable
   end
 
+  test 'loads the plate preview when the printer reports the internal gcode path' do
+    ftps = ChoosingFtps.new('cache/Benchy.gcode.3mf' => sliced_3mf)
+    report = running_report('gcode_file' => '/data/Metadata/plate_1.gcode', 'subtask_name' => 'Benchy')
+
+    poll(report, ftps: ftps)
+
+    job = @printer.jobs.find_by!(prusalink_job_id: '99')
+
+    assert_equal 'PNGDATA', job.preview_image.download
+    assert_includes ftps.downloads, 'cache/Benchy.gcode.3mf'
+  end
+
   test 'finishing the same task records filament weight without downloading the 3mf again' do
     ftps = FakeFtps.new(sliced_3mf)
     poll(running_report, ftps: ftps)
@@ -151,6 +163,23 @@ class BambuLanPollerTest < ActiveJob::TestCase
 
     def command(*)
       :ok
+    end
+  end
+
+  class ChoosingFtps
+    attr_reader :downloads
+
+    def initialize(files)
+      @files = files
+      @downloads = []
+    end
+
+    def download(path)
+      @downloads << path
+      bytes = @files[path]
+      raise BambuLan::Error, "550 #{path}" if bytes.nil?
+
+      bytes
     end
   end
 

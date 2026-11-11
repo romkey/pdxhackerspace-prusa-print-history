@@ -120,31 +120,11 @@ module BambuLan
     end
 
     def load_file_details
-      path = remote_3mf
-      return nil if path.blank?
-
-      FileCache.fetch("printer-#{@printer.id}-#{job_id}-#{path}", expires_in: 6.hours) { download_details(path) }
-    rescue Error => e
-      Rails.logger.warn("[BambuLan] file metadata skipped for printer ##{@printer.id}: #{e.message}")
-      nil
+      ProjectPreview.new(@printer, @print, @ftps, cache_key: preview_cache_key).details
     end
 
-    def download_details(path)
-      archive = Archive.parse(@ftps.download(path))
-      return nil if archive.nil?
-
-      details = {}
-      details['grams'] = archive.grams unless archive.grams.nil?
-      token = FileCache.store_preview(archive.png)
-      details['token'] = token if token
-      details.presence
-    end
-
-    def remote_3mf
-      file = @print['gcode_file'].to_s
-      return nil unless file.downcase.end_with?('.3mf')
-
-      file.sub(%r{\Aftp://}i, '').sub(%r{\A/+}, '')
+    def preview_cache_key
+      "printer-#{@printer.id}-#{job_id}-#{@print['gcode_file']}-#{@print['subtask_name']}"
     end
   end
 end

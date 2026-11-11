@@ -36,6 +36,7 @@ gem 'image_processing', '~> 2.0'
 gem 'mqtt', '~> 0.6'
 gem 'prawn', '~> 2.5'
 gem 'rexml'
+gem 'ruby-vips', '~> 2.2'
 gem 'rubyzip', '~> 2.3'
 
 group :development, :test do

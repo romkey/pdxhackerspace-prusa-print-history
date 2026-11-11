@@ -99,7 +99,11 @@ Add the printer as **Bambu Lab (LAN)** and set:
   **LAN Only Liveview** or the camera port stays closed.
 
 The app also uses MQTT on port 8883 and FTPS on port 990. Those ports have to
-be reachable from the app container. A manual camera URL still overrides the
+be reachable from the app container. The print preview is the plate image
+inside the sliced project, which the app downloads over FTPS. A P2S print sent
+from Bambu Studio stays on the printer's internal storage unless Studio is set
+to store sent files on external storage, and then there is no project file to
+download. A manual camera URL still overrides the
 printer's own camera. Home Assistant enclosure readings still win when a
 sensor is configured; otherwise a printer that reports a chamber temperature
 (P2S, P1S, X, H) fills that in.

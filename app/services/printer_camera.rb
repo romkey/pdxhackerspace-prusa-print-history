@@ -83,6 +83,10 @@ class PrinterCamera
   end
 
   def log_failure(error)
-    Rails.logger.warn("PrinterCamera failed for printer ##{@printer.id}: #{error.class}: #{error.message}")
+    return if @printer.prusalink_reachable == false && !@printer.camera?
+
+    Rails.logger.info(
+      "Photo capture #{@printer.name}: #{error.class}: #{error.message}"
+    )
   end
 end

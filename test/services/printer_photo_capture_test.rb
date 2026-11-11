@@ -42,6 +42,16 @@ class PrinterPhotoCaptureTest < ActiveSupport::TestCase
     assert_equal 1, @printer.photo_captures.idle.count
   end
 
+  test 'does not ask an offline printer with no camera for a photo' do
+    @printer.update!(prusalink_key: 'secret', camera_url: nil, prusalink_reachable: false)
+
+    PrinterCamera.stub(:snapshot, ->(*) { flunk 'should not fetch a snapshot' }) do
+      assert_no_difference -> { PhotoCapture.count } do
+        PrinterPhotoCapture.capture!(@printer, job: @job)
+      end
+    end
+  end
+
   test 'does nothing when camera fetch fails' do
     PrinterCamera.stub(:snapshot, nil) do
       assert_no_difference -> { PhotoCapture.count } do

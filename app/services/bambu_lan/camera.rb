@@ -11,9 +11,9 @@ module BambuLan
 
     def snapshot
       case Models.camera(@printer.model)
-      when :rtsps then attempt { rtsps }
-      when :jpeg then attempt { @jpeg.snapshot }
-      else attempt { rtsps } || attempt { @jpeg.snapshot }
+      when :rtsps then attempt('RTSPS') { rtsps }
+      when :jpeg then attempt('JPEG') { @jpeg.snapshot }
+      else attempt('RTSPS') { rtsps } || attempt('JPEG') { @jpeg.snapshot }
       end
     end
 
@@ -32,7 +32,10 @@ module BambuLan
         failure = e
       end
       bytes = File.binread(path)
-      return bytes if bytes.b.start_with?("\xFF\xD8".b)
+      if bytes.b.start_with?("\xFF\xD8".b)
+        Rails.logger.info("Photo capture #{@printer.name}: RTSPS frame #{bytes.bytesize} bytes")
+        return bytes
+      end
 
       detail = failure&.message || 'ffmpeg wrote nothing'
       raise Error, "no JPEG from RTSPS (#{detail})"
@@ -53,11 +56,11 @@ module BambuLan
       "rtsps://bblp:#{@printer.bambu_access_code}@#{Host.for(@printer)}:322/streaming/live/1"
     end
 
-    def attempt
+    def attempt(transport)
       yield
     rescue Error => e
-      Rails.logger.warn(
-        "[BambuLan] camera failed for #{@printer.name} " \
+      Rails.logger.info(
+        "Photo capture #{@printer.name}: #{transport} failed " \
         "(#{@printer.model}, #{Host.for(@printer)}): #{scrub(e.message)}"
       )
       nil

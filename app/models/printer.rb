@@ -57,6 +57,15 @@ class Printer < ApplicationRecord
     camera? || connection_configured?
   end
 
+  # A printer we already know is down, and that has no camera URL of its own,
+  # has nothing to photograph. Hitting it every minute only fills the log.
+  def capture_photos?
+    return false unless camera? || connection_configured?
+    return false if prusalink_reachable == false && !camera?
+
+    true
+  end
+
   def prusalink?
     hostname.present? && prusalink_key.present?
   end

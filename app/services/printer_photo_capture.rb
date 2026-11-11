@@ -10,10 +10,14 @@ class PrinterPhotoCapture
   end
 
   def capture!
-    return unless @printer.camera? || @printer.connection_configured?
+    return unless @printer.capture_photos?
 
+    Rails.logger.info("Photo capture #{@printer.name}: start #{capture_source}")
     snapshot = PrinterCamera.snapshot(@printer, client: @client)
-    return if snapshot.nil?
+    if snapshot.nil?
+      Rails.logger.info("Photo capture #{@printer.name}: no frame")
+      return
+    end
 
     if @job&.active?
       save_progress_capture!(snapshot)
@@ -22,9 +26,28 @@ class PrinterPhotoCapture
     end
 
     PrinterLiveBroadcaster.broadcast(@printer)
+    Rails.logger.info("Photo capture #{@printer.name}: stored #{snapshot_bytes(snapshot)} bytes")
   end
 
   private
+
+  def capture_source
+    return 'camera url' if @printer.camera?
+    return bambu_source if @printer.bambu?
+
+    'prusalink'
+  end
+
+  def bambu_source
+    transport = BambuLan::Models.camera(@printer.model)
+    "bambu #{@printer.model} #{transport} #{BambuLan::Host.for(@printer)}"
+  end
+
+  def snapshot_bytes(snapshot)
+    io = snapshot[:io]
+    io.rewind if io.respond_to?(:rewind)
+    io.size
+  end
 
   def save_progress_capture!(snapshot)
     capture = @printer.photo_captures.create!(job: @job, captured_at: Time.current)

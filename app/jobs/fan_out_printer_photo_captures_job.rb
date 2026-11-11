@@ -3,7 +3,7 @@ class FanOutPrinterPhotoCapturesJob < ApplicationJob
 
   def perform
     Printer.find_each do |printer|
-      next unless printer.camera? || printer.connection_configured?
+      next unless printer.capture_photos?
 
       PrinterPhotoCaptureJob.perform_later(printer.id)
     end

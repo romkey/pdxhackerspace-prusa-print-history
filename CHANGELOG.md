@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Photo capture logs each Bambu camera attempt in the Sidekiq log, including ffmpeg's
+  error. Printers that are already offline and have no camera are no longer polled for a
+  picture every minute.
+
 ## [0.15.3] - 2026-11-11
 
 ### Fixed

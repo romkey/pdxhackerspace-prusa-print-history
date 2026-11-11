@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.5] - 2026-11-11
+
 ### Fixed
 - P2S camera snapshots no longer pass ffmpeg a flag it rejects, so the stream can
   actually be opened.

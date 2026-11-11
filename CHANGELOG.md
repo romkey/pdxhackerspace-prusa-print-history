@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-11-11
+
 ### Fixed
 - Bambu nozzle temperature on a P2S (and H2) is shown in degrees. Firmware packs
   the target into the same integer, which was being displayed as a number in the millions.

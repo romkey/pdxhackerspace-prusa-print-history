@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-11-11
+
 ### Added
 - Adding a Bambu Lab printer explains how to turn the camera on: LAN Only Liveview for
   P2S, X, and H series, and LAN Only mode for P1 and A1.

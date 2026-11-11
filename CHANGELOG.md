@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-10
+
 ### Added
 - Bambu Lab printers in LAN-only mode with Developer Mode on can be tracked alongside Prusa printers:
   job status, temperatures, the loaded filament, camera snapshots, and print history. Admins add one

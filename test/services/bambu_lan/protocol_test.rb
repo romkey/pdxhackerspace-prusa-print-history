@@ -129,6 +129,40 @@ class BambuLanProtocolTest < ActiveSupport::TestCase
     assert_equal '1', body.dig('print', 'sequence_id')
   end
 
+  test 'unpacks a P2S nozzle temperature instead of showing the packed integer' do
+    report = {
+      'print' => { 'nozzle_diameter' => '0.4' },
+      'device' => {
+        'nozzle' => { 'info' => [{ 'diameter' => 0.4, 'type' => 'HS01' }] },
+        'extruder' => { 'info' => [{ 'id' => 0, 'temp' => 16_711_936 }] },
+        'bed' => { 'info' => { 'temp' => 3_604_535 } }
+      }
+    }
+
+    tool = BambuLan::Tools.entries(report, material: nil).first
+
+    assert_in_delta 256.0, tool['temp']
+    assert_in_delta 0.4, tool['nozzle_diameter']
+    assert_in_delta 55.0, BambuLan::Tools.bed(report)
+
+    report['print']['nozzle_temper'] = 255.125
+
+    assert_in_delta 255.125, BambuLan::Tools.entries(report, material: nil).first['temp']
+  end
+
+  test 'keeps a P2S camera frame when ffmpeg writes one and then times out' do
+    runner = Class.new do
+      def run(argv, **)
+        File.binwrite(argv.last, "\xFF\xD8\xFFframe".b)
+        raise BambuLan::Error, 'timed out'
+      end
+    end
+
+    bytes = BambuLan::Camera.new(printers(:bambu_p2s), runner: runner.new).snapshot
+
+    assert_equal "\xFF\xD8\xFFframe".b, bytes.b
+  end
+
   test 'reads P2S nozzle and chamber temperatures from the device object' do
     report = {
       'print' => { 'gcode_state' => 'RUNNING', 'bed_temper' => 60 },

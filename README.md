@@ -95,7 +95,8 @@ Add the printer as **Bambu Lab (LAN)** and set:
 - **Model** (`P2S`, `X1C`, `P1S`, `A1`, `H2D`, …). This chooses the camera
   transport and whether the chamber temperature is a real sensor. P2S, X, and
   H series use RTSPS on port 322. P1 and A1 use the JPEG stream on port 6000.
-  An unknown model tries both.
+  An unknown model tries both. On a P2S, X, or H printer, also turn on
+  **LAN Only Liveview** or the camera port stays closed.
 
 The app also uses MQTT on port 8883 and FTPS on port 990. Those ports have to
 be reachable from the app container. A manual camera URL still overrides the

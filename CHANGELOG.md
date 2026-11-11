@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Bambu nozzle temperature on a P2S (and H2) is shown in degrees. Firmware packs
+  the target into the same integer, which was being displayed as a number in the millions.
+- A P2S camera frame is kept when ffmpeg has already written it and is still holding
+  the stream open. LAN Only Liveview has to be on or the camera port stays closed.
+
 ## [0.15.0] - 2026-11-10
 
 ### Added

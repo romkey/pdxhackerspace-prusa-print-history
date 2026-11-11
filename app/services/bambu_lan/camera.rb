@@ -1,3 +1,6 @@
+require 'fileutils'
+require 'tempfile'
+
 module BambuLan
   class Camera
     def initialize(printer, runner: ProcessRunner.new, jpeg: nil)
@@ -16,13 +19,29 @@ module BambuLan
 
     private
 
+    # ffmpeg often writes the JPEG and then blocks on the RTSP socket, so a
+    # timeout still counts when the file starts with a JPEG marker.
     def rtsps
-      @runner.run(ffmpeg_argv, timeout: 8, binary: true)
+      file = Tempfile.create(['bambu-camera', '.jpg'])
+      path = file.path
+      file.close
+      failure = nil
+      begin
+        @runner.run(ffmpeg_argv(path), timeout: 12, binary: true)
+      rescue Error => e
+        failure = e
+      end
+      bytes = File.binread(path)
+      return bytes if bytes.b.start_with?("\xFF\xD8".b)
+
+      raise failure || Error.new('camera returned no frame')
+    ensure
+      FileUtils.rm_f(path) if path
     end
 
-    def ffmpeg_argv
-      ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-rtsp_transport', 'tcp', '-timeout', '5000000',
-       '-tls_verify', '0', '-i', stream_url, '-frames:v', '1', '-f', 'image2', '-vcodec', 'mjpeg', 'pipe:1']
+    def ffmpeg_argv(path)
+      ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-rtsp_transport', 'tcp', '-timeout', '8000000',
+       '-tls_verify', '0', '-i', stream_url, '-an', '-frames:v', '1', '-q:v', '5', '-y', path]
     end
 
     def stream_url

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Bambu print previews on a P2S use the printer's live plate image, the same
+  one Bambu Studio shows, instead of a project file that stays on internal storage.
+
 ## [0.15.6] - 2026-11-11
 
 ### Fixed

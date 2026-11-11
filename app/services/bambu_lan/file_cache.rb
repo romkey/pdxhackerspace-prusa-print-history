@@ -8,7 +8,7 @@ module BambuLan
   class FileCache
     ROOT = Rails.root.join('tmp/bambu_cache')
     PREVIEW = Rails.root.join('tmp/bambu_previews')
-    TOKEN = /\Abambu-preview:([a-f0-9]{64})\.png\z/
+    TOKEN = /\Abambu-preview:([a-f0-9]{64})\.(png|jpg)\z/
     MISS = :miss
 
     def self.fetch(key, expires_in:, missing_expires_in: 10.minutes)
@@ -23,17 +23,18 @@ module BambuLan
     def self.store_preview(bytes)
       return nil if bytes.blank?
 
+      ext = bytes.b.start_with?("\xFF\xD8".b) ? 'jpg' : 'png'
       id = Digest::SHA256.hexdigest(bytes)
       FileUtils.mkdir_p(PREVIEW)
-      File.binwrite(PREVIEW.join("#{id}.png"), bytes)
-      "bambu-preview:#{id}.png"
+      File.binwrite(PREVIEW.join("#{id}.#{ext}"), bytes)
+      "bambu-preview:#{id}.#{ext}"
     end
 
     def self.read_preview(token)
       match = TOKEN.match(token.to_s)
       return nil unless match
 
-      path = PREVIEW.join("#{match[1]}.png")
+      path = PREVIEW.join("#{match[1]}.#{match[2]}")
       File.binread(path) if File.file?(path)
     end
 

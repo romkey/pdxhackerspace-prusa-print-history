@@ -124,7 +124,7 @@ module BambuLan
     end
 
     def preview_cache_key
-      "printer-#{@printer.id}-#{job_id}-#{@print['gcode_file']}-#{@print['subtask_name']}"
+      "printer-#{@printer.id}-#{job_id}-#{@print['gcode_file']}-#{@print['subtask_name']}-v2"
     end
   end
 end

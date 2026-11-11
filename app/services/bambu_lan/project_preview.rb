@@ -17,12 +17,54 @@ module BambuLan
     private
 
     def fetch_details
+      file = direct_details
+      return file if file&.dig('token')
+
+      preview = with_memory(file)
+      return preview if preview
+      return file if file
+
+      from_task_names
+    end
+
+    def with_memory(file)
+      jpeg = memory_preview
+      return nil unless jpeg
+
+      details = file || {}
+      details['token'] = FileCache.store_preview(jpeg)
+      Rails.logger.info("Photo preview #{@printer.name}: printer preview #{jpeg.bytesize} bytes")
+      details
+    end
+
+    def from_task_names
       errors = []
-      candidates.each do |path|
+      task_paths.each do |path|
         archive = download(path, errors)
         return stored(path, archive) if archive
       end
       log_miss(errors)
+      nil
+    end
+
+    def direct_details
+      path = reported_file
+      return nil unless project?(path)
+
+      archive = download(path, [])
+      stored(path, archive) if archive
+    end
+
+    def memory_preview
+      return nil unless Models.camera(@printer.model) == :rtsps
+
+      bytes = MemPreview.fetch(@printer)
+      bytes if bytes.to_s.b.start_with?("\xFF\xD8".b)
+    rescue Error => e
+      Rails.logger.info(
+        "Photo preview #{@printer.name}: printer preview failed: " \
+        "#{Secrets.scrub(e.message, @printer.bambu_access_code)}"
+      )
       nil
     end
 
@@ -65,15 +107,8 @@ module BambuLan
       "#{message}. That gcode path is inside the printer and is not a file FTPS can download."
     end
 
-    def candidates
-      (reported_candidates + task_candidates).flat_map { |path| locations(path) }.uniq
-    end
-
-    def reported_candidates
-      path = reported_file
-      return [] unless project?(path)
-
-      [path]
+    def task_paths
+      task_candidates.flat_map { |path| locations(path) }.uniq
     end
 
     def task_candidates

@@ -37,12 +37,29 @@ class BambuLanPollerTest < ActiveJob::TestCase
     ftps = ChoosingFtps.new('cache/Benchy.gcode.3mf' => sliced_3mf)
     report = running_report('gcode_file' => '/data/Metadata/plate_1.gcode', 'subtask_name' => 'Benchy')
 
-    poll(report, ftps: ftps)
+    BambuLan::MemPreview.stub(:fetch, nil) do
+      poll(report, ftps: ftps)
+    end
 
     job = @printer.jobs.find_by!(prusalink_job_id: '99')
 
     assert_equal 'PNGDATA', job.preview_image.download
     assert_includes ftps.downloads, 'cache/Benchy.gcode.3mf'
+  end
+
+  test 'uses the in-memory printer preview when the project file is not on FTPS' do
+    jpeg = "\xFF\xD8\xFFpreview".b
+    ftps = ChoosingFtps.new({})
+    report = running_report('gcode_file' => '/data/Metadata/plate_1.gcode', 'subtask_name' => 'Benchy')
+
+    BambuLan::MemPreview.stub(:fetch, jpeg) do
+      poll(report, ftps: ftps)
+    end
+
+    job = @printer.jobs.find_by!(prusalink_job_id: '99')
+
+    assert_equal jpeg, job.preview_image.download
+    assert_empty ftps.downloads
   end
 
   test 'finishing the same task records filament weight without downloading the 3mf again' do

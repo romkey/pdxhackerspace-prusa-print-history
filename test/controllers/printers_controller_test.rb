@@ -337,6 +337,11 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     get new_printer_path
 
     assert_response :success
+    assert_select '[data-printer-form-target=prusa]:not([hidden]) input[name=?]', 'printer[ha_base_sensor]'
+    assert_select '[data-printer-form-target=prusa]:not([hidden]) input[name=?]', 'printer[camera_url]'
+    assert_select '[data-printer-form-target=bambu][hidden] .alert-warning', text: /LAN Only Liveview/
+    assert_select '[data-printer-form-target=bambu] input[name=?]', 'printer[camera_url]', count: 0
+    assert_select '[data-printer-form-target=bambu] input[name=?]', 'printer[ha_base_sensor]', count: 0
   end
 
   test 'admin can add a bambu printer' do
@@ -356,6 +361,18 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to printer_path(printer)
     assert_predicate printer, :bambu_lan?
     assert_equal 'abcd1234', printer.bambu_access_code
+  end
+
+  test 'editing a bambu printer hides home assistant and camera url' do
+    login_as(users(:admin))
+    get edit_printer_path(printers(:bambu_p2s))
+
+    assert_response :success
+    assert_select '[data-printer-form-target=prusa][hidden] input[name=?]', 'printer[ha_base_sensor]'
+    assert_select '[data-printer-form-target=prusa][hidden] input[name=?]', 'printer[camera_url]'
+    assert_select '[data-printer-form-target=bambu]:not([hidden]) .alert-warning', count: 0
+    assert_select '[data-printer-form-target=bambu] input[name=?]', 'printer[ha_base_sensor]', count: 0
+    assert_select '[data-printer-form-target=bambu] input[name=?]', 'printer[camera_url]', count: 0
   end
 
   test 'show describes a bambu printer without revealing the access code' do
@@ -450,6 +467,24 @@ class PrinterControlsAccessTest < ActionDispatch::IntegrationTest
 
     assert_select 'form[action=?]', pause_printer_path(@printer)
     assert_select 'form[action=?]', stop_printer_path(@printer)
+  end
+
+  test 'stop print follows pause and resume and starts outside the more menu' do
+    login_as(users(:admin))
+    get printer_path(@printer)
+
+    selector = '[data-overflow-actions-target=items] > [data-overflow-actions-target=item]'
+    actions = css_select(selector).pluck('action')
+
+    assert_equal [
+      pause_printer_path(@printer),
+      resume_printer_path(@printer),
+      stop_printer_path(@printer),
+      submit_printer_path(@printer)
+    ], actions
+    assert_select '[data-overflow-actions-target=menu] > *', count: 0
+    assert_select '[data-overflow-actions-target=more][hidden]'
+    assert_select 'button.btn-outline-danger', text: /Stop print/
   end
 
   test 'non-admins cannot post control actions, even on the internal network' do

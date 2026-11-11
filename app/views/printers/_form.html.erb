@@ -86,11 +86,35 @@
           <%= f.text_field :prusa_connect_uuid, class: 'form-control', placeholder: '00000000-0000-0000-0000-000000000000' %>
           <div class="form-text">Optional. From the printer's Connect URL. Lets the app read detailed error reasons (needs the Prusa Connect account on the Settings page).</div>
         </div>
+        <div class="col-md-6">
+          <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
+          <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
+          <div class="form-text">Suffixes <code>_bme680_temperature</code> and <code>_bme680_humidity</code> are appended automatically.</div>
+        </div>
+        <div class="col-12">
+          <%= f.label :camera_url, class: 'form-label' %>
+          <%= f.url_field :camera_url, class: 'form-control', placeholder: 'http://printer.local/snapshot.jpg' %>
+          <div class="form-text">Optional. Overrides the printer's own camera. Use a hostname or IP reachable from this app.</div>
+        </div>
       </div>
     </div>
 
     <div class="col-12" data-printer-form-target="bambu" <%= 'hidden' unless printer.bambu? %>>
       <div class="row g-3">
+        <% if printer.new_record? %>
+          <div class="col-12">
+            <div class="alert alert-warning text-13 mb-0">
+              <div class="fw-medium mb-1">Enable the camera</div>
+              <ul class="mb-0 ps-3">
+                <li>
+                  P2S, X, and H series: on the printer, open Settings → LAN Only and turn on
+                  LAN Only Liveview. The camera port stays closed until that is on.
+                </li>
+                <li>P1 and A1: turn on LAN Only mode. These models have no separate liveview switch.</li>
+              </ul>
+            </div>
+          </div>
+        <% end %>
         <div class="col-md-6">
           <%= f.label :bambu_serial, 'Serial number', class: 'form-label' %>
           <%= f.text_field :bambu_serial, class: 'form-control', autocomplete: 'off', placeholder: '00M09A123456789' %>
@@ -113,17 +137,6 @@
           <% end %>
         </div>
       </div>
-    </div>
-
-    <div class="col-md-6">
-      <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
-      <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
-      <div class="form-text">Suffixes <code>_bme680_temperature</code> and <code>_bme680_humidity</code> are appended automatically.</div>
-    </div>
-    <div class="col-md-12">
-      <%= f.label :camera_url, class: 'form-label' %>
-      <%= f.url_field :camera_url, class: 'form-control', placeholder: 'http://printer.local/snapshot.jpg' %>
-      <div class="form-text">Optional. Overrides the printer's own camera. Use a hostname or IP reachable from this app.</div>
     </div>
   </div>
 

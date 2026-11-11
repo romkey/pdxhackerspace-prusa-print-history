@@ -1,37 +1,69 @@
-<div class="card mb-3">
-  <div class="card-body d-flex align-items-center gap-2 py-2">
-    <div class="h-section-label mb-0 me-2">Controls</div>
-    <%= button_to pause_printer_path(printer), method: :post,
-                  class: 'btn btn-outline-secondary btn-sm', form: { class: 'd-inline' } do %>
-      <i class="bi bi-pause-fill"></i> Pause
-    <% end %>
-    <%= button_to resume_printer_path(printer), method: :post,
-                  class: 'btn btn-outline-secondary btn-sm', form: { class: 'd-inline' } do %>
-      <i class="bi bi-play-fill"></i> Resume
-    <% end %>
-    <%= form_with url: submit_printer_path(printer), multipart: true, class: 'd-inline-flex gap-2 ms-3',
-                  data: { turbo: false } do |f| %>
-      <%= f.file_field :gcode,
-                       accept: (printer.bambu? ? '.3mf,.gcode.3mf' : '.gcode,.bgcode,.gco,.g'),
-                       required: true, class: 'form-control form-control-sm',
-                       'aria-label': (printer.bambu? ? 'Sliced 3MF file' : 'G-code file') %>
-      <%= f.button class: 'btn btn-primary btn-sm text-nowrap',
-                   data: { turbo_confirm: "Upload this file and start printing on #{printer.name}?" } do %>
-        <i class="bi bi-upload"></i> Print
+<div class="card mb-3" data-controller="overflow-actions">
+  <div class="card-body printer-controls__bar py-2" data-overflow-actions-target="bar">
+    <div class="h-section-label printer-controls__label me-1">Controls</div>
+    <div class="printer-controls__items" data-overflow-actions-target="items">
+      <%= button_to pause_printer_path(printer), method: :post,
+                    class: 'btn btn-outline-secondary btn-sm text-nowrap',
+                    form: { class: 'printer-controls__item', data: { overflow_actions_target: 'item' } },
+                    data: {
+                      overflow_actions_bar_class: 'btn btn-outline-secondary btn-sm text-nowrap',
+                      overflow_actions_menu_class: 'dropdown-item'
+                    } do %>
+        <i class="bi bi-pause-fill"></i> Pause
       <% end %>
-    <% end %>
-    <div class="dropdown ms-auto">
+      <%= button_to resume_printer_path(printer), method: :post,
+                    class: 'btn btn-outline-secondary btn-sm text-nowrap',
+                    form: { class: 'printer-controls__item', data: { overflow_actions_target: 'item' } },
+                    data: {
+                      overflow_actions_bar_class: 'btn btn-outline-secondary btn-sm text-nowrap',
+                      overflow_actions_menu_class: 'dropdown-item'
+                    } do %>
+        <i class="bi bi-play-fill"></i> Resume
+      <% end %>
+      <%= button_to stop_printer_path(printer), method: :post,
+                    class: 'btn btn-outline-danger btn-sm text-nowrap',
+                    form: {
+                      class: 'printer-controls__item',
+                      data: {
+                        overflow_actions_target: 'item',
+                        turbo_confirm: "Stop the current print on #{printer.name}? This cannot be undone."
+                      }
+                    },
+                    data: {
+                      overflow_actions_bar_class: 'btn btn-outline-danger btn-sm text-nowrap',
+                      overflow_actions_menu_class: 'dropdown-item text-danger'
+                    } do %>
+        <i class="bi bi-stop-fill"></i> Stop print
+      <% end %>
+      <%= form_with url: submit_printer_path(printer), multipart: true,
+                    class: 'printer-controls__item d-flex align-items-center gap-2 ms-1',
+                    data: {
+                      turbo: false,
+                      overflow_actions_target: 'item',
+                      overflow_actions_bar_class: 'printer-controls__item d-flex align-items-center gap-2 ms-1',
+                      overflow_actions_menu_class: 'd-flex flex-column gap-2 px-3 py-2'
+                    } do |f| %>
+        <%= f.file_field :gcode,
+                         accept: (printer.bambu? ? '.3mf,.gcode.3mf' : '.gcode,.bgcode,.gco,.g'),
+                         required: true,
+                         class: 'form-control form-control-sm printer-controls__file',
+                         data: {
+                           overflow_actions_bar_class: 'form-control form-control-sm printer-controls__file',
+                           overflow_actions_menu_class: 'form-control form-control-sm'
+                         },
+                         'aria-label': (printer.bambu? ? 'Sliced 3MF file' : 'G-code file') %>
+        <%= f.button class: 'btn btn-primary btn-sm text-nowrap',
+                     data: { turbo_confirm: "Upload this file and start printing on #{printer.name}?" } do %>
+          <i class="bi bi-upload"></i> Print
+        <% end %>
+      <% end %>
+    </div>
+    <div class="dropdown printer-controls__more" data-overflow-actions-target="more" hidden>
       <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown"
-              aria-expanded="false" aria-label="More controls">&hellip;</button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li>
-          <%= button_to stop_printer_path(printer), method: :post,
-                        class: 'dropdown-item text-danger',
-                        form: { data: { turbo_confirm: "Stop the current print on #{printer.name}? This cannot be undone." } } do %>
-            Stop print
-          <% end %>
-        </li>
-      </ul>
+              data-bs-auto-close="outside" aria-expanded="false" aria-label="More controls">
+        <i class="bi bi-three-dots" aria-hidden="true"></i>
+      </button>
+      <div class="dropdown-menu dropdown-menu-end printer-controls__menu" data-overflow-actions-target="menu"></div>
     </div>
   </div>
 </div>

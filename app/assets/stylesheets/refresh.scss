@@ -246,6 +246,47 @@ body {
   }
 }
 
+.printer-controls__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.printer-controls__label {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.printer-controls__items {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.printer-controls__item {
+  flex: 0 0 auto;
+}
+
+.printer-controls__file {
+  width: 14rem;
+}
+
+.printer-controls__more {
+  flex: 0 0 auto;
+}
+
+.printer-controls__menu {
+  min-width: 16rem;
+
+  > form {
+    margin: 0;
+  }
+}
+
 .dashboard-temps {
   max-width: 180px;
 }

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Adding a Bambu Lab printer explains how to turn the camera on: LAN Only Liveview for
+  P2S, X, and H series, and LAN Only mode for P1 and A1.
+
+### Changed
+- Pause, Resume, and Stop print sit together on the printer page. The more menu only
+  holds controls that do not fit the current screen.
+- The Bambu printer form no longer asks for a Home Assistant base sensor or a camera URL.
+
 ## [0.15.1] - 2026-11-11
 
 ### Fixed

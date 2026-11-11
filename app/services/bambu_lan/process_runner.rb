@@ -5,6 +5,8 @@ module BambuLan
   class ProcessRunner
     def run(argv, timeout:, binary: true)
       Open3.popen3(*argv) { |stdin, stdout, stderr, wait| capture([stdin, stdout, stderr], wait, timeout, binary) }
+    rescue SystemCallError => e
+      raise Error, e.message
     end
 
     private
@@ -19,10 +21,13 @@ module BambuLan
       reap(wait) unless finished
       body = output.value.to_s
       detail = error.value.to_s.strip.byteslice(0, 500)
-      raise Error, 'timed out' unless finished
-      raise Error, detail.presence || "command failed (#{wait.value.exitstatus})" unless wait.value.success?
-
+      check_status!(finished, wait, detail)
       body
+    end
+
+    def check_status!(finished, wait, detail)
+      raise Error, [detail.presence, 'timed out'].compact.join(' — ') unless finished
+      raise Error, detail.presence || "command failed (#{wait.value.exitstatus})" unless wait.value.success?
     end
 
     def reap(wait)

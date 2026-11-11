@@ -150,6 +150,24 @@ class BambuLanProtocolTest < ActiveSupport::TestCase
     assert_in_delta 255.125, BambuLan::Tools.entries(report, material: nil).first['temp']
   end
 
+  test 'asks ffmpeg for one frame without probing the whole stream' do
+    seen = []
+    runner = Class.new do
+      define_method(:run) do |argv, **|
+        seen << argv
+        File.binwrite(argv.last, "\xFF\xD8\xFFframe".b)
+        'ok'
+      end
+    end
+
+    BambuLan::Camera.new(printers(:bambu_p2s), runner: runner.new).snapshot
+    argv = seen.first
+
+    assert_operator argv.index('-analyzeduration'), :<, argv.index('-i')
+    assert_operator argv.index('-probesize'), :<, argv.index('-i')
+    assert_equal '65536', argv[argv.index('-probesize') + 1]
+  end
+
   test 'keeps a P2S camera frame when ffmpeg writes one and then times out' do
     runner = Class.new do
       def run(argv, **)

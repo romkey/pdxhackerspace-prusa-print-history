@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.3] - 2026-11-11
+
 ### Fixed
 - P2S camera snapshots no longer wait for ffmpeg to buffer several seconds of video
   before saving a frame. A failed grab is logged with the printer name and ffmpeg's own error.

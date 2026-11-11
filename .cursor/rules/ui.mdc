@@ -40,8 +40,10 @@ Apply these rules to any HTML/template/CSS written for this project. The system 
 
 - `btn-primary` — the single most-used action per region only.
 - `btn-outline-secondary` — everything else.
-- `btn-danger` / `btn-outline-danger` — only for genuinely destructive actions (Delete a
-  printer, discard a print). Destructive buttons belong in a `⋯` kebab menu, never bare.
+- `btn-danger` / `btn-outline-danger` — only for genuinely destructive actions (delete a
+  printer, stop a print, discard a print).
+- A `⋯` menu is an overflow for actions that do not fit the current row at the current
+  width. Hide it when everything fits. Do not park a single action there on a wide layout.
 - Never use `btn-success` / `btn-warning` / `btn-info` as category color labels. Semantic
   meaning only.
 
@@ -133,6 +135,9 @@ Defined in `refresh.scss` — use these rather than inventing new ones:
 - `.status-dot` with `.status-success` / `.status-danger` / `.status-warning` / `.status-muted`
 - `.filter-chip` with `.active`
 - `.table-compact`
+- `.printer-controls__bar`, `.printer-controls__items`, `.printer-controls__item`,
+  `.printer-controls__file`, `.printer-controls__more`, `.printer-controls__menu` — printer
+  control row that overflows into the `⋯` menu
 - `.job-timeline`, `.job-list-thumb`, `.job-list-thumbs-col` — job views
 - `.dashboard-page`, `.dashboard-title`, `.dashboard-clock`, `.dashboard-printer-card`,
   `.dashboard-printer-name`, `.dashboard-job-filename`, `.dashboard-temps`,

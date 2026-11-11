@@ -1,4 +1,6 @@
 class Printer < ApplicationRecord
+  include PrinterLan
+
   encrypts :prusalink_key
   encrypts :prusa_connect_token
 
@@ -52,7 +54,7 @@ class Printer < ApplicationRecord
   end
 
   def camera_configured?
-    camera? || prusalink?
+    camera? || connection_configured?
   end
 
   def prusalink?
@@ -97,7 +99,7 @@ class Printer < ApplicationRecord
   end
 
   def prusalink_connection_status
-    return :unconfigured unless prusalink?
+    return :unconfigured unless connection_configured?
 
     return :unknown unless connection_tracking? && !prusalink_reachable.nil?
 

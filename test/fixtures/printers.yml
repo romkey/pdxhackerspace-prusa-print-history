@@ -18,3 +18,12 @@ prusa_mini:
   location: Studio
   model: Mini+
   hostname: prusa-mini.local
+
+bambu_p2s:
+  name: Bambu P2S
+  location: Shop
+  model: P2S
+  hostname: 192.168.1.50
+  printer_type: bambu
+  bambu_serial: 00M09A123456789
+  bambu_access_code: abcd1234

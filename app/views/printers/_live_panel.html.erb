@@ -33,7 +33,7 @@
 
           <table class="table table-compact mt-3 mb-0 text-13">
             <tbody>
-              <tr><th class="text-secondary">PrusaLink job</th><td><%= current_job.prusalink_job_id.presence || '—' %></td></tr>
+              <tr><th class="text-secondary"><%= printer.bambu? ? 'Task' : 'PrusaLink job' %></th><td><%= current_job.prusalink_job_id.presence || '—' %></td></tr>
               <tr><th class="text-secondary">Filament used</th><td class="num"><%= current_job.total_filament_grams.present? ? "#{current_job.total_filament_grams.to_f.round(1)} g" : '—' %></td></tr>
               <tr><th class="text-secondary">Started</th><td><%= current_job.started_at ? l(current_job.started_at, format: :short) : '—' %></td></tr>
             </tbody>
@@ -214,8 +214,8 @@
           <div class="h-section-label">Integrations</div>
           <ul class="list-unstyled mb-0 text-13">
             <li>
-              <span class="status-dot <%= printer.prusalink? ? 'status-success' : 'status-muted' %> me-2"></span>
-              PrusaLink <%= printer.prusalink? ? 'configured' : 'not configured' %>
+              <span class="status-dot <%= printer.connection_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
+              <%= printer.connection_summary %>
             </li>
             <li>
               <span class="status-dot <%= printer.home_assistant? ? 'status-success' : 'status-muted' %> me-2"></span>
@@ -223,12 +223,14 @@
             </li>
             <li>
               <span class="status-dot <%= printer.camera_configured? ? 'status-success' : 'status-muted' %> me-2"></span>
-              Camera: <%= printer.camera? ? printer.camera_url : (printer.prusalink? ? 'PrusaLink' : 'none') %>
+              Camera: <%= printer.camera_source_label %>
             </li>
-            <li>
-              <span class="status-dot <%= printer.prusa_connect? ? 'status-success' : 'status-muted' %> me-2"></span>
-              Prusa Connect <%= printer.prusa_connect? ? 'configured' : 'not configured' %>
-            </li>
+            <% unless printer.bambu? %>
+              <li>
+                <span class="status-dot <%= printer.prusa_connect? ? 'status-success' : 'status-muted' %> me-2"></span>
+                Prusa Connect <%= printer.prusa_connect? ? 'configured' : 'not configured' %>
+              </li>
+            <% end %>
           </ul>
         </div>
       </div>

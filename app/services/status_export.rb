@@ -91,7 +91,9 @@ module StatusExport
       humidity_sensor: printer.humidity_sensor,
       camera: printer.camera?,
       camera_configured: printer.camera_configured?,
+      printer_type: printer.printer_type,
       prusalink: printer.prusalink?,
+      bambu: printer.bambu?,
       home_assistant: printer.home_assistant?,
       created_at: timestamp(printer.created_at),
       updated_at: timestamp(printer.updated_at)

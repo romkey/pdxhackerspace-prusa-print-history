@@ -19,6 +19,7 @@ RUN apt-get update -qq && \
         build-essential \
         curl \
         cups-client \
+        ffmpeg \
         git \
         libpq-dev \
         libvips \

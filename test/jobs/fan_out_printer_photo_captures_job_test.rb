@@ -7,8 +7,8 @@ class FanOutPrinterPhotoCapturesJobTest < ActiveJob::TestCase
     printers(:prusa_mini).update!(prusalink_key: nil, camera_url: nil)
   end
 
-  test 'enqueues capture jobs for printers with camera or PrusaLink' do
-    assert_enqueued_jobs 2, only: PrinterPhotoCaptureJob do
+  test 'enqueues capture jobs for printers with a camera or a connection' do
+    assert_enqueued_jobs 3, only: PrinterPhotoCaptureJob do
       FanOutPrinterPhotoCapturesJob.perform_now
     end
 
@@ -18,6 +18,7 @@ class FanOutPrinterPhotoCapturesJobTest < ActiveJob::TestCase
 
     assert_includes enqueued_ids, printers(:prusa_xl).id
     assert_includes enqueued_ids, printers(:prusa_mk4).id
+    assert_includes enqueued_ids, printers(:bambu_p2s).id
     assert_not_includes enqueued_ids, printers(:prusa_mini).id
   end
 end

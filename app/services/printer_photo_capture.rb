@@ -10,7 +10,7 @@ class PrinterPhotoCapture
   end
 
   def capture!
-    return unless @printer.camera? || @printer.prusalink?
+    return unless @printer.camera? || @printer.connection_configured?
 
     snapshot = PrinterCamera.snapshot(@printer, client: @client)
     return if snapshot.nil?

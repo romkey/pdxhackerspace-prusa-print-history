@@ -1,4 +1,5 @@
-<%= form_with model: printer, local: true do |f| %>
+<%= form_with model: printer, local: true,
+              data: { controller: 'printer-form' } do |f| %>
   <% if printer.errors.any? %>
     <div class="alert alert-danger">
       <ul class="mb-0">
@@ -15,54 +16,105 @@
       <%= f.text_field :name, class: 'form-control', required: true %>
     </div>
     <div class="col-md-6">
+      <%= f.label :printer_type, 'Printer', class: 'form-label' %>
+      <%= f.select :printer_type,
+                   [['Prusa (PrusaLink)', 'prusa'], ['Bambu Lab (LAN)', 'bambu']],
+                   {},
+                   class: 'form-select',
+                   data: { action: 'change->printer-form#toggle', printer_form_target: 'type' } %>
+    </div>
+    <div class="col-md-6">
       <%= f.label :model, class: 'form-label' %>
-      <%= f.text_field :model, class: 'form-control', placeholder: 'XL, MK4, Mini+, ...' %>
+      <%= f.text_field :model, class: 'form-control', list: 'printer-model-list', placeholder: 'P2S, X1C, XL, MK4, ...' %>
+      <datalist id="printer-model-list">
+        <% BambuLan::Models::NAMES.each do |name| %>
+          <option value="<%= name %>"></option>
+        <% end %>
+        <option value="XL"></option>
+        <option value="MK4"></option>
+        <option value="MK4S"></option>
+        <option value="Mini+"></option>
+        <option value="Core One"></option>
+      </datalist>
+      <div class="form-text">For a Bambu printer this picks the camera and whether chamber temperature is used.</div>
     </div>
     <div class="col-md-6">
       <%= f.label :location, class: 'form-label' %>
       <%= f.text_field :location, class: 'form-control' %>
     </div>
     <div class="col-md-6">
-      <%= f.label :hostname, class: 'form-label' %>
+      <%= f.label :hostname, 'Hostname or IP', class: 'form-label' %>
       <%= f.text_field :hostname, class: 'form-control', required: true, placeholder: 'printer.local or 10.0.0.50' %>
     </div>
-    <div class="col-md-6">
-      <%= f.label :prusalink_key, 'PrusaLink API key', class: 'form-label' %>
-      <% if printer.persisted? && printer.prusalink? %>
-        <%= f.password_field :prusalink_key,
-                             class: 'form-control',
-                             placeholder: '••••••••',
-                             autocomplete: 'new-password',
-                             value: '' %>
-        <div class="form-text">Key is saved. Leave blank to keep, or enter a new key to replace.</div>
-      <% else %>
-        <%= f.password_field :prusalink_key,
-                             class: 'form-control',
-                             autocomplete: 'new-password' %>
-        <div class="form-text">Encrypted at rest.</div>
-      <% end %>
+
+    <div class="col-12" data-printer-form-target="prusa" <%= 'hidden' if printer.bambu? %>>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <%= f.label :prusalink_key, 'PrusaLink API key', class: 'form-label' %>
+          <% if printer.persisted? && printer.prusalink? %>
+            <%= f.password_field :prusalink_key,
+                                 class: 'form-control',
+                                 placeholder: '••••••••',
+                                 autocomplete: 'new-password',
+                                 value: '' %>
+            <div class="form-text">Key is saved. Leave blank to keep, or enter a new key to replace.</div>
+          <% else %>
+            <%= f.password_field :prusalink_key,
+                                 class: 'form-control',
+                                 autocomplete: 'new-password' %>
+            <div class="form-text">Encrypted at rest.</div>
+          <% end %>
+        </div>
+        <div class="col-md-6">
+          <%= f.label :prusa_connect_token, 'Prusa Connect camera token', class: 'form-label' %>
+          <% if printer.persisted? && printer.prusa_connect? %>
+            <%= f.password_field :prusa_connect_token,
+                                 class: 'form-control',
+                                 placeholder: '••••••••',
+                                 autocomplete: 'new-password',
+                                 value: '' %>
+            <div class="form-text">Token is saved. Leave blank to keep, or enter a new token to replace.</div>
+          <% else %>
+            <%= f.password_field :prusa_connect_token,
+                                 class: 'form-control',
+                                 autocomplete: 'new-password' %>
+            <div class="form-text">Camera token from Prusa Connect. Encrypted at rest. Uploads respect a 10s rate limit.</div>
+          <% end %>
+        </div>
+        <div class="col-md-6">
+          <%= f.label :prusa_connect_uuid, 'Prusa Connect printer UUID', class: 'form-label' %>
+          <%= f.text_field :prusa_connect_uuid, class: 'form-control', placeholder: '00000000-0000-0000-0000-000000000000' %>
+          <div class="form-text">Optional. From the printer's Connect URL. Lets the app read detailed error reasons (needs the Prusa Connect account on the Settings page).</div>
+        </div>
+      </div>
     </div>
-    <div class="col-md-6">
-      <%= f.label :prusa_connect_token, 'Prusa Connect camera token', class: 'form-label' %>
-      <% if printer.persisted? && printer.prusa_connect? %>
-        <%= f.password_field :prusa_connect_token,
-                             class: 'form-control',
-                             placeholder: '••••••••',
-                             autocomplete: 'new-password',
-                             value: '' %>
-        <div class="form-text">Token is saved. Leave blank to keep, or enter a new token to replace.</div>
-      <% else %>
-        <%= f.password_field :prusa_connect_token,
-                             class: 'form-control',
-                             autocomplete: 'new-password' %>
-        <div class="form-text">Camera token from Prusa Connect. Encrypted at rest. Uploads respect a 10s rate limit.</div>
-      <% end %>
+
+    <div class="col-12" data-printer-form-target="bambu" <%= 'hidden' unless printer.bambu? %>>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <%= f.label :bambu_serial, 'Serial number', class: 'form-label' %>
+          <%= f.text_field :bambu_serial, class: 'form-control', autocomplete: 'off', placeholder: '00M09A123456789' %>
+          <div class="form-text">From the printer screen or the sticker. Not the access code.</div>
+        </div>
+        <div class="col-md-6">
+          <%= f.label :bambu_access_code, 'LAN access code', class: 'form-label' %>
+          <% if printer.persisted? && printer.bambu_access_code.present? %>
+            <%= f.password_field :bambu_access_code,
+                                 class: 'form-control',
+                                 placeholder: '••••••••',
+                                 autocomplete: 'new-password',
+                                 value: '' %>
+            <div class="form-text">Code is saved. Leave blank to keep, or enter a new code to replace.</div>
+          <% else %>
+            <%= f.password_field :bambu_access_code,
+                                 class: 'form-control',
+                                 autocomplete: 'new-password' %>
+            <div class="form-text">8 characters from the printer's LAN settings. Encrypted at rest. Developer Mode must be on.</div>
+          <% end %>
+        </div>
+      </div>
     </div>
-    <div class="col-md-6">
-      <%= f.label :prusa_connect_uuid, 'Prusa Connect printer UUID', class: 'form-label' %>
-      <%= f.text_field :prusa_connect_uuid, class: 'form-control', placeholder: '00000000-0000-0000-0000-000000000000' %>
-      <div class="form-text">Optional. From the printer's Connect URL. Lets the app read detailed error reasons (needs the Prusa Connect account on the Settings page).</div>
-    </div>
+
     <div class="col-md-6">
       <%= f.label :ha_base_sensor, 'Home Assistant base sensor', class: 'form-label' %>
       <%= f.text_field :ha_base_sensor, class: 'form-control', placeholder: 'sensor.prusa1_monitor' %>
@@ -71,7 +123,7 @@
     <div class="col-md-12">
       <%= f.label :camera_url, class: 'form-label' %>
       <%= f.url_field :camera_url, class: 'form-control', placeholder: 'http://printer.local/snapshot.jpg' %>
-      <div class="form-text">Fetched by the server on each poll and shown live on the printer page. Use a hostname or IP reachable from this app.</div>
+      <div class="form-text">Optional. Overrides the printer's own camera. Use a hostname or IP reachable from this app.</div>
     </div>
   </div>
 

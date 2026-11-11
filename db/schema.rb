@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_11_050000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,6 +166,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_120100) do
     t.boolean "prusalink_reachable"
     t.datetime "updated_at", null: false
     t.string "prusa_connect_uuid"
+    t.string "printer_type", default: "prusa", null: false
+    t.string "bambu_serial"
+    t.text "bambu_access_code"
     t.index ["name"], name: "index_printers_on_name", unique: true
     t.index ["prusa_connect_uuid"], name: "index_printers_on_prusa_connect_uuid"
   end

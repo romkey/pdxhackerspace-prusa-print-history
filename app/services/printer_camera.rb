@@ -15,7 +15,7 @@ class PrinterCamera
   end
 
   def snapshot
-    snapshot_from_url || snapshot_from_prusalink
+    snapshot_from_url || snapshot_from_printer
   end
 
   private
@@ -32,17 +32,25 @@ class PrinterCamera
     nil
   end
 
-  def snapshot_from_prusalink
-    return nil unless @printer.prusalink?
+  def snapshot_from_printer
+    return nil unless @printer.connection_configured?
 
-    client = @client || PrusaLink::Client.new(@printer)
+    client = @client || @printer.connection_client
     body = client.camera_snapshot
     return nil if body.blank?
 
-    build_snapshot(body, 'image/png')
-  rescue PrusaLink::Error => e
+    build_snapshot(body, content_type_for(body))
+  rescue PrinterConnection::Error => e
     log_failure(e)
     nil
+  end
+
+  def content_type_for(body)
+    bytes = body.to_s.b
+    return 'image/jpeg' if bytes.start_with?("\xFF\xD8".b)
+    return 'image/png' if bytes.start_with?("\x89PNG".b)
+
+    'image/png'
   end
 
   def fetch(url)

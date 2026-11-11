@@ -16,7 +16,7 @@ class JobImageCapture
     return if path.blank?
 
     attach_preview(@client.download(path), path)
-  rescue PrusaLink::Error => e
+  rescue PrinterConnection::Error => e
     Rails.logger.warn("JobImageCapture preview failed for job ##{@job.id}: #{e.message}")
     nil
   end

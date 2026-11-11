@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Bambu Lab printers in LAN-only mode with Developer Mode on can be tracked alongside Prusa printers:
+  job status, temperatures, the loaded filament, camera snapshots, and print history. Admins add one
+  from the printer form (serial number, LAN access code, and model) and can pause, resume, stop, or
+  start a sliced `.3mf` from the printer page. The printer's model picks the camera (P2S, X, and H
+  series over RTSPS; P1 and A1 over the JPEG stream). Home Assistant still wins for enclosure
+  temperature when a sensor is configured.
+
 ## [0.14.0] - 2026-11-04
 
 ### Added

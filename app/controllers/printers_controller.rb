@@ -30,11 +30,11 @@ class PrintersController < ApplicationController
 
   def submit
     file = params[:gcode]
-    return redirect_to @printer, alert: 'Choose a G-code file to print.' unless file.respond_to?(:tempfile)
+    return redirect_to @printer, alert: 'Choose a file to print.' unless file.respond_to?(:tempfile)
 
     name = PrinterControl.new(@printer).submit(file)
     redirect_to @printer, notice: "Submitted #{name} to #{@printer.name}."
-  rescue PrinterControl::NotAllowed, PrusaLink::Error => e
+  rescue PrinterControl::NotAllowed, PrinterConnection::Error => e
     redirect_to @printer, alert: e.message
   end
 
@@ -83,7 +83,7 @@ class PrintersController < ApplicationController
   def run_control(action, success)
     PrinterControl.new(@printer).public_send(action)
     redirect_to @printer, notice: "#{success} for #{@printer.name}."
-  rescue PrinterControl::NotAllowed, PrusaLink::Error => e
+  rescue PrinterControl::NotAllowed, PrinterConnection::Error => e
     redirect_to @printer, alert: e.message
   end
 
@@ -104,12 +104,17 @@ class PrintersController < ApplicationController
   end
 
   def printer_params
-    permitted = params.expect(printer: %i[name location model hostname
+    permitted = params.expect(printer: %i[name location model hostname printer_type
                                           prusalink_key prusa_connect_token prusa_connect_uuid
+                                          bambu_serial bambu_access_code
                                           ha_base_sensor camera_url])
-    permitted[:prusalink_key] = nil if permitted[:prusalink_key].blank? && action_name == 'update'
-    permitted.delete(:prusalink_key) if permitted[:prusalink_key].blank? && action_name == 'update'
-    permitted.delete(:prusa_connect_token) if permitted[:prusa_connect_token].blank? && action_name == 'update'
+    clear_blank_secret(permitted, :prusalink_key)
+    clear_blank_secret(permitted, :prusa_connect_token)
+    clear_blank_secret(permitted, :bambu_access_code)
     permitted
+  end
+
+  def clear_blank_secret(permitted, key)
+    permitted.delete(key) if action_name == 'update' && permitted[key].blank?
   end
 end

@@ -76,6 +76,19 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal original, @mini.reload.prusa_connect_fingerprint
   end
 
+  test 'bambu access code is encrypted and the LAN connection requires it' do
+    printer = printers(:bambu_p2s)
+    raw = Printer.connection.select_value("SELECT bambu_access_code FROM printers WHERE id = #{printer.id}")
+
+    assert_not_equal 'abcd1234', raw
+    assert_equal 'abcd1234', printer.reload.bambu_access_code
+    assert_predicate printer, :bambu_lan?
+
+    printer.bambu_access_code = 'short'
+
+    assert_not printer.valid?
+  end
+
   test 'prusalink? requires hostname and key' do
     @mini.prusalink_key = nil
 

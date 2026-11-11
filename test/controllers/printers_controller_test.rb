@@ -339,6 +339,46 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test 'admin can add a bambu printer' do
+    login_as(users(:admin))
+
+    assert_difference -> { Printer.count } => 1 do
+      post printers_path, params: {
+        printer: {
+          name: 'New P2S', hostname: '10.0.0.8', printer_type: 'bambu', model: 'P2S',
+          bambu_serial: '00M09A000000001', bambu_access_code: 'abcd1234'
+        }
+      }
+    end
+
+    printer = Printer.find_by!(name: 'New P2S')
+
+    assert_redirected_to printer_path(printer)
+    assert_predicate printer, :bambu_lan?
+    assert_equal 'abcd1234', printer.bambu_access_code
+  end
+
+  test 'show describes a bambu printer without revealing the access code' do
+    login_as(users(:admin))
+    get printer_path(printers(:bambu_p2s))
+
+    assert_response :success
+    assert_match(/Bambu LAN configured/, response.body)
+    assert_match(/Sliced 3MF file/, response.body)
+    assert_no_match(/abcd1234/, response.body)
+  end
+
+  test 'update keeps a bambu access code when the field is left blank' do
+    login_as(users(:admin))
+    patch printer_path(printers(:bambu_p2s)), params: { printer: { location: 'Annex', bambu_access_code: '' } }
+
+    printer = printers(:bambu_p2s).reload
+
+    assert_redirected_to printer_path(printer)
+    assert_equal 'abcd1234', printer.bambu_access_code
+    assert_equal 'Annex', printer.location
+  end
+
   test 'admin can create a printer' do
     login_as(users(:admin))
 

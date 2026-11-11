@@ -8,7 +8,7 @@ class FanOutPrinterPollsJobTest < ActiveJob::TestCase
   end
 
   test 'enqueues a PrinterPollJob for every printer with a key' do
-    assert_enqueued_jobs 2, only: PrinterPollJob do
+    assert_enqueued_jobs 3, only: PrinterPollJob do
       FanOutPrinterPollsJob.perform_now
     end
 
@@ -18,6 +18,7 @@ class FanOutPrinterPollsJobTest < ActiveJob::TestCase
 
     assert_includes enqueued_ids, printers(:prusa_xl).id
     assert_includes enqueued_ids, printers(:prusa_mk4).id
+    assert_includes enqueued_ids, printers(:bambu_p2s).id
     assert_not_includes enqueued_ids, printers(:prusa_mini).id
   end
 end

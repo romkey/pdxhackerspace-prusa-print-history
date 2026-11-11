@@ -3,7 +3,7 @@ require 'net/http'
 require 'uri'
 
 module PrusaLink
-  class Error < StandardError; end
+  class Error < PrinterConnection::Error; end
 
   class Client
     DEFAULT_TIMEOUT = 5

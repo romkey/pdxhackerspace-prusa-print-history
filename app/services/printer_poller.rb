@@ -1,4 +1,4 @@
-# Polls PrusaLink and Home Assistant, updates jobs, and broadcasts live UI updates.
+# Polls a printer (PrusaLink or Bambu LAN) and Home Assistant, updates jobs, and broadcasts live UI updates.
 # rubocop:disable-next Metrics/ClassLength
 class PrinterPoller
   PRUSA_TO_STATUS = {
@@ -24,16 +24,16 @@ class PrinterPoller
     'cancelled' => 'cancelled'
   }.freeze
 
-  def initialize(printer, prusalink: PrusaLink::Client.new(printer), home_assistant: HomeAssistant::Client.from_env)
+  def initialize(printer, prusalink: nil, client: nil, home_assistant: HomeAssistant::Client.from_env)
     @printer = printer
-    @prusalink = prusalink
+    @client = client || prusalink || printer.connection_client
     @home_assistant = home_assistant
   end
 
   def poll!
-    return unless @printer.prusalink?
+    return unless @printer.connection_configured?
 
-    status_payload = @prusalink.status
+    status_payload = @client.status
     record_prusalink_reachable!
     info_payload     = safe_info
     legacy_payload   = safe_legacy_printer
@@ -50,7 +50,7 @@ class PrinterPoller
     )
 
     handle_job_poll(status_payload, job_payload, mapped_status, head_entries)
-  rescue PrusaLink::Error => e
+  rescue PrinterConnection::Error => e
     record_prusalink_unreachable!
     broadcast_live_update
     Rails.logger.warn("PrinterPoller failed for printer ##{@printer.id}: #{e.message}")
@@ -60,20 +60,20 @@ class PrinterPoller
 
   def handle_idle_poll(status_payload)
     finalize_active_jobs!(status_payload: status_payload)
-    update_printer_environment!(operational_state: 'idle')
+    update_printer_environment!(operational_state: 'idle', status_payload: status_payload)
     broadcast_live_update
   end
 
   def handle_terminal_without_job(mapped_status, status_payload)
     finalize_active_jobs!(status: mapped_status, status_payload: status_payload)
-    update_printer_environment!(operational_state: 'idle')
+    update_printer_environment!(operational_state: 'idle', status_payload: status_payload)
     broadcast_live_update
   end
 
   def handle_job_poll(status_payload, job_payload, mapped_status, head_entries)
     job = upsert_job(job_payload, mapped_status)
     job ||= ensure_active_job!(mapped_status, job_payload, status_payload)
-    update_printer_environment!(operational_state: mapped_status || 'unknown')
+    update_printer_environment!(operational_state: mapped_status || 'unknown', status_payload: status_payload)
 
     if job.nil?
       broadcast_live_update
@@ -83,10 +83,10 @@ class PrinterPoller
     sync_job_progress!(job, job_payload, status_payload)
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
-    JobImageCapture.capture_preview!(job, job_payload, client: @prusalink)
-    detect_status_change(job, mapped_status)
+    JobImageCapture.capture_preview!(job, job_payload, client: @client)
+    detect_status_change(job, mapped_status, status_payload)
     finalize_if_terminal(job, job_payload)
-    update_printer_environment!(operational_state: 'idle') if job.reload.terminal?
+    update_printer_environment!(operational_state: 'idle', status_payload: status_payload) if job.reload.terminal?
 
     broadcast_live_update
   end
@@ -96,20 +96,20 @@ class PrinterPoller
   end
 
   def safe_job_payload
-    @prusalink.job
-  rescue PrusaLink::Error
+    @client.job
+  rescue PrinterConnection::Error
     nil
   end
 
   def safe_info
-    @prusalink.info
-  rescue PrusaLink::Error
+    @client.info
+  rescue PrinterConnection::Error
     {}
   end
 
   def safe_legacy_printer
-    @prusalink.legacy_printer
-  rescue PrusaLink::Error
+    @client.legacy_printer
+  rescue PrinterConnection::Error
     nil
   end
 
@@ -142,8 +142,8 @@ class PrinterPoller
     storage_path = file_storage_path(job_payload)
     return nil if storage_path.blank?
 
-    @prusalink.file_info(storage_path)&.dig('meta')
-  rescue PrusaLink::Error
+    @client.file_info(storage_path)&.dig('meta')
+  rescue PrinterConnection::Error
     nil
   end
 
@@ -221,13 +221,13 @@ class PrinterPoller
     end
   end
 
-  def update_printer_environment!(operational_state:)
+  def update_printer_environment!(operational_state:, status_payload: nil)
     return unless @printer.environment_tracking?
 
     @printer.update!(
       operational_state: operational_state,
       ambient_temp: temperature_sensor_value(Setting.default_ambient_sensor),
-      enclosure_temp: temperature_sensor_value(@printer.enclosure_temp_sensor),
+      enclosure_temp: enclosure_temperature(status_payload),
       enclosure_humidity: humidity_sensor_value(@printer.humidity_sensor),
       environment_updated_at: Time.current
     )
@@ -284,7 +284,7 @@ class PrinterPoller
       recorded_at: Time.current,
       tool_temps: extract_tool_temps(status_payload),
       bed_temp: bed_temp(status_payload),
-      enclosure_temp: temperature_sensor_value(@printer.enclosure_temp_sensor),
+      enclosure_temp: enclosure_temperature(status_payload),
       ambient_temp: temperature_sensor_value(Setting.default_ambient_sensor),
       enclosure_humidity: humidity_sensor_value(@printer.humidity_sensor)
     )
@@ -304,6 +304,10 @@ class PrinterPoller
     end
   end
 
+  def enclosure_temperature(status_payload)
+    temperature_sensor_value(@printer.enclosure_temp_sensor) || status_payload&.dig('printer', 'temp_chamber')
+  end
+
   def temperature_sensor_value(entity_id)
     return nil if entity_id.blank?
 
@@ -316,20 +320,33 @@ class PrinterPoller
     @home_assistant.numeric_state(entity_id)
   end
 
-  def detect_status_change(job, new_status)
+  def detect_status_change(job, new_status, status_payload = nil)
     last_status = job.events.recent.first&.to_status
     return if new_status.blank? || new_status == last_status
 
-    event = job.events.create!(
-      event_type: event_type_for(new_status, last_status),
-      from_status: last_status,
-      to_status: new_status,
-      occurred_at: Time.current
-    )
+    event = job.events.create!(event_attributes(new_status, last_status, status_payload))
 
     CaptureEventPhotoJob.perform_later(event.id) if @printer.camera_configured?
     enqueue_connect_error_sync(event, new_status)
     enqueue_attention_notification(job, last_status, new_status)
+  end
+
+  def event_attributes(new_status, last_status, status_payload)
+    attrs = {
+      event_type: event_type_for(new_status, last_status),
+      from_status: last_status,
+      to_status: new_status,
+      occurred_at: Time.current
+    }
+    message = printer_error_message(status_payload, new_status)
+    attrs[:message] = message if message.present?
+    attrs
+  end
+
+  def printer_error_message(status_payload, new_status)
+    return nil unless %w[attention error cancelled].include?(new_status)
+
+    status_payload&.dig('printer', 'error_message').presence
   end
 
   def enqueue_connect_error_sync(event, new_status)

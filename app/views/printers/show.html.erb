@@ -37,7 +37,7 @@
   </div>
 
   <%# Admin-only, and deliberately outside the live panel: that panel is broadcast to every viewer. %>
-  <% if admin? && @printer.prusalink? %>
+  <% if admin? && @printer.connection_configured? %>
     <%= render 'printers/controls', printer: @printer %>
   <% end %>
 

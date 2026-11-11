@@ -112,6 +112,7 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     xl.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'idle')
     mk4.update!(prusalink_key: 'secret', prusalink_reachable: true, operational_state: 'attention')
     mini.update!(prusalink_key: 'secret', prusalink_reachable: false, operational_state: 'idle')
+    printers(:bambu_p2s).update!(prusalink_reachable: true, operational_state: 'idle')
     jobs(:active_xl).update!(status: 'finished', ended_at: 1.hour.ago)
     jobs(:orphaned_active).update!(status: 'attention')
 

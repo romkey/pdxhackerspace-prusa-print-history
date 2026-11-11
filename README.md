@@ -8,9 +8,9 @@
 [![Rails](https://img.shields.io/badge/Rails-8.1-red?logo=rubyonrails&logoColor=white)](https://rubyonrails.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Rails application that tracks and reports the printing history of multiple
-Prusa 3D printers. It polls PrusaLink for job + temperature data, layers
-in enclosure / humidity / ambient readings from Home Assistant, grabs a
+Rails application that tracks and reports the printing history of Prusa and
+Bambu Lab 3D printers. It polls each printer for job and temperature data,
+layers in enclosure / humidity / ambient readings from Home Assistant, grabs a
 camera snapshot on every status change, and serves it all behind a
 viewer-aware UI:
 
@@ -28,6 +28,8 @@ viewer-aware UI:
 - PostgreSQL 18
 - Redis 8 (Sidekiq + ActiveJob)
 - Docker + Docker Compose v2
+- `ffmpeg` and `curl`, for Bambu camera snapshots and file transfer (both are
+  in the Docker images)
 
 All of the above are baked into the Docker images, so a working Docker
 install is enough for local development.
@@ -76,6 +78,36 @@ for the full list; the values you must set on a fresh install are:
   `tmp/mail/` instead.
 - `SLACK_API_TOKEN` — bot token with `chat:write`, `files:write`, and `im:write`;
   used to DM claimants who opt in and have a Slack user ID on their profile.
+
+## Bambu Lab printers (LAN Developer Mode)
+
+Bambu printers are polled the same way as Prusa printers: once a minute for
+status, temperatures, the loaded filament, and a camera frame. There is no
+Bambu cloud account. On the printer, turn on **LAN Only** mode and then
+**Developer Mode** (reads work with LAN Only; pause, resume, stop, and starting
+a print need Developer Mode too).
+
+Add the printer as **Bambu Lab (LAN)** and set:
+
+- **Hostname or IP** the app can reach
+- **Serial number**
+- **LAN access code** (8 characters, stored encrypted)
+- **Model** (`P2S`, `X1C`, `P1S`, `A1`, `H2D`, …). This chooses the camera
+  transport and whether the chamber temperature is a real sensor. P2S, X, and
+  H series use RTSPS on port 322. P1 and A1 use the JPEG stream on port 6000.
+  An unknown model tries both.
+
+The app also uses MQTT on port 8883 and FTPS on port 990. Those ports have to
+be reachable from the app container. A manual camera URL still overrides the
+printer's own camera. Home Assistant enclosure readings still win when a
+sensor is configured; otherwise a printer that reports a chamber temperature
+(P2S, P1S, X, H) fills that in.
+
+Admins can pause, resume, stop, or upload a sliced `.3mf` from the printer
+page. A one-color print uses the external spool when the printer has that
+selected, and otherwise the selected AMS tray. A multi-color print needs one
+loaded AMS tray per filament, mapped in tray order. Prusa Connect is not used
+for Bambu printers.
 
 ## Prusa Connect error details (optional)
 

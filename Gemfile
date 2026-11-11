@@ -33,7 +33,10 @@ gem 'bootsnap', require: false
 gem 'thruster', require: false
 
 gem 'image_processing', '~> 2.0'
+gem 'mqtt', '~> 0.6'
 gem 'prawn', '~> 2.5'
+gem 'rexml'
+gem 'rubyzip', '~> 2.3'
 
 group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'

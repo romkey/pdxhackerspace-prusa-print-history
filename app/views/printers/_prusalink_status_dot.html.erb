@@ -1,8 +1,9 @@
 <% status = printer.prusalink_connection_status %>
+<% label = printer.connection_label %>
 <% if status == :reachable %>
-  <span class="status-dot status-success" title="PrusaLink connected"></span>
+  <span class="status-dot status-success" title="<%= label %> connected"></span>
 <% elsif status == :unreachable %>
-  <span class="status-dot status-danger" title="PrusaLink unreachable"></span>
+  <span class="status-dot status-danger" title="<%= label %> unreachable"></span>
 <% elsif status == :unknown %>
-  <span class="status-dot status-muted" title="PrusaLink status unknown"></span>
+  <span class="status-dot status-muted" title="<%= label %> status unknown"></span>
 <% end %>

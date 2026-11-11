@@ -80,6 +80,24 @@ class PrinterControlTest < ActiveSupport::TestCase
     assert_empty client.calls
   end
 
+  test 'submit accepts a sliced 3mf when a bambu printer is idle after an error' do
+    printer = printers(:bambu_p2s)
+    client = FakeClient.new(nil)
+    client.state = 'ERROR'
+
+    assert_equal 'part.3mf', PrinterControl.new(printer, client: client).submit(gcode_upload('part.3mf', 'PK'))
+    assert_equal 'part.3mf', client.calls.first[1]
+  end
+
+  test 'submit rejects g-code for a bambu printer' do
+    client = FakeClient.new(nil)
+
+    assert_raises(PrinterControl::NotAllowed) do
+      PrinterControl.new(printers(:bambu_p2s), client: client).submit(gcode_upload)
+    end
+    assert_empty client.calls
+  end
+
   test 'submit refuses while the printer is busy' do
     client = FakeClient.new(nil)
     client.state = 'PRINTING'

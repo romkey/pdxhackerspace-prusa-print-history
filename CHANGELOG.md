@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.6] - 2026-11-11
+
 ### Fixed
 - Bambu print previews are fetched when the printer reports the internal gcode
   path instead of the project file. The lookup is logged with the path it tried.

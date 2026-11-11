@@ -95,6 +95,39 @@ class BambuLanPollerTest < ActiveJob::TestCase
     assert_equal 'The print was cancelled.', job.events.last.message
   end
 
+  test 'a user cancel ends the job instead of leaving it in error' do
+    poll(running_report)
+    poll(running_report('gcode_state' => 'FAILED', 'print_error' => 50_348_044))
+
+    job = @printer.jobs.find_by!(prusalink_job_id: '99')
+
+    assert_equal 'cancelled', job.status
+    assert_nil job.progress_percent
+    assert_equal 'The print was cancelled.', job.events.last.message
+  end
+
+  test 'a running print stays printing when an alert is still reported' do
+    poll(running_report('hms' => [{ 'code' => '0300400000020001' }]))
+
+    job = @printer.jobs.find_by!(prusalink_job_id: '99')
+
+    assert_equal 'printing', job.status
+  end
+
+  test 'a new print closes the previous job that was stuck on an error' do
+    poll(running_report)
+    poll(running_report('gcode_state' => 'FAILED', 'print_error' => 83_902_467))
+    poll(running_report('task_id' => '100', 'subtask_name' => 'Next',
+                        'hms' => [{ 'code' => '0300400000020001' }]))
+
+    previous = @printer.jobs.find_by!(prusalink_job_id: '99')
+    current = @printer.jobs.find_by!(prusalink_job_id: '100')
+
+    assert_equal 'cancelled', previous.status
+    assert_equal 'The printer started another print.', previous.events.last.message
+    assert_equal 'printing', current.status
+  end
+
   test 'a failed print with an error code is an error' do
     poll(running_report)
     poll(running_report('gcode_state' => 'FAILED', 'print_error' => 83_902_467))

@@ -12,7 +12,13 @@ class BambuLanProtocolTest < ActiveSupport::TestCase
     assert_equal 'ERROR', state('FAILED', 'print_error' => 83_902_467)
     assert_equal 'ATTENTION', state('PAUSE', 'print_error' => 83_902_467)
     assert_equal 'PRINTING', state('RUNNING', 'print_error' => 83_902_467)
-    assert_equal 'ATTENTION', state('RUNNING', 'hms' => [{ 'code' => '0300400000020001' }])
+  end
+
+  test 'a user cancel is not an error, and a running print ignores leftover alerts' do
+    assert_equal 'STOPPED', state('FAILED', 'print_error' => 50_348_044)
+    assert_equal 'STOPPED', state('FAILED', 'hms' => [{ 'attr' => 50_348_044, 'code' => 0 }])
+    assert_equal 'PRINTING', state('RUNNING', 'hms' => [{ 'code' => '0300400000020001' }])
+    assert_equal 'ATTENTION', state('PAUSE', 'hms' => [{ 'code' => '0300400000020001' }])
   end
 
   test 'describes a known print error and an HMS code' do
@@ -21,6 +27,8 @@ class BambuLanProtocolTest < ActiveSupport::TestCase
 
     assert_match(/could not parse the file/, message)
     assert_match(/HMS 0300-4000-0002-0001/, message)
+    assert_equal 'The print was cancelled.',
+                 BambuLan::ErrorDetail.message('gcode_state' => 'FAILED', 'print_error' => 50_348_044)
   end
 
   test 'picks the camera transport and chamber sensor from the model name' do

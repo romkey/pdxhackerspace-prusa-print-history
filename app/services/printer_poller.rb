@@ -90,6 +90,7 @@ class PrinterPoller
       return
     end
 
+    retire_superseded_jobs!(job)
     sync_job_progress!(job, job_payload, status_payload)
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
@@ -208,6 +209,38 @@ class PrinterPoller
   def idle_state?(status_payload)
     raw = (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
     IDLE_STATES.include?(raw)
+  end
+
+  def retire_superseded_jobs!(job)
+    return unless job.persisted? && job.active?
+
+    @printer.jobs.active.where.not(id: job.id).find_each { |other| close_superseded_job!(other) }
+  end
+
+  def close_superseded_job!(job)
+    from_status = job.status
+    job.update!(ended_job_attrs('cancelled'))
+    job.events.create!(superseded_event(from_status))
+  end
+
+  def ended_job_attrs(status)
+    {
+      status: status,
+      ended_at: Time.current,
+      progress_percent: nil,
+      estimated_finish_at: nil,
+      time_printing_seconds: nil
+    }
+  end
+
+  def superseded_event(from_status)
+    {
+      event_type: 'cancelled',
+      from_status: from_status,
+      to_status: 'cancelled',
+      occurred_at: Time.current,
+      message: 'The printer started another print.'
+    }
   end
 
   def finalize_active_jobs!(status: 'finished', status_payload: nil)

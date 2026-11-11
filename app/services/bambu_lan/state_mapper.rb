@@ -17,8 +17,10 @@ module BambuLan
       ErrorDetail.cancelled?(print) ? 'STOPPED' : 'ERROR'
     end
 
+    # A print the printer still calls RUNNING is underway. Leftover HMS from a
+    # cancel must not mark that whole job as attention. A pause still does.
     def self.attention?(print, raw)
-      return false if %w[IDLE FINISH FAILED].include?(raw)
+      return false if %w[IDLE FINISH FAILED RUNNING PREPARE].include?(raw)
       return true if ErrorDetail.hms?(print)
 
       raw == 'PAUSE' && ErrorDetail.error_code(print).present?

@@ -7,24 +7,31 @@ module BambuLan
       '0500c010' => 'The printer could not read its storage.'
     }.freeze
 
+    # Bambu reports a user cancel as this print_error for a few seconds, and
+    # sometimes leaves it (or the matching HMS entry) set after the print stops.
+    # 50348044 == 0x0300400C.
+    CANCEL_CODE = '0300400c'.freeze
+
     def self.message(print)
+      return 'The print was cancelled.' if cancelled?(print)
+
       parts = []
       text = print_error_text(print)
       parts << text if text
       parts.concat(hms_texts(print))
-      parts << 'The print was cancelled.' if parts.empty? && cancelled?(print)
       parts.presence&.join(' ')
     end
 
     def self.cancelled?(print)
-      return true if print['fail_reason'].to_s.match?(/cancel/i)
       return false unless print['gcode_state'].to_s.upcase == 'FAILED'
+      return true if print['fail_reason'].to_s.match?(/cancel/i)
+      return true if cancel_code?(error_code(print))
 
       error_code(print).nil? && !hms?(print)
     end
 
     def self.hms?(print)
-      hms_texts(print).any?
+      Array(print['hms']).any? { |item| fault_hms?(item) }
     end
 
     def self.error_code(print)
@@ -48,6 +55,21 @@ module BambuLan
       raw = item.is_a?(Hash) ? item['code'] : item
       formatted = format_hms(raw)
       "HMS #{formatted}" if formatted
+    end
+
+    def self.fault_hms?(item)
+      return false if cancel_hms?(item)
+
+      hms_text(item).present?
+    end
+
+    def self.cancel_hms?(item)
+      values = item.is_a?(Hash) ? [item['attr'], item['code']] : [item]
+      values.any? { |value| cancel_code?(normalize_code(value)) }
+    end
+
+    def self.cancel_code?(code)
+      code == CANCEL_CODE
     end
 
     def self.format_hms(code)

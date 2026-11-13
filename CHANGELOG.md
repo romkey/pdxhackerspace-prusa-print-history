@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.9] - 2026-11-12
+
+### Security
+- Updated rubyzip to 3.x, which fixes a published vulnerability.
+
+### Changed
+- Dependency updates: Bootstrap 5.3.9, Node.js 26.13.1, pagy 43.8.2, minitest 6.1.0, sass 1.108.2.
+
 ## [0.15.8] - 2026-11-11
 
 ### Fixed

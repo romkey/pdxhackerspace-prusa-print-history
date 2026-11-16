@@ -1,0 +1,14 @@
+<tr>
+  <th <%= report_header_attributes('name', sort_column:, sort_direction:) %>>
+    <%= report_column_heading(label, 'name', sort_column:, sort_direction:) %>
+  </th>
+  <th class="num" <%= report_header_attributes('week', sort_column:, sort_direction:) %>>
+    <%= report_column_heading('Last 7 days', 'week', sort_column:, sort_direction:, numeric: true) %>
+  </th>
+  <th class="num" <%= report_header_attributes('month', sort_column:, sort_direction:) %>>
+    <%= report_column_heading('Last 30 days', 'month', sort_column:, sort_direction:, numeric: true) %>
+  </th>
+  <th class="num" <%= report_header_attributes('all', sort_column:, sort_direction:) %>>
+    <%= report_column_heading('All time', 'all', sort_column:, sort_direction:, numeric: true) %>
+  </th>
+</tr>

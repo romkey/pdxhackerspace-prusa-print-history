@@ -36,12 +36,7 @@
     <div class="card">
       <table class="table table-compact mb-0">
         <thead>
-          <tr>
-            <th>Printer</th>
-            <th class="num">Last 7 days</th>
-            <th class="num">Last 30 days</th>
-            <th class="num">All time</th>
-          </tr>
+          <%= render 'column_headings', label: 'Printer', sort_column: @sort_column, sort_direction: @sort_direction %>
         </thead>
         <tbody>
           <% @rows.each do |row| %>

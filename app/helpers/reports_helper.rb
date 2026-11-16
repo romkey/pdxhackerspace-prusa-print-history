@@ -42,11 +42,63 @@ module ReportsHelper
     )
   end
 
+  def report_column_heading(label, column, sort_column:, sort_direction:, numeric: false)
+    return label if sort_column.blank?
+
+    link_to(
+      report_sort_path(column, sort_column:, sort_direction:, numeric:),
+      class: report_sort_link_class(column, sort_column:, numeric:)
+    ) do
+      safe_join([label, report_sort_icon(column, sort_column:, sort_direction:)].compact)
+    end
+  end
+
+  def report_header_attributes(column, sort_column:, sort_direction:)
+    return if sort_column.blank?
+
+    state = sort_column == column ? report_aria_sort_state(sort_direction) : 'none'
+    tag.attributes(aria: { sort: state })
+  end
+
   def format_report_count_cell(count)
     if count.to_i <= 0
       tag.span('—', class: 'text-secondary')
     else
       count.to_i
     end
+  end
+
+  private
+
+  def report_sort_path(column, sort_column:, sort_direction:, numeric:)
+    url_for(sort: column, direction: next_report_sort_direction(column, sort_column:, sort_direction:, numeric:))
+  end
+
+  def next_report_sort_direction(column, sort_column:, sort_direction:, numeric:)
+    return opposite_report_sort_direction(sort_direction) if sort_column == column
+
+    numeric ? 'desc' : 'asc'
+  end
+
+  def opposite_report_sort_direction(sort_direction)
+    sort_direction == 'asc' ? 'desc' : 'asc'
+  end
+
+  def report_sort_link_class(column, sort_column:, numeric:)
+    classes = %w[text-decoration-none text-nowrap align-items-center gap-1]
+    classes << (numeric ? 'd-flex w-100 justify-content-end' : 'd-inline-flex')
+    classes << (sort_column == column ? 'link-body-emphasis' : 'link-secondary')
+    classes.join(' ')
+  end
+
+  def report_sort_icon(column, sort_column:, sort_direction:)
+    return if sort_column != column
+
+    icon = sort_direction == 'asc' ? 'bi-caret-up-fill' : 'bi-caret-down-fill'
+    tag.i(class: "bi #{icon}", aria: { hidden: true })
+  end
+
+  def report_aria_sort_state(sort_direction)
+    sort_direction == 'asc' ? 'ascending' : 'descending'
   end
 end

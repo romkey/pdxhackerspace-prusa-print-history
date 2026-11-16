@@ -5,6 +5,7 @@ class ReportsController < ApplicationController
 
   def printers
     load_report(:printers)
+    sort_report_rows!(ReportTableSort::PRINT_TIME)
     render :report
   end
 
@@ -21,10 +22,16 @@ class ReportsController < ApplicationController
   def attention
     @rows = AttentionEventsReport.by_printer
     @chart_series = AttentionEventsReport.chart_series(@rows)
+    sort_report_rows!(ReportTableSort::ATTENTION)
     render :attention
   end
 
   private
+
+  def sort_report_rows!(columns)
+    @sort_column, @sort_direction = ReportTableSort.normalize(params[:sort], params[:direction], columns)
+    @rows = ReportTableSort.call(@rows, columns:, sort: @sort_column, direction: @sort_direction)
+  end
 
   def load_report(report_type)
     @report_type = report_type

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Printer reports sort when you click a column heading. Click the heading again to reverse the order.
+
 ## [0.15.8] - 2026-11-11
 
 ### Fixed

@@ -47,6 +47,56 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/PLA/, response.body)
   end
 
+  test 'printer report column headings sort the table' do
+    login_as(users(:admin))
+
+    get printers_reports_path
+
+    assert_response :success
+    assert_equal ['Bambu P2S', 'Prusa Mini', 'Prusa MK4', 'Prusa XL'], report_row_labels
+    assert_select 'th[aria-sort=?]', 'ascending', text: /Printer/
+    assert_select 'a[href=?]', printers_reports_path(sort: 'name', direction: 'desc')
+    assert_select 'a[href=?]', printers_reports_path(sort: 'week', direction: 'desc')
+    assert_select 'th[aria-sort=?] i.bi-caret-up-fill', 'ascending'
+
+    get printers_reports_path(sort: 'week', direction: 'desc')
+
+    assert_equal ['Prusa MK4', 'Prusa XL', 'Bambu P2S', 'Prusa Mini'], report_row_labels
+    assert_select 'a[href=?]', printers_reports_path(sort: 'week', direction: 'asc')
+  end
+
+  test 'printer report ignores an unknown sort' do
+    login_as(users(:admin))
+
+    get printers_reports_path(sort: 'nope', direction: 'sideways')
+
+    assert_response :success
+    assert_equal ['Bambu P2S', 'Prusa Mini', 'Prusa MK4', 'Prusa XL'], report_row_labels
+  end
+
+  test 'user and filament reports keep static headings' do
+    login_as(users(:admin))
+
+    get users_reports_path
+
+    assert_response :success
+    assert_select 'th a', count: 0
+
+    get filament_reports_path
+
+    assert_select 'th a', count: 0
+  end
+
+  test 'attention report column headings sort printers' do
+    login_as(users(:admin))
+
+    get attention_reports_path(sort: 'week', direction: 'desc')
+
+    assert_response :success
+    assert_equal ['Prusa MK4', 'Prusa XL', 'Bambu P2S', 'Prusa Mini'], report_row_labels
+    assert_select 'a[href=?]', attention_reports_path(sort: 'all', direction: 'desc')
+  end
+
   test 'users print time report shows unclaimed row and duration' do
     login_as(users(:admin))
 
@@ -79,5 +129,11 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select 'a.nav-link', text: 'Reports', count: 0
+  end
+
+  private
+
+  def report_row_labels
+    css_select('table tbody tr').map { |row| row.at_css('td').text.squish }
   end
 end

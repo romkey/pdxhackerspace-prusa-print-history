@@ -177,9 +177,9 @@ GEM
     marcel (1.2.1)
     matrix (0.4.3)
     mini_mime (1.1.5)
-    minitest (6.0.6)
+    minitest (6.1.0)
       drb (~> 2.0)
-      prism (~> 1.5)
+      prism (>= 1.5, < 3)
     minitest-mock (5.27.0)
     mqtt (0.7.0)
       logger
@@ -213,7 +213,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.7-x86_64-linux-musl)
       racc (~> 1.4)
-    omniauth (2.3.1)
+    omniauth (2.4.1)
       hashie (>= 3.5.2)
       logger
       rack (>= 2.2.8)
@@ -236,7 +236,7 @@ GEM
       tzinfo
       validate_url
       webfinger (~> 2.0)
-    pagy (43.8.1)
+    pagy (43.8.2)
       json
       uri
       yaml
@@ -261,7 +261,7 @@ GEM
       activesupport (>= 7.0.0)
       rack
     public_suffix (7.0.5)
-    puma (8.0.2)
+    puma (8.1.1)
       nio4r (~> 2.0)
     raabro (1.5.0)
     racc (1.8.1)
@@ -335,7 +335,7 @@ GEM
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
-    rubyzip (2.4.1)
+    rubyzip (3.7.0)
     securerandom (0.4.1)
     selenium-webdriver (4.52.0)
       base64 (~> 0.2)
@@ -436,7 +436,7 @@ DEPENDENCIES
   redis (~> 6.0)
   rexml
   ruby-vips (~> 2.2)
-  rubyzip (~> 2.3)
+  rubyzip (~> 3.0)
   selenium-webdriver
   sidekiq (~> 8.0)
   sidekiq-cron (~> 2.0)

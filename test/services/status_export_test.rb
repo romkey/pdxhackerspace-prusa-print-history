@@ -12,6 +12,8 @@ class StatusExportTest < ActiveSupport::TestCase
     assert_equal job.id, xl[:job][:id]
     assert_in_delta 42.5, xl[:job][:progress_percent]
     assert_equal 'printing', xl[:job][:status]
+    assert_not xl[:out_of_service]
+    assert_nil xl[:out_of_service_since]
     assert_kind_of Array, xl[:heads]
     assert_not(payload.any? { |entry| entry.key?(:prusalink_key) })
   end

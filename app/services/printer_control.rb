@@ -13,6 +13,7 @@ class PrinterControl
 
   # Uploads a print file (an uploaded file responding to +original_filename+/+tempfile+) and starts printing it.
   def submit(upload)
+    refuse_out_of_service!
     raise NotAllowed, unconfigured_message unless @printer.connection_configured?
 
     filename = sanitize_filename(upload&.original_filename)
@@ -28,10 +29,12 @@ class PrinterControl
   end
 
   def pause
+    refuse_out_of_service!
     perform(%w[PRINTING], 'pause') { |id| @client.pause_job(id) }
   end
 
   def resume
+    refuse_out_of_service!
     perform(%w[PAUSED], 'resume') { |id| @client.resume_job(id) }
   end
 
@@ -65,6 +68,12 @@ class PrinterControl
     return SUBMIT_STATES + %w[ERROR] if @printer.bambu?
 
     SUBMIT_STATES
+  end
+
+  def refuse_out_of_service!
+    return unless @printer.out_of_service?
+
+    raise NotAllowed, "#{@printer.name} is out of service."
   end
 
   def unconfigured_message

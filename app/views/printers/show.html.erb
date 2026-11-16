@@ -16,6 +16,7 @@
         &middot; <%= @printer.hostname %>
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
+      <%= render 'service_entries/reliability', score: @reliability, show_link: true, compact: true %>
       <% if @presenter.reported_tools.any? %>
         <div class="text-13 text-secondary mt-1">
           <% @presenter.reported_tools.each_with_index do |head, index| %>

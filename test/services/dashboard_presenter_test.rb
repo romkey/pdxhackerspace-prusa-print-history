@@ -195,6 +195,21 @@ class DashboardPresenterTest < ActiveSupport::TestCase
     assert_equal 'attention', card.image_outline_status
   end
 
+  test 'an out of service printer is dimmed and left out of the idle filter' do
+    printer = printers(:prusa_mini)
+    printer.update!(prusalink_key: 'secret', operational_state: 'idle', prusalink_reachable: true,
+                    out_of_service_since: Time.current)
+    jobs(:finished_old).update!(status: 'finished', ended_at: 1.hour.ago)
+
+    card = build_card(printer)
+
+    assert_equal 'out-of-service', card.image_outline_status
+
+    presenter = build_presenter(filters: ['idle'])
+
+    assert_not_includes presenter.filtered_cards.map { |filtered| filtered.printer.id }, printer.id
+  end
+
   private
 
   def build_card(printer, active_jobs: {}, last_jobs: {})

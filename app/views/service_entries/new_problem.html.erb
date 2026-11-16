@@ -1,0 +1,41 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="mb-3">
+        <div class="text-13 text-secondary">
+          <%= link_to 'Service log', service_log_location(@printer), class: 'text-decoration-none' %>
+        </div>
+        <h1 class="h-page-title mb-0">Report a problem</h1>
+      </div>
+
+      <%= form_with model: @entry, url: problem_reports_path do |f| %>
+        <%= render 'errors', entry: @entry %>
+
+        <div class="mb-3">
+          <%= f.label :printer_id, 'Printer', class: 'form-label' %>
+          <%= f.collection_select :printer_id, @printers, :id, :name,
+                                  { include_blank: 'Choose a printer' },
+                                  class: 'form-select', required: true %>
+        </div>
+        <div class="mb-3">
+          <%= f.label :summary, 'Summary', class: 'form-label' %>
+          <%= f.text_field :summary, class: 'form-control', required: true, maxlength: 200 %>
+        </div>
+        <div class="mb-3">
+          <%= f.label :details, 'Details', class: 'form-label' %>
+          <%= f.text_area :details, class: 'form-control', rows: 4 %>
+        </div>
+        <% if logged_in? %>
+          <div class="form-check mb-3">
+            <%= hidden_field_tag 'service_entry[take_out_of_service]', '0' %>
+            <%= check_box_tag 'service_entry[take_out_of_service]', '1',
+                              ActiveModel::Type::Boolean.new.cast(params.dig(:service_entry, :take_out_of_service)),
+                              class: 'form-check-input', id: 'take_out_of_service' %>
+            <%= label_tag 'take_out_of_service', 'Also take this printer out of service', class: 'form-check-label' %>
+          </div>
+        <% end %>
+        <%= f.submit 'Report a problem', class: 'btn btn-primary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+</div>

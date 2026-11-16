@@ -1,0 +1,38 @@
+<div class="card mb-3">
+  <table class="table table-compact mb-0">
+    <thead>
+      <tr>
+        <th>Printer</th>
+        <th class="num">Reliability</th>
+        <th class="num">Open problems</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% scores.each do |score| %>
+        <% printer = score.printer %>
+        <% open_count = open_counts.fetch(printer.id, 0) %>
+        <tr>
+          <td>
+            <%= link_to printer.name, service_printer_path(printer), class: 'text-decoration-none' %>
+          </td>
+          <td class="num <%= reliability_score_class(score.display_score) %>">
+            <% if score.display_score.nil? %>
+              <span class="text-secondary">—</span>
+            <% else %>
+              <%= score.display_score %>
+            <% end %>
+          </td>
+          <td class="num <%= open_count.positive? ? 'fw-medium' : 'text-secondary' %>"><%= open_count.positive? ? open_count : '—' %></td>
+          <td>
+            <% if printer.out_of_service? %>
+              <span class="badge text-bg-warning-subtle">Out of service</span>
+            <% else %>
+              <span class="text-secondary">In service</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

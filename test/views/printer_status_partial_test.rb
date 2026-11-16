@@ -54,4 +54,14 @@ class PrinterStatusPartialTest < ActionView::TestCase
     assert_select '.status-dot.status-success', count: 1
     assert_match(/printing/, rendered)
   end
+
+  test 'an out of service printer overrides the live status' do
+    printer = printers(:prusa_xl)
+    printer.update!(prusalink_key: 'secret', prusalink_reachable: true, out_of_service_since: Time.current)
+
+    render partial: 'shared/printer_status', locals: { printer: printer }
+
+    assert_select '.status-dot.status-warning', count: 1
+    assert_match(/out of service/, rendered)
+  end
 end

@@ -10,7 +10,24 @@
 <div class="dashboard-printer-card h-100 text-center">
   <h2 class="dashboard-printer-name mb-2">
     <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
+    <% if logged_in_or_internal? %>
+      <%= link_to service_printer_path(printer),
+                  class: "fs-6 align-middle ms-1 text-decoration-none #{dashboard_service_link_class(printer)}",
+                  title: dashboard_service_link_title(printer) do %>
+        <i class="bi bi-wrench-adjustable" aria-hidden="true"></i>
+        <span class="visually-hidden">Service log for <%= printer.name %></span>
+        <% if open_problem_count(printer).positive? %>
+          <span class="num"><%= open_problem_count(printer) %></span>
+        <% end %>
+      <% end %>
+    <% end %>
   </h2>
+
+  <% if printer.out_of_service? %>
+    <div class="mb-2">
+      <span class="badge text-bg-warning-subtle">Out of service</span>
+    </div>
+  <% end %>
 
   <div class="dashboard-images mb-2">
     <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %> mb-2">

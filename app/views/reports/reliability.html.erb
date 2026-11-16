@@ -1,0 +1,70 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0">Reliability by printer</h1>
+      <div class="text-13 text-secondary mt-1">
+        Last <%= PrinterReliability::WINDOW.in_days.to_i %> days. Attentions count only while a printer is in service.
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to 'All reports', reports_path, class: 'btn btn-outline-secondary btn-sm' %>
+    </div>
+  </div>
+
+  <%= render 'report_nav' %>
+
+  <% if @rows.any? %>
+    <div class="card">
+      <table class="table table-compact mb-0">
+        <thead>
+          <tr>
+            <th <%= report_header_attributes('name', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Printer', 'name', sort_column: @sort_column, sort_direction: @sort_direction) %>
+            </th>
+            <th class="num" <%= report_header_attributes('score', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Reliability', 'score', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+            <th class="num" <%= report_header_attributes('attentions', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Attentions', 'attentions', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+            <th class="num" <%= report_header_attributes('problems', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Problems', 'problems', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+            <th class="num" <%= report_header_attributes('repairs', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Repairs', 'repairs', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+            <th class="num" <%= report_header_attributes('days', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Days out', 'days', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+            <th class="num" <%= report_header_attributes('jobs', sort_column: @sort_column, sort_direction: @sort_direction) %>>
+              <%= report_column_heading('Prints', 'jobs', sort_column: @sort_column, sort_direction: @sort_direction, numeric: true) %>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rows.each do |row| %>
+            <tr>
+              <td>
+                <%= link_to row.printer.name, service_printer_path(row.printer), class: 'text-decoration-none' %>
+              </td>
+              <td class="num <%= reliability_score_class(row.display_score) %>">
+                <% if row.display_score.nil? %>
+                  <span class="text-secondary">—</span>
+                <% else %>
+                  <%= row.display_score %>
+                <% end %>
+              </td>
+              <td class="num"><%= format_report_count_cell(row.attentions) %></td>
+              <td class="num"><%= format_report_count_cell(row.problems) %></td>
+              <td class="num"><%= format_report_count_cell(row.repairs) %></td>
+              <td class="num"><%= format_report_count_cell(row.days_out) %></td>
+              <td class="num"><%= format_report_count_cell(row.jobs) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-secondary">No printers yet.</p>
+  <% end %>
+</div>

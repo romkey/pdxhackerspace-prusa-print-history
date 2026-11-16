@@ -15,6 +15,7 @@ class Printer < ApplicationRecord
   CONNECTIVITY_COLUMNS = %w[prusalink_reachable prusalink_checked_at].freeze
 
   has_many :jobs, dependent: :destroy
+  has_many :service_entries, dependent: :destroy, inverse_of: :printer
   has_many :photo_captures, dependent: :destroy
   has_many :printer_events, -> { order(:occurred_at) }, dependent: :destroy, inverse_of: :printer
   has_many :printer_heads, -> { order(:tool_index) }, dependent: :destroy, inverse_of: :printer
@@ -105,6 +106,10 @@ class Printer < ApplicationRecord
 
   def idle?
     display_status == 'idle'
+  end
+
+  def out_of_service?
+    out_of_service_since.present?
   end
 
   def prusalink_connection_status

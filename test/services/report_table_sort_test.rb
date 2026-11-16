@@ -2,8 +2,10 @@ require 'test_helper'
 
 class ReportTableSortTest < ActiveSupport::TestCase
   Row = Data.define(:key, :label, :week_seconds, :month_seconds, :all_seconds)
+  ScoreRow = Data.define(:key, :label, :display_score)
 
   COLUMNS = ReportTableSort::PRINT_TIME
+  SCORE_COLUMNS = { 'name' => :label, 'score' => :display_score }.freeze
 
   setup do
     @rows = [
@@ -39,6 +41,21 @@ class ReportTableSortTest < ActiveSupport::TestCase
     column, direction = ReportTableSort.normalize('nope', 'sideways', COLUMNS)
 
     assert_equal %w[name asc], [column, direction]
+  end
+
+  test 'missing scores stay after real scores in both directions' do
+    rows = [
+      ScoreRow.new(key: 'a', label: 'Alpha', display_score: nil),
+      ScoreRow.new(key: 'd', label: 'Delta', display_score: nil),
+      ScoreRow.new(key: 'b', label: 'Beta', display_score: 0),
+      ScoreRow.new(key: 'c', label: 'Gamma', display_score: 80)
+    ]
+
+    descending = ReportTableSort.call(rows, columns: SCORE_COLUMNS, sort: 'score', direction: 'desc')
+    ascending = ReportTableSort.call(rows, columns: SCORE_COLUMNS, sort: 'score', direction: 'asc')
+
+    assert_equal %w[Gamma Beta Alpha Delta], descending.map(&:label)
+    assert_equal %w[Beta Gamma Alpha Delta], ascending.map(&:label)
   end
 
   test 'a period with no direction defaults to descending' do

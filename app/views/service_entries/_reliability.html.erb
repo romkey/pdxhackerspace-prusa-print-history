@@ -1,0 +1,30 @@
+<% score = local_assigns.fetch(:score) %>
+<div class="text-13 <%= local_assigns[:compact] ? 'mt-1' : 'mb-3' %>">
+  <% if score&.rated? %>
+    Reliability
+    <span class="num fw-medium <%= reliability_score_class(score.display_score) %>"><%= score.display_score %></span>
+  <% else %>
+    <span class="text-secondary">Reliability —</span>
+    <span class="text-secondary">· not enough recent prints</span>
+  <% end %>
+  <% if score %>
+    <span class="text-secondary">
+      · <%= reliability_count(score.attentions, 'attention') %>
+      · <%= reliability_count(score.problems, 'problem') %>
+      · <%= reliability_count(score.repairs, 'repair') %>
+      <% if score.days_out.positive? %>
+        · <%= pluralize(score.days_out, 'day') %> out of service
+      <% end %>
+      · last 90 days
+    </span>
+  <% end %>
+  <% if local_assigns[:show_link] && score %>
+    · <%= link_to 'Service log', service_printer_path(score.printer), class: 'text-decoration-none' %>
+  <% end %>
+</div>
+<% if score && !local_assigns[:compact] %>
+  <p class="text-12 text-secondary mb-3">
+    Attentions count only while the printer is in service. A score needs at least
+    <%= PrinterReliability::MIN_JOBS %> prints in the last <%= PrinterReliability::WINDOW.in_days.to_i %> days.
+  </p>
+<% end %>

@@ -11,6 +11,13 @@ Rails.application.routes.draw do
   get 'jobs.json', to: 'status#jobs'
   get 'events.json', to: 'status#events'
 
+  get 'service', to: 'service_entries#index', as: :service_log
+  get 'service/problems/new', to: 'service_entries#new_problem', as: :new_problem_report
+  post 'service/problems', to: 'service_entries#create_problem', as: :problem_reports
+  get 'service/repairs/new', to: 'service_entries#new_repair', as: :new_repair_entry
+  post 'service/repairs', to: 'service_entries#create_repair', as: :repair_entries
+  patch 'service/problems/:id/resolve', to: 'service_entries#resolve', as: :resolve_problem
+
   resources :printers do
     member do
       get :camera
@@ -18,6 +25,10 @@ Rails.application.routes.draw do
       post :resume
       post :stop
       post :submit
+      get :service, to: 'service_entries#index'
+      get 'out_of_service/new', to: 'service_entries#new_outage', as: :new_out_of_service
+      post :out_of_service, to: 'service_entries#out_of_service'
+      delete :out_of_service, to: 'service_entries#return_to_service', as: :return_to_service
     end
     resources :jobs, only: %i[index]
   end
@@ -42,6 +53,7 @@ Rails.application.routes.draw do
       get :users
       get :filament
       get :attention
+      get :reliability
     end
   end
 

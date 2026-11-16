@@ -142,7 +142,8 @@ Defined in `refresh.scss` — use these rather than inventing new ones:
 - `.dashboard-page`, `.dashboard-title`, `.dashboard-clock`, `.dashboard-printer-card`,
   `.dashboard-printer-name`, `.dashboard-job-filename`, `.dashboard-temps`,
   `.dashboard-image`, `.dashboard-image-placeholder`, `.dashboard-thumb`, `.dashboard-thumbs`,
-  and the state modifiers `.dashboard-image-wrap--printing` / `--attention` / `--ready`
+  and the state modifiers `.dashboard-image-wrap--printing` / `--attention` / `--ready` /
+  `--out-of-service`
 
 If a new pattern is genuinely needed, add it to `refresh.scss` — don't inline styles, and
 don't reference classes that aren't in this list.

@@ -115,7 +115,9 @@ module StatusExport
       prusalink_reachable: printer.prusalink_reachable,
       prusalink_checked_at: timestamp(printer.prusalink_checked_at),
       display_status: printer.display_status,
-      prusalink_connection_status: printer.prusalink_connection_status.to_s
+      prusalink_connection_status: printer.prusalink_connection_status.to_s,
+      out_of_service: printer.out_of_service?,
+      out_of_service_since: timestamp(printer.out_of_service_since)
     }
   end
 

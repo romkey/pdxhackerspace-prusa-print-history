@@ -13,6 +13,16 @@ class ReportTableSort
     'all' => :all_count
   }.freeze
 
+  RELIABILITY = {
+    'name' => :label,
+    'score' => :display_score,
+    'attentions' => :attentions,
+    'problems' => :problems,
+    'repairs' => :repairs,
+    'days' => :days_out,
+    'jobs' => :jobs
+  }.freeze
+
   class << self
     def call(rows, columns:, sort:, direction:)
       column, dir = normalize(sort, direction, columns)
@@ -34,13 +44,27 @@ class ReportTableSort
     end
 
     def compare(left, right, accessor, direction)
-      result = directed(primary_value(left, accessor) <=> primary_value(right, accessor), direction)
+      result = ordered(primary_value(left, accessor), primary_value(right, accessor), direction)
       result.nonzero? || left.label.to_s.casecmp(right.label.to_s).nonzero? || left.key.to_s <=> right.key.to_s
     end
 
     def primary_value(row, accessor)
       value = row.public_send(accessor)
+      return if accessor != :label && value.nil?
+
       accessor == :label ? value.to_s.downcase : value.to_i
+    end
+
+    def ordered(left_value, right_value, direction)
+      return missing_order(left_value, right_value) if left_value.nil? || right_value.nil?
+
+      directed(left_value <=> right_value, direction)
+    end
+
+    def missing_order(left_value, right_value)
+      return 0 if left_value.nil? && right_value.nil?
+
+      left_value.nil? ? 1 : -1
     end
 
     def directed(comparison, direction)

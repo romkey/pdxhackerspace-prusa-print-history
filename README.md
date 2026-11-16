@@ -11,14 +11,14 @@
 Rails application that tracks and reports the printing history of Prusa and
 Bambu Lab 3D printers. It polls each printer for job and temperature data,
 layers in enclosure / humidity / ambient readings from Home Assistant, grabs a
-camera snapshot on every status change, and serves it all behind a
-viewer-aware UI:
+camera snapshot on every status change, keeps a service log of problems and
+repairs, and serves it all behind a viewer-aware UI:
 
 | Tier                    | Access                                                                 |
 |-------------------------|------------------------------------------------------------------------|
 | Anonymous (off internal networks) | Public printer dashboard at `/` only.                                |
-| Anonymous (on `INTERNAL_NETWORKS`) | Dashboard, jobs, and printers; can clear prints.                     |
-| Logged-in non-admin     | All of the above, plus claim/release a job and a "My prints" filter.   |
+| Anonymous (on `INTERNAL_NETWORKS`) | Dashboard, jobs, printers, and the service log; can clear prints and report a problem. |
+| Logged-in non-admin     | All of the above, plus claim/release a job, a "My prints" filter, log a repair, and mark a printer out of service. |
 | Admin                   | All of the above, plus add/edit/delete printers, app settings, Sidekiq.|
 
 ## Requirements

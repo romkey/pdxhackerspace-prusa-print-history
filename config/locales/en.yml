@@ -33,3 +33,6 @@ en:
     formats:
       precise: "%Y-%m-%d %H:%M:%S %Z"
       dashboard_clock: "%H:%M:%S %A %Y-%m-%d"
+      time_only: "%-l:%M %p"
+      month_day: "%b %-d"
+      month_day_year: "%b %-d, %Y"

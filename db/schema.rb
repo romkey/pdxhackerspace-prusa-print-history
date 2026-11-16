@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_11_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -169,7 +169,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_050000) do
     t.string "printer_type", default: "prusa", null: false
     t.string "bambu_serial"
     t.text "bambu_access_code"
+    t.datetime "out_of_service_since"
     t.index ["name"], name: "index_printers_on_name", unique: true
+    t.index ["out_of_service_since"], name: "index_printers_on_out_of_service_since", where: "(out_of_service_since IS NOT NULL)"
     t.index ["prusa_connect_uuid"], name: "index_printers_on_prusa_connect_uuid"
   end
 
@@ -181,6 +183,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_050000) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "service_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "details"
+    t.string "kind", null: false
+    t.datetime "occurred_at", null: false
+    t.bigint "printer_id", null: false
+    t.datetime "resolved_at"
+    t.bigint "resolved_by_id"
+    t.bigint "resolving_repair_id"
+    t.string "summary", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["kind", "occurred_at"], name: "index_service_entries_on_kind_and_occurred_at"
+    t.index ["occurred_at"], name: "index_service_entries_on_occurred_at"
+    t.index ["printer_id", "occurred_at"], name: "index_service_entries_on_printer_id_and_occurred_at"
+    t.index ["printer_id"], name: "index_service_entries_on_open_problems", where: "((kind)::text = 'problem'::text) AND (resolved_at IS NULL)"
+    t.index ["printer_id"], name: "index_service_entries_on_printer_id"
+    t.index ["resolved_by_id"], name: "index_service_entries_on_resolved_by_id"
+    t.index ["resolving_repair_id"], name: "index_service_entries_on_resolving_repair_id"
+    t.index ["user_id"], name: "index_service_entries_on_user_id"
   end
 
   create_table "settings", force: :cascade do |t|
@@ -249,6 +273,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_11_050000) do
   add_foreign_key "photo_captures", "printers"
   add_foreign_key "printer_events", "printers"
   add_foreign_key "printer_heads", "printers"
+  add_foreign_key "service_entries", "printers"
+  add_foreign_key "service_entries", "service_entries", column: "resolving_repair_id", on_delete: :nullify
+  add_foreign_key "service_entries", "users", column: "resolved_by_id", on_delete: :nullify
+  add_foreign_key "service_entries", "users", column: "user_id", on_delete: :nullify
   add_foreign_key "telemetry_readings", "jobs"
   add_foreign_key "tools", "jobs"
 end

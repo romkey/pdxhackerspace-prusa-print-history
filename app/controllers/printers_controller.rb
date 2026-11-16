@@ -9,6 +9,7 @@ class PrintersController < ApplicationController
 
   def show
     @presenter = PrinterShowPresenter.new(@printer)
+    @reliability = PrinterReliability.for_printer(@printer)
   end
 
   def camera
@@ -29,6 +30,11 @@ class PrintersController < ApplicationController
   end
 
   def submit
+    if @printer.out_of_service?
+      redirect_to @printer, alert: "#{@printer.name} is out of service."
+      return
+    end
+
     file = params[:gcode]
     return redirect_to @printer, alert: 'Choose a file to print.' unless file.respond_to?(:tempfile)
 

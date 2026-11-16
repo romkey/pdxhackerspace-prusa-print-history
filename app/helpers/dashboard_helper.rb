@@ -22,7 +22,26 @@ module DashboardHelper
     filter_name.humanize
   end
 
+  def open_problem_count(printer)
+    open_problem_counts.fetch(printer.id, 0)
+  end
+
+  def dashboard_service_link_class(printer)
+    open_problem_count(printer).positive? ? 'text-warning' : 'text-secondary'
+  end
+
+  def dashboard_service_link_title(printer)
+    count = open_problem_count(printer)
+    return 'Service log' unless count.positive?
+
+    "Service log, #{pluralize(count, 'open problem')}"
+  end
+
   private
+
+  def open_problem_counts
+    @open_problem_counts ||= ServiceEntry.open.group(:printer_id).count
+  end
 
   def dashboard_active_filter_names
     dashboard_active_filters.to_a

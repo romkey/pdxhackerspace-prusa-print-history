@@ -19,6 +19,11 @@ class ReportsController < ApplicationController
     render :report
   end
 
+  def reliability
+    @rows = PrinterReliability.all
+    sort_report_rows!(ReportTableSort::RELIABILITY)
+  end
+
   def attention
     @rows = AttentionEventsReport.by_printer
     @chart_series = AttentionEventsReport.chart_series(@rows)

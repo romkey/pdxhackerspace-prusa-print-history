@@ -124,6 +124,11 @@ body {
   border-color: var(--bs-danger);
 }
 
+.dashboard-image-wrap--out-of-service .dashboard-image {
+  border-color: var(--bs-border-color);
+  opacity: 0.45;
+}
+
 .dashboard-image-placeholder {
   background: var(--bs-tertiary-bg);
 }

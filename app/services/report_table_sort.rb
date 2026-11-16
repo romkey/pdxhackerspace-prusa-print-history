@@ -13,6 +13,16 @@ class ReportTableSort
     'all' => :all_count
   }.freeze
 
+  RELIABILITY = {
+    'name' => :label,
+    'score' => :sort_score,
+    'attentions' => :attentions,
+    'problems' => :problems,
+    'repairs' => :repairs,
+    'days' => :days_out,
+    'jobs' => :jobs
+  }.freeze
+
   class << self
     def call(rows, columns:, sort:, direction:)
       column, dir = normalize(sort, direction, columns)

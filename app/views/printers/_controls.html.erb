@@ -2,6 +2,7 @@
   <div class="card-body printer-controls__bar py-2" data-overflow-actions-target="bar">
     <div class="h-section-label printer-controls__label me-1">Controls</div>
     <div class="printer-controls__items" data-overflow-actions-target="items">
+      <% unless printer.out_of_service? %>
       <%= button_to pause_printer_path(printer), method: :post,
                     class: 'btn btn-outline-secondary btn-sm text-nowrap',
                     form: { class: 'printer-controls__item', data: { overflow_actions_target: 'item' } },
@@ -20,6 +21,7 @@
                     } do %>
         <i class="bi bi-play-fill"></i> Resume
       <% end %>
+      <% end %>
       <%= button_to stop_printer_path(printer), method: :post,
                     class: 'btn btn-outline-danger btn-sm text-nowrap',
                     form: {
@@ -35,6 +37,7 @@
                     } do %>
         <i class="bi bi-stop-fill"></i> Stop print
       <% end %>
+      <% unless printer.out_of_service? %>
       <%= form_with url: submit_printer_path(printer), multipart: true,
                     class: 'printer-controls__item d-flex align-items-center gap-2 ms-1',
                     data: {
@@ -56,6 +59,7 @@
                      data: { turbo_confirm: "Upload this file and start printing on #{printer.name}?" } do %>
           <i class="bi bi-upload"></i> Print
         <% end %>
+      <% end %>
       <% end %>
     </div>
     <div class="dropdown printer-controls__more" data-overflow-actions-target="more" hidden>

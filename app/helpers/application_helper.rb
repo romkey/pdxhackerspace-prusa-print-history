@@ -78,10 +78,14 @@ module ApplicationHelper
   end
 
   def printer_status_dot_class(printer)
-    printer.prusalink_connection_status == :reachable ? 'status-success' : 'status-danger'
+    return 'status-warning' if printer.out_of_service?
+    return 'status-success' if printer.prusalink_connection_status == :reachable
+
+    'status-danger'
   end
 
   def printer_status_label(printer)
+    return 'out of service' if printer.out_of_service?
     return 'offline' unless printer.prusalink_connection_status == :reachable
 
     printer.display_status

@@ -19,6 +19,23 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'h1', count: 0
   end
 
+  test 'the service log link is hidden from visitors outside the shop network' do
+    get root_path, headers: external_request_headers
+
+    assert_select 'a[href=?]', service_printer_path(printers(:prusa_xl)), count: 0
+  end
+
+  test 'the dashboard links to a printer service log and flags an out of service printer' do
+    PrinterServiceLog.report_problem!(printer: printers(:prusa_xl), user: users(:viewer), summary: 'Belt')
+    printers(:prusa_mk4).update!(out_of_service_since: Time.current)
+
+    get root_path
+
+    assert_select 'a.text-warning[href=?]', service_printer_path(printers(:prusa_xl))
+    assert_select 'a.text-warning span.num', text: '1'
+    assert_select '.badge', text: 'Out of service'
+  end
+
   test 'dashboard shows configured heading above the clock' do
     Setting.dashboard_heading = 'PDX Hackerspace 3D Printers'
 

@@ -23,6 +23,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'h1', text: 'Reports'
     assert_select 'a.nav-link.active', text: 'Reports'
     assert_select 'a[href=?]', attention_reports_path
+    assert_select 'a[href=?]', reliability_reports_path
   end
 
   test 'admins can view print time sub-reports' do
@@ -95,6 +96,16 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal ['Prusa MK4', 'Prusa XL', 'Bambu P2S', 'Prusa Mini'], report_row_labels
     assert_select 'a[href=?]', attention_reports_path(sort: 'all', direction: 'desc')
+  end
+
+  test 'reliability report column headings sort printers by name' do
+    login_as(users(:admin))
+
+    get reliability_reports_path
+
+    assert_response :success
+    assert_equal ['Bambu P2S', 'Prusa Mini', 'Prusa MK4', 'Prusa XL'], report_row_labels
+    assert_select 'a[href=?]', reliability_reports_path(sort: 'score', direction: 'desc')
   end
 
   test 'users print time report shows unclaimed row and duration' do

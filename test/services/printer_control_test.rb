@@ -64,6 +64,19 @@ class PrinterControlTest < ActiveSupport::TestCase
     assert_equal [[:upload, 'part.gcode', 3, 'G28']], client.calls
   end
 
+  test 'submit pause and resume are refused while the printer is out of service' do
+    @printer.update!(out_of_service_since: Time.current)
+    client = FakeClient.new({ 'id' => 5, 'state' => 'PRINTING' })
+    control = PrinterControl.new(@printer, client: client)
+
+    assert_raises(PrinterControl::NotAllowed) { control.submit(gcode_upload) }
+    assert_raises(PrinterControl::NotAllowed) { control.pause }
+    assert_raises(PrinterControl::NotAllowed) { control.resume }
+    control.stop
+
+    assert_equal [[:stop, 5]], client.calls
+  end
+
   test 'submit strips directories and unsafe characters from the filename' do
     client = FakeClient.new(nil)
     PrinterControl.new(@printer, client: client).submit(gcode_upload('../../etc/my part$.bgcode'))

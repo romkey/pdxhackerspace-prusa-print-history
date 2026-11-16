@@ -56,6 +56,8 @@ class DashboardPresenter
     end
 
     def image_outline_status
+      return 'out-of-service' if printer.out_of_service?
+
       status = printer.display_status
       return 'printing' if status == 'printing'
       return 'ready' if status == 'idle'
@@ -127,16 +129,22 @@ class DashboardPresenter
   end
 
   def card_attention?(card)
+    return false if card.printer.out_of_service?
+
     card.printer.prusalink_connection_status == :reachable &&
       ATTENTION_OUTLINE_STATUSES.include?(card.printer.display_status)
   end
 
   def card_idle?(card)
+    return false if card.printer.out_of_service?
+
     card.printer.prusalink_connection_status == :reachable &&
       card.printer.display_status == 'idle'
   end
 
   def card_printing?(card)
+    return false if card.printer.out_of_service?
+
     card.printer.prusalink_connection_status == :reachable &&
       card.printer.display_status == 'printing'
   end

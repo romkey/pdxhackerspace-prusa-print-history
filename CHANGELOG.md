@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Printer reports sort when you click a column heading. Click the heading again to reverse the order.
+- A service log for problems and repairs. Anyone on the shop network can report
+  a problem. Signed-in users can log a repair, resolve a problem, and mark a
+  printer out of service.
+- Each printer has a reliability score for the last 90 days. Attentions count
+  only while the printer is in service. The dashboard links to a printer's
+  service log and shows when a printer is out of service. Print jobs can't be
+  sent to a printer that is out of service.
+
 ## [0.15.9] - 2026-11-12
 
 ### Security

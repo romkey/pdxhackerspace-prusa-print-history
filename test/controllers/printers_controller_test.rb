@@ -487,6 +487,27 @@ class PrinterControlsAccessTest < ActionDispatch::IntegrationTest
     assert_select 'button.btn-outline-danger', text: /Stop print/
   end
 
+  test 'pause resume and print are hidden while the printer is out of service' do
+    login_as(users(:admin))
+    @printer.update!(out_of_service_since: Time.current)
+
+    get printer_path(@printer)
+
+    assert_select 'form[action=?]', pause_printer_path(@printer), count: 0
+    assert_select 'form[action=?]', submit_printer_path(@printer), count: 0
+    assert_select 'form[action=?]', stop_printer_path(@printer)
+  end
+
+  test 'admin submit is refused while the printer is out of service' do
+    login_as(users(:admin))
+    @printer.update!(out_of_service_since: Time.current)
+
+    post submit_printer_path(@printer)
+
+    assert_redirected_to printer_path(@printer)
+    assert_match(/out of service/, flash[:alert])
+  end
+
   test 'non-admins cannot post control actions, even on the internal network' do
     post pause_printer_path(@printer)
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-16
+
 ### Added
 - Printer reports sort when you click a column heading. Click the heading again to reverse the order.
 - A service log for problems and repairs. Anyone on the shop network can report

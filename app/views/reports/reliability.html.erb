@@ -48,10 +48,10 @@
                 <%= link_to row.printer.name, service_printer_path(row.printer), class: 'text-decoration-none' %>
               </td>
               <td class="num <%= reliability_score_class(row.display_score) %>">
-                <% if row.display_score %>
-                  <%= row.display_score %>
-                <% else %>
+                <% if row.display_score.nil? %>
                   <span class="text-secondary">—</span>
+                <% else %>
+                  <%= row.display_score %>
                 <% end %>
               </td>
               <td class="num"><%= format_report_count_cell(row.attentions) %></td>

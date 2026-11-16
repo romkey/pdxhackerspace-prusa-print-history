@@ -17,10 +17,10 @@
             <%= link_to printer.name, service_printer_path(printer), class: 'text-decoration-none' %>
           </td>
           <td class="num <%= reliability_score_class(score.display_score) %>">
-            <% if score.display_score %>
-              <%= score.display_score %>
-            <% else %>
+            <% if score.display_score.nil? %>
               <span class="text-secondary">—</span>
+            <% else %>
+              <%= score.display_score %>
             <% end %>
           </td>
           <td class="num <%= open_count.positive? ? 'fw-medium' : 'text-secondary' %>"><%= open_count.positive? ? open_count : '—' %></td>

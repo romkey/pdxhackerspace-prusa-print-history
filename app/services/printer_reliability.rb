@@ -16,11 +16,6 @@ class PrinterReliability
     def display_score
       rated? ? score : nil
     end
-
-    # Unrated printers sort after every real score.
-    def sort_score
-      display_score.nil? ? -1 : display_score
-    end
   end
 
   def self.all

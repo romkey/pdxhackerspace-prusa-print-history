@@ -71,6 +71,13 @@ module ServiceEntriesHelper
     tag.span(pluralize(count.to_i, noun), class: css)
   end
 
+  def repair_occurred_at_value(entry)
+    submitted = params.dig(:service_entry, :occurred_at)
+    return submitted if submitted.present?
+
+    (entry.occurred_at || Time.current).strftime('%Y-%m-%dT%H:%M')
+  end
+
   def resolve_checked?(problem)
     ids = params.dig(:service_entry, :resolves)
     return true if ids.nil?

@@ -98,6 +98,37 @@ class ServiceEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Nozzle replaced/, response.body)
   end
 
+  test 'a failed repair keeps the summary, details, and time' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Under extrusion')
+    PrinterServiceLog.resolve_problem!(problem, user: @user)
+    login_as(@user)
+
+    post repair_entries_path, params: repair_params(
+      summary: 'Swapped the hotend', details: 'New heater block', occurred_at: '2026-11-01T09:30',
+      resolves: [problem.id.to_s]
+    )
+
+    assert_response :unprocessable_content
+    assert_select 'input[name="service_entry[summary]"][value=?]', 'Swapped the hotend'
+    assert_select 'textarea[name="service_entry[details]"]', text: 'New heater block'
+    assert_select 'input[name="service_entry[occurred_at]"][value=?]', '2026-11-01T09:30'
+    assert_match 'Choose open problem reports for this printer.', response.body
+  end
+
+  test 'an unparseable repair time stays in the form' do
+    login_as(@user)
+
+    post repair_entries_path, params: repair_params(
+      summary: 'Swapped the hotend', details: 'New heater block', occurred_at: 'not-a-time'
+    )
+
+    assert_response :unprocessable_content
+    assert_select 'input[name="service_entry[summary]"][value=?]', 'Swapped the hotend'
+    assert_select 'textarea[name="service_entry[details]"]', text: 'New heater block'
+    assert_select 'input[name="service_entry[occurred_at]"][value=?]', 'not-a-time'
+    assert_match 'Enter a valid date and time.', response.body
+  end
+
   test 'a blank problem report is rejected' do
     post problem_reports_path, params: problem_params(summary: '')
 
@@ -112,15 +143,11 @@ class ServiceEntriesControllerTest < ActionDispatch::IntegrationTest
     { service_entry: entry }
   end
 
-  def repair_params(summary: 'Replaced the nozzle', return_to_service: '0', resolves: [''])
+  def repair_params(summary: 'Replaced the nozzle', details: '', occurred_at: Time.current.iso8601,
+                    return_to_service: '0', resolves: [''])
     {
       service_entry: {
-        printer_id: @printer.id,
-        summary:,
-        details: '',
-        occurred_at: Time.current.iso8601,
-        return_to_service:,
-        resolves:
+        printer_id: @printer.id, summary:, details:, occurred_at:, return_to_service:, resolves:
       }
     }
   end

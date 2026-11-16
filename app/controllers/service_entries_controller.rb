@@ -123,13 +123,15 @@ class ServiceEntriesController < ApplicationController
     case error
     when ActiveRecord::RecordInvalid then @entry = error.record
     when ActiveRecord::RecordNotFound then @entry.errors.add(:printer, 'must be chosen')
-    else @entry.errors.add(:base, error.message)
+    else
+      @entry.assign_attributes(summary: repair_params[:summary], details: repair_params[:details])
+      @entry.errors.add(:base, error.message)
     end
   end
 
   def build_form(kind)
     @printers = Printer.ordered
-    @printer = Printer.find_by(id: params[:printer_id].presence || entry_printer_id)
+    @printer = Printer.find_by(id: params[:printer_id].presence || params.dig(:service_entry, :printer_id))
     @entry = ServiceEntry.new(printer: @printer, kind:)
     @open_problems = @printer ? @printer.service_entries.open.recent : ServiceEntry.none
   end
@@ -169,10 +171,6 @@ class ServiceEntriesController < ApplicationController
 
   def resolve_ids
     Array(params.dig(:service_entry, :resolves))
-  end
-
-  def entry_printer_id
-    params.dig(:service_entry, :printer_id)
   end
 
   def truthy?(value)

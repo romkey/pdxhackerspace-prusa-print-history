@@ -33,9 +33,7 @@
           </div>
           <div class="mb-3">
             <%= f.label :occurred_at, 'When', class: 'form-label' %>
-            <%= f.datetime_field :occurred_at,
-                                 value: (@entry.occurred_at || Time.current).strftime('%Y-%m-%dT%H:%M'),
-                                 class: 'form-control' %>
+            <%= f.datetime_field :occurred_at, value: repair_occurred_at_value(@entry), class: 'form-control' %>
           </div>
 
           <% if @open_problems.any? %>

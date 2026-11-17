@@ -51,6 +51,7 @@ x-app-base: &app-base
     LOCAL_ADMIN_EMAIL: ${LOCAL_ADMIN_EMAIL:-}
     LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:-}
     LOCAL_ADMIN_NAME: ${LOCAL_ADMIN_NAME:-Local Admin}
+    METRICS_TOKEN: ${METRICS_TOKEN:-}
   volumes:
     - prusa-print-history-storage:/data/storage
   networks:

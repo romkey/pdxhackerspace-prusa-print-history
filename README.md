@@ -76,8 +76,45 @@ for the full list; the values you must set on a fresh install are:
   **Notifications** in the account menu. Without `SMTP_SERVER`, email is
   not offered. In development without SMTP, outgoing mail is written to
   `tmp/mail/` instead.
+- `METRICS_TOKEN` — optional; enables the [Prometheus `/metrics` endpoint](#prometheus-metrics).
 - `SLACK_API_TOKEN` — bot token with `chat:write`, `files:write`, and `im:write`;
   used to DM claimants who opt in and have a Slack user ID on their profile.
+
+## Prometheus metrics
+
+`GET /metrics` serves Prometheus text-format metrics. It is disabled (404) until you set
+`METRICS_TOKEN`; generate one with `openssl rand -hex 32`. Requests must send it as a bearer
+token. The token is not accepted in the query string, and the endpoint ignores logins and
+`INTERNAL_NETWORKS`.
+
+```yaml
+scrape_configs:
+  - job_name: prusa-print-history
+    metrics_path: /metrics
+    authorization:
+      credentials: <METRICS_TOKEN>
+    static_configs:
+      - targets: ['prusa-history.example.com']
+```
+
+Metrics are prefixed `prusa_history_`:
+
+- **App:** `build_info{version}`, `scrape_duration_seconds`.
+- **Users:** `users`, `admin_users`, `users_active_30d`, `users_trained_on_prusa`,
+  `user_print_seconds_total`.
+- **Printers** (label `printer`): `printers{printer_type}`, `printers_by_state{state}`,
+  `printer_state{printer,state}`, `printer_reachable`, `printer_out_of_service`,
+  `printer_reliability_score`, `printer_attentions_90d`, and ambient, enclosure temperature
+  and humidity gauges.
+- **Jobs:** `jobs{status}`, `jobs_by_printer{printer,status}`, `jobs_cleared{outcome}`,
+  `job_failures{reason}`, `jobs_private`, `jobs_unclaimed`, `print_seconds_total{printer}`,
+  `filament_grams_total{printer}`, `job_events_total{event_type}`, `photo_captures`, and the
+  `job_duration_seconds` histogram for finished and cancelled jobs.
+- **Service log:** `service_open_problems{printer}`, `service_entries_total{kind}`.
+- **Infrastructure:** `home_assistant_ok`, `home_assistant_last_poll_timestamp_seconds`,
+  `label_printers{status}`, and Sidekiq `sidekiq_processes`, `sidekiq_busy`, `sidekiq_enqueued`,
+  `sidekiq_retries`, `sidekiq_dead`, `sidekiq_processed_total`, `sidekiq_failed_total`,
+  `sidekiq_queue_latency_seconds{queue}`. If Redis can't be read, `sidekiq_up 0` is emitted instead.
 
 ## Bambu Lab printers (LAN Developer Mode)
 

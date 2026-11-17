@@ -3,6 +3,8 @@ require 'sidekiq/web'
 Rails.application.routes.draw do
   get 'up' => 'rails/health#show', as: :rails_health_check
 
+  get 'metrics', to: 'metrics#show', as: :metrics
+
   root 'dashboard#index'
 
   get 'ar', to: 'ar#show', as: :ar

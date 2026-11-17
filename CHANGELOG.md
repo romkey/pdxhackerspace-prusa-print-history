@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- A Prometheus `/metrics` endpoint, protected by a bearer token (`METRICS_TOKEN`) and off
+  until you set one. It reports users, printers and their state and reliability, jobs by
+  status and printer, failure reasons, print time, filament, job durations, the service log,
+  Home Assistant health, and Sidekiq queues.
+
 ## [0.16.0] - 2026-11-16
 
 ### Added

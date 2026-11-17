@@ -19,9 +19,17 @@ class MetricsController < ApplicationController
   end
 
   def token_matches?(expected)
-    provided = request.authorization.to_s[/\ABearer\s+(.+)\z/i, 1].to_s
+    provided = bearer_token
     ActiveSupport::SecurityUtils.secure_compare(
       Digest::SHA256.hexdigest(provided), Digest::SHA256.hexdigest(expected)
     )
+  end
+
+  # Plain string handling (no regex) so a hostile Authorization header can't trigger backtracking.
+  def bearer_token
+    scheme, token = request.authorization.to_s.split(' ', 2)
+    return '' unless scheme.to_s.casecmp?('bearer')
+
+    token.to_s.strip
   end
 end

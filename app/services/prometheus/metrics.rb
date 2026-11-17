@@ -42,8 +42,8 @@ module Prometheus
                  User.where(last_login_at: 30.days.ago..).count)
       @out.gauge('prusa_history_users_trained_on_prusa', 'Users marked as trained on the Prusa printers.',
                  User.where(trained_on_prusa: true).count)
-      @out.counter('prusa_history_user_print_seconds_total', 'Print time credited to users, in seconds.',
-                   User.sum(:total_print_seconds))
+      @out.gauge('prusa_history_user_print_seconds', 'Print time credited to users, in seconds.',
+                 User.sum(:total_print_seconds))
     end
 
     def printer_metrics
@@ -73,8 +73,11 @@ module Prometheus
 
     def reliability_metrics
       scores = PrinterReliability.all
-      @out.gauge('prusa_history_printer_reliability_score', 'Reliability score (0-100) over the last 90 days.',
-                 scores.map { |r| [{ printer: r.printer.name }, r.score] })
+      @out.gauge('prusa_history_printer_reliability_score',
+                 'Reliability score (0-100) over the last 90 days; omitted until a printer has enough jobs.',
+                 scores.select(&:rated?).map { |r| [{ printer: r.printer.name }, r.score] })
+      @out.gauge('prusa_history_printer_jobs_90d', 'Jobs in the last 90 days.',
+                 scores.map { |r| [{ printer: r.printer.name }, r.jobs] })
       @out.gauge('prusa_history_printer_attentions_90d', 'Attention events in the last 90 days.',
                  scores.map { |r| [{ printer: r.printer.name }, r.attentions] })
     end
@@ -92,8 +95,8 @@ module Prometheus
       job_counts
       job_totals
       job_durations
-      @out.counter('prusa_history_job_events_total', 'Job events recorded, by type.',
-                   JobEvent.group(:event_type).count.map { |type, n| [{ event_type: type }, n] })
+      @out.gauge('prusa_history_job_events', 'Job events recorded, by type.',
+                 JobEvent.group(:event_type).count.map { |type, n| [{ event_type: type }, n] })
       @out.gauge('prusa_history_photo_captures', 'Stored photo captures.', PhotoCapture.count)
     end
 
@@ -119,23 +122,25 @@ module Prometheus
     end
 
     def job_totals
-      @out.counter('prusa_history_print_seconds_total', 'Time spent printing, in seconds, by printer.',
-                   sums(:time_printing_seconds))
-      @out.counter('prusa_history_filament_grams_total', 'Filament used, in grams, by printer.',
-                   sums(:total_filament_grams))
+      @out.gauge('prusa_history_print_seconds', 'Time spent printing, in seconds, by printer.',
+                 sums(:time_printing_seconds))
+      @out.gauge('prusa_history_filament_grams', 'Filament used, in grams, by printer.',
+                 sums(:total_filament_grams))
     end
 
     def job_durations
       values = Job.terminal.where.not(total_duration_seconds: nil).pluck(:total_duration_seconds)
-      @out.histogram('prusa_history_job_duration_seconds', 'Total duration of finished and cancelled jobs.',
-                     buckets: DURATION_BUCKETS, values:)
+      @out.cumulative_gauge('prusa_history_jobs_within_duration', 'Finished and cancelled jobs lasting at most le sec.',
+                            buckets: DURATION_BUCKETS, values:)
+      @out.gauge('prusa_history_job_duration_seconds_sum', 'Combined duration of finished and cancelled jobs.',
+                 values.sum)
     end
 
     def service_metrics
       @out.gauge('prusa_history_service_open_problems', 'Open problem reports by printer.',
                  ServiceEntry.open.joins(:printer).group('printers.name').count.map { |n, c| [{ printer: n }, c] })
-      @out.counter('prusa_history_service_entries_total', 'Service log entries by kind.',
-                   ServiceEntry.group(:kind).count.map { |k, c| [{ kind: k }, c] })
+      @out.gauge('prusa_history_service_entries', 'Service log entries by kind.',
+                 ServiceEntry.group(:kind).count.map { |k, c| [{ kind: k }, c] })
     end
 
     def infrastructure_metrics

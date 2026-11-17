@@ -38,7 +38,7 @@ class MetricsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, '# TYPE prusa_history_jobs gauge'
     assert_match(/^prusa_history_users \d+$/, response.body)
     assert_match(/^prusa_history_jobs\{status="printing"\} \d+$/, response.body)
-    assert_match(/^prusa_history_job_duration_seconds_bucket\{le="\+Inf"\} \d+$/, response.body)
+    assert_match(/^prusa_history_jobs_within_duration\{le="\+Inf"\} \d+$/, response.body)
     assert_match(/^prusa_history_printer_reachable\{printer="Prusa XL"\} [01]$/, response.body)
   end
 end

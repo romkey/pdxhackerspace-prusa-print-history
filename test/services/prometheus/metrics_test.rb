@@ -20,11 +20,23 @@ module Prometheus
       assert_includes @body, %(prusa_history_jobs{status="printing"} #{printing}\n)
     end
 
-    test 'reports every printer with state and reliability' do
+    test 'reports every printer with state' do
       Printer.find_each do |printer|
         assert_includes @body, %(prusa_history_printer_reachable{printer="#{printer.name}"})
-        assert_includes @body, %(prusa_history_printer_reliability_score{printer="#{printer.name}"})
+        assert_includes @body, %(prusa_history_printer_jobs_90d{printer="#{printer.name}"})
       end
+    end
+
+    test 'omits the reliability score for unrated printers' do
+      PrinterReliability.all.to_a.each do |row|
+        sample = %(prusa_history_printer_reliability_score{printer="#{row.printer.name}"})
+
+        assert_equal row.rated?, @body.include?(sample)
+      end
+    end
+
+    test 'does not type recomputed totals as counters' do
+      assert_no_match(/# TYPE prusa_history_(?!sidekiq)\w+ (counter|histogram)/, @body)
     end
 
     test 'counts failed prints by reason' do

@@ -101,16 +101,18 @@ Metrics are prefixed `prusa_history_`:
 
 - **App:** `build_info{version}`, `scrape_duration_seconds`.
 - **Users:** `users`, `admin_users`, `users_active_30d`, `users_trained_on_prusa`,
-  `user_print_seconds_total`.
+  `user_print_seconds`.
 - **Printers** (label `printer`): `printers{printer_type}`, `printers_by_state{state}`,
   `printer_state{printer,state}`, `printer_reachable`, `printer_out_of_service`,
-  `printer_reliability_score`, `printer_attentions_90d`, and ambient, enclosure temperature
+  `printer_reliability_score` (only once a printer has enough jobs), `printer_jobs_90d`, `printer_attentions_90d`, and ambient, enclosure temperature
   and humidity gauges.
 - **Jobs:** `jobs{status}`, `jobs_by_printer{printer,status}`, `jobs_cleared{outcome}`,
-  `job_failures{reason}`, `jobs_private`, `jobs_unclaimed`, `print_seconds_total{printer}`,
-  `filament_grams_total{printer}`, `job_events_total{event_type}`, `photo_captures`, and the
-  `job_duration_seconds` histogram for finished and cancelled jobs.
-- **Service log:** `service_open_problems{printer}`, `service_entries_total{kind}`.
+  `job_failures{reason}`, `jobs_private`, `jobs_unclaimed`, `print_seconds{printer}`,
+  `filament_grams{printer}`, `job_events{event_type}`, `photo_captures`, and the
+  `jobs_within_duration{le}` (cumulative counts) and `job_duration_seconds_sum` for finished
+  and cancelled jobs. These are gauges recomputed on each scrape, not Prometheus counters or
+  histograms, because deleting or reassigning a job can lower them.
+- **Service log:** `service_open_problems{printer}`, `service_entries{kind}`.
 - **Infrastructure:** `home_assistant_ok`, `home_assistant_last_poll_timestamp_seconds`,
   `label_printers{status}`, and Sidekiq `sidekiq_processes`, `sidekiq_busy`, `sidekiq_enqueued`,
   `sidekiq_retries`, `sidekiq_dead`, `sidekiq_processed_total`, `sidekiq_failed_total`,

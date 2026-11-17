@@ -25,17 +25,15 @@ module Prometheus
       assert_includes out.to_s, 'm{printer="Say \"hi\"\\\\\nnow"} 1'
     end
 
-    test 'renders histograms cumulatively' do
+    test 'renders cumulative gauges' do
       out = Exposition.new
-      out.histogram('d', 'Durations.', buckets: [10, 20], values: [5, 15, 15, 99])
-
+      out.cumulative_gauge('d', 'Durations.', buckets: [10, 20], values: [5, 15, 15, 99])
       text = out.to_s
 
-      assert_includes text, 'd_bucket{le="10"} 1'
-      assert_includes text, 'd_bucket{le="20"} 3'
-      assert_includes text, 'd_bucket{le="+Inf"} 4'
-      assert_includes text, 'd_sum 134'
-      assert_includes text, 'd_count 4'
+      assert_includes text, '# TYPE d gauge'
+      assert_includes text, 'd{le="10"} 1'
+      assert_includes text, 'd{le="20"} 3'
+      assert_includes text, 'd{le="+Inf"} 4'
     end
 
     test 'renders NaN for nil values' do

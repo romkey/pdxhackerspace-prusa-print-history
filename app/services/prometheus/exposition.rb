@@ -15,15 +15,12 @@ module Prometheus
       family(name, help, 'counter', samples)
     end
 
-    # buckets: ascending upper bounds; values: the observed numbers.
-    def histogram(name, help, buckets:, values:)
-      header(name, help, 'histogram')
-      buckets.each do |bound|
-        @lines << sample("#{name}_bucket", { le: bound }, values.count { |v| v <= bound })
-      end
-      @lines << sample("#{name}_bucket", { le: '+Inf' }, values.size)
-      @lines << sample("#{name}_sum", {}, values.sum)
-      @lines << sample("#{name}_count", {}, values.size)
+    # Cumulative "less than or equal" counts as a gauge. These are recomputed from the database each
+    # scrape and can fall when jobs are deleted, so they must not be typed as a Prometheus histogram.
+    def cumulative_gauge(name, help, buckets:, values:)
+      samples = buckets.map { |bound| [{ le: bound }, values.count { |v| v <= bound }] }
+      samples << [{ le: '+Inf' }, values.size]
+      gauge(name, help, samples)
     end
 
     def to_s

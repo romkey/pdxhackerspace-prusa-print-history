@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ## [0.17.0] - 2026-11-17
+
 ### Added
 - A Prometheus `/metrics` endpoint, protected by a bearer token (`METRICS_TOKEN`) and off
   until you set one. It reports users, printers and their state and reliability, jobs by

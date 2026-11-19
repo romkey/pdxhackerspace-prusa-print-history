@@ -21,6 +21,7 @@
     "defaults"
   ],
   "resolutions": {
-    "nodemon/chokidar": "^6.0.0"
+    "nodemon/chokidar": "^6.0.0",
+    "minimatch": "^11.0.1"
   }
 }

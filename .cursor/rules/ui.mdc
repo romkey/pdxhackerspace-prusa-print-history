@@ -6,7 +6,7 @@ alwaysApply: true
 # UI Design Rules
 
 Apply these rules to any HTML/template/CSS written for this project. The system is Bootstrap
-5.3.3 following the OS light/dark preference (`$color-mode-type: media-query` — no
+5.3.9 following the OS light/dark preference (`$color-mode-type: media-query` — no
 `data-bs-theme`, no toggle), plus a small custom layer in
 `app/assets/stylesheets/refresh.scss`.
 

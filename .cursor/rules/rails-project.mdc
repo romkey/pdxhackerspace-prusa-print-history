@@ -9,8 +9,8 @@ Rails app that tracks the print history of a fleet of Prusa 3D printers. It poll
 for job and telemetry data, layers in Home Assistant environment readings, captures camera
 photos, and serves it behind a viewer-aware UI.
 
-- **Stack:** Rails 8.1, Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8 + sidekiq-cron
-- **Frontend:** Bootstrap 5.3.3 via cssbundling-rails (Sass/Yarn), Stimulus, Turbo,
+- **Stack:** Rails 8.1, Ruby 4.0.10, PostgreSQL 18, Redis 8, Sidekiq 8 + sidekiq-cron
+- **Frontend:** Bootstrap 5.3.9 via cssbundling-rails (Sass/Yarn), Stimulus, Turbo,
   importmap-rails, Propshaft, Chartkick
 - **Auth:** OmniAuth + OpenID Connect (Authentik), plus an optional local admin password login
 - **Testing:** Minitest with fixtures; Capybara + Selenium available for system tests

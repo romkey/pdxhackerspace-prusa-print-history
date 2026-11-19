@@ -5,7 +5,7 @@
 # Build:  docker build -t prusa-print-history .
 # Run:    docker compose -f docker-compose.server.yml up -d
 
-ARG RUBY_VERSION=4.0.9
+ARG RUBY_VERSION=4.0.10
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 WORKDIR /rails
@@ -23,6 +23,8 @@ ENV RAILS_ENV="production" \
     BUNDLE_WITHOUT="development:test" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
+RUN gem install bundler -v 4.1.0 --no-document --install-dir "$(ruby -e 'puts Gem.default_dir')"
+
 FROM base AS build
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -31,13 +33,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev node-gyp pkg-config python-is-python3 && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-ARG NODE_VERSION=26.13.0
+ARG NODE_VERSION=26.13.1
 ARG TARGETARCH
 RUN ARCH="$(case "${TARGETARCH}" in amd64) echo x64;; arm64) echo arm64;; *) echo "${TARGETARCH}";; esac)" && \
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" | \
     tar -xJ -C /usr/local --strip-components=1 && \
-    corepack enable && \
-    corepack prepare yarn@1.22.22 --activate
+    /usr/local/bin/npm install -g yarn@1.22.22
 
 COPY Gemfile Gemfile.lock ./
 RUN --mount=type=cache,target=/usr/local/bundle/cache,sharing=locked \

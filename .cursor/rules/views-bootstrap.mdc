@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Views and Bootstrap
 
-- **Bootstrap 5.3.3**, compiled from Sass by cssbundling-rails
+- **Bootstrap 5.3.9**, compiled from Sass by cssbundling-rails
   (`app/assets/stylesheets/application.bootstrap.scss` → `app/assets/builds/application.css`).
   Use Bootstrap utility classes and components; avoid custom CSS when a utility exists.
 - **Color mode:** `$color-mode-type: media-query` — the app follows the OS light/dark

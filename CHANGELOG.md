@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+- Docker images run Ruby 4.0.10, matching the app, so the published regular-expression and string case-conversion fixes are in the image you deploy.
+
+### Changed
+- Docker images use Node.js 26.13.1. Yarn is installed with npm because current Node no longer includes Corepack. Ruby gems and front-end packages are refreshed, including Bundler 4.1.0.
+
 ## [0.17.0] - 2026-11-17
 
 ### Added

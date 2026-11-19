@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-11-19
+
 ### Security
 - Docker images run Ruby 4.0.10, matching the app, so the published regular-expression and string case-conversion fixes are in the image you deploy.
 - The stylesheet watcher's file matcher is updated past a published denial-of-service issue.

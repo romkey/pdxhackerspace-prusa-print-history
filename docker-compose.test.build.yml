@@ -37,7 +37,7 @@ x-app-base: &app-base
 
 services:
   postgres:
-    image: postgres:18
+    image: postgres:19
     container_name: prusa-print-history-test-postgres
     environment:
       POSTGRES_USER: postgres

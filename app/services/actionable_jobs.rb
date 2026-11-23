@@ -19,12 +19,13 @@ class ActionableJobs
 
   private
 
+  # One row per printer (Postgres DISTINCT ON), newest first in the same order as Job.recent,
+  # so a kiosk polling the printer list never loads the whole print history.
   def latest_per_printer(scope)
     scope.where(printer_id: @printer_ids)
-         .includes(:owner, :cleared_by, :printer)
-         .reorder(started_at: :desc, created_at: :desc)
-         .to_a
-         .group_by(&:printer_id)
-         .transform_values(&:first)
+         .select('DISTINCT ON (jobs.printer_id) jobs.*')
+         .reorder(Arel.sql('jobs.printer_id, jobs.started_at DESC, jobs.created_at DESC'))
+         .preload(:owner, :cleared_by, :printer)
+         .index_by(&:printer_id)
   end
 end

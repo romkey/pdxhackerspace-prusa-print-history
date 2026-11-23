@@ -12,6 +12,10 @@
         <% end %>
       </div>
     </div>
+    <% if logged_in? %>
+      <%= link_to 'Download my history (CSV)', jobs_path(jobs_filter_params.except(:owner).merge(format: :csv)),
+                  class: 'btn btn-outline-secondary btn-sm' %>
+    <% end %>
   </div>
 
   <%= render 'jobs/filters', printers: @printers %>

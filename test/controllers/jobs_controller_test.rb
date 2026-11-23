@@ -1,3 +1,4 @@
+require 'csv'
 require 'test_helper'
 
 class JobsControllerTest < ActionDispatch::IntegrationTest
@@ -663,6 +664,37 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to job_path(@job)
     assert_match(/not cleared/i, flash[:alert])
+  end
+
+  test 'csv export requires sign-in even on the internal network' do
+    get jobs_path(format: :csv)
+
+    assert_redirected_to login_path
+  end
+
+  test 'csv export contains only the signed-in user\'s jobs' do
+    login_as(users(:viewer))
+
+    get jobs_path(format: :csv)
+
+    assert_response :success
+    assert_equal 'text/csv', response.media_type
+    rows = CSV.parse(response.body, headers: true)
+
+    assert_equal JobHistoryCsv::HEADERS, rows.headers
+    assert_includes rows.pluck('file'), 'vase.gcode'
+    assert_not_includes rows.pluck('file'), 'hook.gcode'
+    assert_equal users(:viewer).owned_jobs.count, rows.size
+  end
+
+  test 'csv export respects filters' do
+    login_as(users(:viewer))
+
+    get jobs_path(format: :csv, status: ['finished'])
+
+    rows = CSV.parse(response.body, headers: true)
+
+    assert_equal ['finished'], rows.pluck('status').uniq
   end
 
   private

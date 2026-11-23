@@ -107,6 +107,7 @@ GEM
       unicode (>= 0.4.4.5)
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
+    csv (3.3.7)
     date (3.6.0)
     debug (1.11.1)
       irb (~> 1.10)
@@ -422,6 +423,7 @@ DEPENDENCIES
   capybara
   chartkick (~> 5.1)
   cssbundling-rails
+  csv
   debug
   dotenv-rails (~> 3.1)
   image_processing (~> 2.0)

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Download your print history as a CSV from the Jobs page. The file includes only your own prints and respects the status, printer and date filters you have applied.
+
 ## [0.17.1] - 2026-11-19
 
 ### Security

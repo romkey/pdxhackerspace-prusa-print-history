@@ -2,15 +2,12 @@ class JobsController < ApplicationController
   include JobHistoryExport
 
   before_action :require_login_or_internal, only: %i[index show]
-  before_action :require_login, only: %i[claim unclaim]
+  before_action :require_login, only: %i[claim unclaim export]
   before_action :require_admin_or_internal, only: %i[clear_print unclear_print]
   before_action :require_admin, only: %i[update reprint_label]
-  before_action :require_login_for_csv, only: :index
   before_action :set_job, only: %i[show update claim unclaim clear_print unclear_print reprint_label]
 
   def index
-    return send_history_csv if request.format.csv?
-
     scope = base_scope.includes(:printer, :owner, :preview_image_attachment,
                                 photo_captures: { image_attachment: :blob }).recent
     scope = apply_filters(scope)
@@ -31,6 +28,10 @@ class JobsController < ApplicationController
     @timeline          = JobTimeline.new(@job, events: @job.events.ordered.to_a)
     @label_printers    = LabelPrinter.ordered
     @default_label_printer = LabelPrinter.default
+  end
+
+  def export
+    send_history_export
   end
 
   def claim

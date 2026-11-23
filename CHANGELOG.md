@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- The Jobs page's history download is now a menu with CSV and JSON options.
+
 ## [0.18.0] - 2026-11-22
 
 ### Added

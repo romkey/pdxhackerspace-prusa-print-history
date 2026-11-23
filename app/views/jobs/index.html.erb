@@ -13,8 +13,15 @@
       </div>
     </div>
     <% if logged_in? %>
-      <%= link_to 'Download my history (CSV)', jobs_path(jobs_filter_params.except(:owner).merge(format: :csv)),
-                  class: 'btn btn-outline-secondary btn-sm' %>
+      <% export_params = jobs_filter_params.except(:owner) %>
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                aria-expanded="false">Download my history</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><%= link_to 'CSV', export_jobs_path(export_params.merge(format: :csv)), class: 'dropdown-item' %></li>
+          <li><%= link_to 'JSON', export_jobs_path(export_params.merge(format: :json)), class: 'dropdown-item' %></li>
+        </ul>
+      </div>
     <% end %>
   </div>
 

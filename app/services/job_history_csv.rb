@@ -2,9 +2,7 @@ require 'csv'
 
 # Renders a user's print history as CSV.
 class JobHistoryCsv
-  HEADERS = %w[
-    file printer status started_at ended_at duration_seconds filament_grams cleared_at clear_outcome
-  ].freeze
+  HEADERS = JobHistoryRecords::FIELDS
 
   def self.call(jobs)
     new(jobs).to_csv
@@ -24,14 +22,7 @@ class JobHistoryCsv
   private
 
   def row(job)
-    [
-      safe(job.filename), safe(job.printer.name), job.status, time(job.started_at), time(job.ended_at),
-      job.duration_seconds, job.total_filament_grams&.to_f, time(job.cleared_at), job.clear_outcome
-    ]
-  end
-
-  def time(value)
-    value&.utc&.iso8601
+    JobHistoryRecords.for(job).map { |field, value| %w[file printer].include?(field) ? safe(value) : value }
   end
 
   # Neutralise spreadsheet formula injection in user-influenced text.

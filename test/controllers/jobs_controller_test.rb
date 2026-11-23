@@ -667,7 +667,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'csv export requires sign-in even on the internal network' do
-    get jobs_path(format: :csv)
+    get export_jobs_path(format: :csv)
 
     assert_redirected_to login_path
   end
@@ -675,7 +675,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
   test 'csv export contains only the signed-in user\'s jobs' do
     login_as(users(:viewer))
 
-    get jobs_path(format: :csv)
+    get export_jobs_path(format: :csv)
 
     assert_response :success
     assert_equal 'text/csv', response.media_type
@@ -687,10 +687,40 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:viewer).owned_jobs.count, rows.size
   end
 
+  test 'json export contains only the signed-in user\'s jobs' do
+    login_as(users(:viewer))
+
+    get export_jobs_path(format: :json)
+
+    assert_response :success
+    assert_equal 'application/json', response.media_type
+    records = response.parsed_body
+
+    assert_equal JobHistoryRecords::FIELDS, records.first.keys
+    assert_includes records.pluck('file'), 'vase.gcode'
+    assert_not_includes records.pluck('file'), 'hook.gcode'
+    assert_equal 7200, records.find { |r| r['file'] == 'vase.gcode' }['duration_seconds']
+  end
+
+  test 'json export requires sign-in' do
+    get export_jobs_path(format: :json)
+
+    assert_redirected_to login_path
+  end
+
+  test 'index offers CSV and JSON downloads when signed in' do
+    login_as(users(:viewer))
+
+    get jobs_path
+
+    assert_select 'a.dropdown-item[href=?]', export_jobs_path(format: :csv), text: 'CSV'
+    assert_select 'a.dropdown-item[href=?]', export_jobs_path(format: :json), text: 'JSON'
+  end
+
   test 'csv export respects filters' do
     login_as(users(:viewer))
 
-    get jobs_path(format: :csv, status: ['finished'])
+    get export_jobs_path(format: :csv, status: ['finished'])
 
     rows = CSV.parse(response.body, headers: true)
 

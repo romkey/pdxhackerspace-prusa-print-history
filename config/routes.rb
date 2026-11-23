@@ -36,6 +36,9 @@ Rails.application.routes.draw do
   end
 
   resources :jobs, only: %i[index show update] do
+    collection do
+      get :export
+    end
     member do
       patch  :claim
       delete :claim, action: :unclaim

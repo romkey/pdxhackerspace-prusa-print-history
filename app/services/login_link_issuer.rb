@@ -67,9 +67,10 @@ class LoginLinkIssuer
     @user.admin? && !Setting.login_links_allow_admins?
   end
 
+  # A blank setting means its own default: 60 minutes emailed, 5 minutes on a kiosk screen.
   def lifetime
-    minutes = @delivery == 'display' ? Setting.login_link_qr_ttl_minutes : Setting.login_link_ttl_minutes
-    (minutes || ApiSettings::NUMBER_DEFAULTS[:login_link_ttl_minutes]).minutes
+    key = @delivery == 'display' ? :login_link_qr_ttl_minutes : :login_link_ttl_minutes
+    (Setting.public_send(key) || ApiSettings::NUMBER_DEFAULTS.fetch(key)).minutes
   end
 
   def refuse!(message, code, status = :forbidden)

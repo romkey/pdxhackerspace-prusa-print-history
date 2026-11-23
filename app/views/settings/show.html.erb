@@ -159,7 +159,7 @@
           <%= render 'settings/days_field', key: :login_link_ttl_minutes, label: 'Emailed links expire after (minutes)',
                                             value: Setting.login_link_ttl_minutes, blank: '60 minutes' %>
           <%= render 'settings/days_field', key: :login_link_qr_ttl_minutes, label: 'QR code links expire after (minutes)',
-                                            value: Setting.login_link_qr_ttl_minutes, blank: '60 minutes' %>
+                                            value: Setting.login_link_qr_ttl_minutes, blank: '5 minutes' %>
         </div>
 
         <%= f.submit 'Save API settings', class: 'btn btn-outline-secondary' %>

@@ -38,6 +38,16 @@ class LoginLinkIssuerTest < ActiveSupport::TestCase
     end
   end
 
+  test 'a blank lifetime setting falls back to that setting\'s own default' do
+    Setting.login_link_ttl_minutes = ''
+    Setting.login_link_qr_ttl_minutes = ''
+
+    freeze_time do
+      assert_equal 60.minutes.from_now, issue.link.expires_at
+      assert_equal 5.minutes.from_now, issue(delivery: 'display', display_allowed: true).link.expires_at
+    end
+  end
+
   test 'refuses when links are off, for admins unless allowed, and when email is not set up' do
     Setting.login_links_enabled = false
 

@@ -21,6 +21,15 @@ module ActiveSupport
       encrypt_sensitive_fixtures!
     end
 
+    # Creates a token for `user` and returns it; its one-time secret is `token.secret`.
+    def create_api_token(user, access_level: 'read_write_delete', **attributes)
+      ApiToken.create!(user:, name: 'Test token', access_level:, **attributes)
+    end
+
+    def enable_api!
+      Setting.api_enabled = true
+    end
+
     def encrypt_sensitive_fixtures!
       original = ActiveRecord::Encryption.config.support_unencrypted_data
       ActiveRecord::Encryption.config.support_unencrypted_data = true
@@ -73,6 +82,15 @@ module ActionDispatch
           slack: { uid: user.slack_id, name: user.slack_handle || user.username }
         }
       }
+    end
+
+    def api_headers(token_or_secret, ip: '127.0.0.1')
+      secret = token_or_secret.is_a?(ApiToken) ? token_or_secret.secret : token_or_secret
+      { 'Authorization' => "Bearer #{secret}", 'REMOTE_ADDR' => ip, 'Accept' => 'application/json' }
+    end
+
+    def json_body
+      response.parsed_body
     end
 
     def internal_request_headers(ip = '192.168.0.50')

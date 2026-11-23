@@ -65,6 +65,24 @@ Rails.application.routes.draw do
 
   resource :profile, only: %i[show update]
 
+  resources :api_tokens, only: %i[index new create show] do
+    member do
+      post :pause
+      post :resume
+      post :renew
+      post :rotate
+      post :revoke
+    end
+  end
+
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      get '/', to: 'docs#index'
+      get 'docs', to: 'docs#show', defaults: { format: :text }
+      get 'me', to: 'me#show'
+    end
+  end
+
   resources :label_printers, path: 'settings/label_printers' do
     member do
       post :test_print

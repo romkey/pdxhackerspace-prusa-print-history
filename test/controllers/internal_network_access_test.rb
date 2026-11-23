@@ -164,7 +164,7 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     assert_select 'a.nav-link', text: 'Sign in'
   end
 
-  test 'internal anonymous users can unclear prints' do
+  test 'internal anonymous users cannot unclear prints' do
     @job.update!(
       status: 'finished',
       cleared_at: 1.hour.ago,
@@ -174,9 +174,8 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
 
     post unclear_print_job_path(@job), headers: internal_request_headers
 
-    assert_redirected_to job_path(@job)
-    assert_match(/unclear/i, flash[:notice])
-    assert_nil @job.reload.cleared_at
+    assert_redirected_to login_path
+    assert @job.reload.cleared?
   end
 
   test 'internal anonymous users cannot reprint labels' do
@@ -220,7 +219,7 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     assert_equal 'camera-bytes', response.body
   end
 
-  test 'internal anonymous users see unclear print on cleared jobs' do
+  test 'internal anonymous users see a cleared job without the unclear button' do
     @job.update!(
       status: 'finished',
       cleared_at: 1.hour.ago,
@@ -231,7 +230,7 @@ class InternalNetworkAccessTest < ActionDispatch::IntegrationTest
     get job_path(@job), headers: internal_request_headers
 
     assert_response :success
-    assert_select 'button[type=submit]', text: 'Unclear print'
+    assert_select 'button[type=submit]', text: 'Unclear print', count: 0
     assert_select 'input[type=submit][value=?]', 'Reprint label', count: 0
   end
 

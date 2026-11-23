@@ -94,6 +94,65 @@
     </div>
   </div>
 
+  <div class="card mb-3" id="api">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-baseline">
+        <div class="h-section-label">API and tokens</div>
+        <div class="text-13">
+          <%= link_to 'All tokens', api_tokens_path, class: 'text-decoration-none' %> &middot;
+          <%= link_to 'API reference', api_v1_docs_path, class: 'text-decoration-none' %>
+        </div>
+      </div>
+      <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+        <%= render 'settings/check_box', key: :api_enabled, label: 'Turn on the API',
+                                         checked: Setting.api_enabled?,
+                                         hint: 'When off, every API request is refused. Tokens are kept.' %>
+        <%= render 'settings/check_box', key: :api_require_internal_network, label: 'Only accept API requests from the shop network',
+                                         checked: Setting.api_require_internal_network?,
+                                         hint: 'Uses INTERNAL_NETWORKS. Individual tokens can also be limited to addresses.' %>
+
+        <div class="h-section-label mt-4">Members</div>
+        <%= render 'settings/check_box', key: :api_members_can_create_tokens, label: 'Members can create their own tokens',
+                                         checked: Setting.api_members_can_create_tokens?,
+                                         hint: 'When off, only admins issue tokens, including tokens for members.' %>
+        <%= render 'settings/check_box', key: :members_can_undo_clear, label: 'Members can undo a clear',
+                                         checked: Setting.members_can_undo_clear?,
+                                         hint: 'Applies on the web and through the API. Admins always can.' %>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <%= label_tag 'settings[api_member_max_access_level]', 'Highest access for member tokens', class: 'form-label' %>
+            <%= select_tag 'settings[api_member_max_access_level]',
+                           options_for_select(ApiToken::ACCESS_LEVEL_LABELS.invert, Setting.api_member_max_access_level),
+                           class: 'form-select' %>
+          </div>
+          <%= render 'settings/days_field', key: :api_member_token_default_days, label: 'Default lifetime (days)',
+                                            value: Setting.api_member_token_default_days, blank: 'never expires' %>
+          <%= render 'settings/days_field', key: :api_member_token_max_days, label: 'Maximum lifetime (days)',
+                                            value: Setting.api_member_token_max_days, blank: 'no limit' %>
+        </div>
+
+        <div class="h-section-label mt-4">Admins</div>
+        <div class="row g-3 mb-3">
+          <%= render 'settings/days_field', key: :api_admin_token_default_days, label: 'Default lifetime (days)',
+                                            value: Setting.api_admin_token_default_days, blank: 'never expires' %>
+          <%= render 'settings/days_field', key: :api_admin_token_max_days, label: 'Maximum lifetime (days)',
+                                            value: Setting.api_admin_token_max_days, blank: 'no limit' %>
+        </div>
+
+        <div class="h-section-label mt-4">All tokens</div>
+        <div class="row g-3 mb-3">
+          <%= render 'settings/days_field', key: :api_token_renew_grace_days, label: 'Renew after expiry within (days)',
+                                            value: Setting.api_token_renew_grace_days, blank: 'expired tokens cannot be renewed' %>
+          <%= render 'settings/days_field', key: :api_token_max_login_age_days, label: 'Require a sign-in within (days)',
+                                            value: Setting.api_token_max_login_age_days,
+                                            blank: 'off. When set, a token stops working if its owner has not signed in for this long' %>
+        </div>
+
+        <%= f.submit 'Save API settings', class: 'btn btn-outline-secondary' %>
+      <% end %>
+    </div>
+  </div>
+
   <div class="card mb-3" id="prusa-connect-account">
     <div class="card-body">
       <div class="h-section-label">Prusa Connect account</div>

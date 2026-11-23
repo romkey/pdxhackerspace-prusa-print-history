@@ -22,6 +22,10 @@ module InternalNetworks
     false
   end
 
+  def exclude?(ip)
+    !include?(ip)
+  end
+
   def reset!
     @list = nil
   end

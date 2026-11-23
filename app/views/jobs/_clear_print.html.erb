@@ -41,7 +41,9 @@
           <% end %>
         <% end %>
 
-        <%= button_to 'Unclear print', unclear_print_job_path(job), method: :post, class: 'btn btn-outline-secondary btn-sm' %>
+        <% if can_undo_clears? %>
+          <%= button_to 'Unclear print', unclear_print_job_path(job), method: :post, class: 'btn btn-outline-secondary btn-sm' %>
+        <% end %>
       </div>
     </div>
   </div>

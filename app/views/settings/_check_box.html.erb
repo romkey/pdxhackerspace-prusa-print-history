@@ -1,0 +1,8 @@
+<div class="form-check mb-2">
+  <%= hidden_field_tag "settings[#{key}]", '0', id: nil %>
+  <%= check_box_tag "settings[#{key}]", '1', checked, class: 'form-check-input' %>
+  <%= label_tag "settings[#{key}]", label, class: 'form-check-label' %>
+  <% if local_assigns[:hint] %>
+    <div class="form-text mt-0"><%= hint %></div>
+  <% end %>
+</div>

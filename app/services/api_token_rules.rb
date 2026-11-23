@@ -63,6 +63,19 @@ module ApiTokenRules
     actor.admin? || token.user_id == actor.id
   end
 
+  # How far a renewal extends a token: the lifetime it was issued with (or, for tokens with
+  # no recorded lifetime, today's default), never beyond today's maximum.
+  def renewal_days_for(token)
+    days = token.lifetime_days || default_days_for(token.user) || built_in_default_days(token.user)
+    max = max_days_for(token.user)
+    max ? [days, max].min : days
+  end
+
+  def built_in_default_days(owner)
+    key = admin_owner?(owner) ? :api_admin_token_default_days : :api_member_token_default_days
+    ApiSettings::DAYS_DEFAULTS.fetch(key)
+  end
+
   def renewable?(token, at: Time.current)
     return false if token.revoked?
     return true unless token.expired?(at)

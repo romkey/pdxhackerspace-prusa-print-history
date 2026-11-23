@@ -64,7 +64,7 @@
           <% else %>
             <%= button_to 'Pause', pause_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm' %>
           <% end %>
-          <% if ApiTokenRules.renewable?(@token) && (@token.expires_at || ApiTokenRules.default_days_for(@token.user)) %>
+          <% if @token.expires_at && ApiTokenRules.renewable?(@token) %>
             <%= button_to 'Renew', renew_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm',
                                                                  title: 'Extend the expiry; the secret stays the same' %>
           <% end %>

@@ -83,9 +83,31 @@ class ApiTokenLifecycleTest < ActiveSupport::TestCase
     assert_raises(ApiTokenLifecycle::Error) { lifecycle.resume!(token) }
   end
 
-  test 'renew! extends from now by the default lifetime' do
-    Setting.api_member_token_default_days = '30'
-    token = create_api_token(@member, expires_at: 2.days.ago)
+  test 'renew! extends from now by the lifetime the token was issued with' do
+    token = lifecycle.issue!(owner: @member, name: 'Script', access_level: 'read', expires_in_days: '10')
+    token.update!(expires_at: 2.days.ago)
+
+    freeze_time do
+      lifecycle.renew!(token)
+
+      assert_equal 10.days.from_now, token.expires_at
+    end
+  end
+
+  test 'renew! keeps a time-limited token time-limited when the default is never expire' do
+    Setting.api_member_token_default_days = ''
+    token = create_api_token(@member, expires_at: 1.day.from_now)
+
+    freeze_time do
+      lifecycle.renew!(token)
+
+      assert_equal 365.days.from_now, token.expires_at
+    end
+  end
+
+  test 'renew! is capped by the current maximum' do
+    token = lifecycle.issue!(owner: @member, name: 'Script', access_level: 'read', expires_in_days: '100')
+    Setting.api_member_token_max_days = '30'
 
     freeze_time do
       lifecycle.renew!(token)
@@ -94,11 +116,11 @@ class ApiTokenLifecycleTest < ActiveSupport::TestCase
     end
   end
 
-  test 'renew! refuses a revoked token and a token that has no expiry to extend' do
-    Setting.api_member_token_default_days = ''
-
+  test 'renew! refuses a revoked token and a token that never expires' do
     assert_raises(ApiTokenLifecycle::Error) { lifecycle.renew!(create_api_token(@member)) }
-    assert_raises(ApiTokenLifecycle::Error) { lifecycle.renew!(create_api_token(@member, revoked_at: Time.current)) }
+    assert_raises(ApiTokenLifecycle::Error) do
+      lifecycle.renew!(create_api_token(@member, expires_at: 1.day.from_now, revoked_at: Time.current))
+    end
   end
 
   test 'other members cannot manage a token' do

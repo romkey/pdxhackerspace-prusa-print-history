@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_100100) do
     t.string "token_prefix", null: false
     t.string "access_level", default: "read", null: false
     t.datetime "expires_at"
+    t.integer "lifetime_days"
     t.datetime "paused_at"
     t.datetime "revoked_at"
     t.string "allowed_cidrs", default: [], null: false, array: true

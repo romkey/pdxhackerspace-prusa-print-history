@@ -13,8 +13,9 @@ class ApiTokenLifecycle
     raise Error, 'You cannot create tokens for this user.' unless ApiTokenRules.can_create_for?(@actor, owner)
     raise Error, 'That access level is not allowed for this user.' unless level_allowed?(owner, access_level)
 
+    days = lifetime_days_for(owner, expires_in_days)
     token = ApiToken.new(user: owner, created_by: @actor, name: name.to_s.strip, access_level: access_level.to_s,
-                         expires_at: expiry_for(owner, expires_in_days))
+                         lifetime_days: days, expires_at: days&.days&.from_now)
     token.allowed_cidrs_text = allowed_cidrs_text
     save_with_event!(token, 'created', access_level: token.access_level, expires_at: token.expires_at&.iso8601)
   end
@@ -37,15 +38,16 @@ class ApiTokenLifecycle
     save_with_event!(token, 'resumed')
   end
 
+  # Extends the expiry from now by the lifetime the token was issued with, capped by the
+  # current maximum. A token that never expires has nothing to renew.
   def renew!(token)
     authorize!(token)
+    raise Error, 'This token does not expire.' if token.expires_at.nil?
     raise Error, 'This token can no longer be renewed.' unless ApiTokenRules.renewable?(token)
 
-    days = ApiTokenRules.default_days_for(token.user)
-    raise Error, 'This token does not expire.' if days.nil? && token.expires_at.nil?
-
-    token.expires_at = days&.days&.from_now
-    save_with_event!(token, 'renewed', expires_at: token.expires_at&.iso8601)
+    days = ApiTokenRules.renewal_days_for(token)
+    token.expires_at = days.days.from_now
+    save_with_event!(token, 'renewed', expires_at: token.expires_at.iso8601)
   end
 
   def rotate!(token)
@@ -74,8 +76,8 @@ class ApiTokenLifecycle
     ApiTokenRules.levels_for(owner).include?(level.to_s)
   end
 
-  # Blank means "never expires", which is only allowed when no maximum lifetime is set.
-  def expiry_for(owner, expires_in_days)
+  # Blank means "never expires" (nil), which is only allowed when no maximum lifetime is set.
+  def lifetime_days_for(owner, expires_in_days)
     max = ApiTokenRules.max_days_for(owner)
     if expires_in_days.blank?
       raise Error, "Tokens for this user must expire within #{max} days." unless max.nil?
@@ -87,7 +89,7 @@ class ApiTokenLifecycle
     raise Error, 'Expiry must be a whole number of days.' if days.nil? || !days.positive?
     raise Error, "Tokens for this user must expire within #{max} days." if max && days > max
 
-    days.days.from_now
+    days
   end
 
   def save_with_event!(token, action, detail = {})

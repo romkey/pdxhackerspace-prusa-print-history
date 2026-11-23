@@ -12,6 +12,13 @@ module BambuLan
 
     delegate :status, :job, :info, to: :view
 
+    # { 'printer' => main (ota) version, 'ams/0' => ..., ... }
+    def firmware_versions
+      modules = @mqtt.fetch_firmware_versions
+      main = modules.delete('ota')
+      main ? { 'printer' => main }.merge(modules) : modules
+    end
+
     def legacy_printer
       nil
     end

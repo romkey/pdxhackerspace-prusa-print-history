@@ -14,6 +14,7 @@
         <%= @printer.model.presence || 'Unknown model' %>
         &middot; <%= @printer.location.presence || 'No location' %>
         &middot; <%= @printer.hostname %>
+        <% if @printer.firmware_version.present? %>&middot; Firmware <%= @printer.firmware_version %><% end %>
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
       <%= render 'service_entries/reliability', score: @reliability, show_link: true, compact: true %>

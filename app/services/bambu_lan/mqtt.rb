@@ -21,6 +21,16 @@ module BambuLan
       end
     end
 
+    # Asks for the module list and returns { module name => sw_ver } for every module that reports one.
+    def fetch_firmware_versions
+      with_session do |session|
+        session.subscribe(report_topic)
+        seq = next_sequence
+        session.publish(request_topic, JSON.generate(envelope('info', 'get_version', seq, {})))
+        read_firmware(session)
+      end
+    end
+
     def command(category, name, extra = {})
       with_session do |session|
         seq = next_sequence
@@ -58,6 +68,25 @@ module BambuLan
       return best if best
 
       raise Error, 'No status report from the printer. Check the IP, serial, access code, and that LAN mode is on.'
+    end
+
+    def read_firmware(session)
+      each_message(session, REPORT_WAIT) do |message|
+        info = message['info']
+        next unless info.is_a?(Hash) && info['command'] == 'get_version'
+
+        return module_versions(info['module'])
+      end
+      {}
+    end
+
+    def module_versions(modules)
+      Array(modules).each_with_object({}) do |mod, versions|
+        next unless mod.is_a?(Hash)
+
+        version = mod['sw_ver'].to_s.strip
+        versions[mod['name'].to_s] = version if mod['name'].present? && version.present?
+      end
     end
 
     def read_ack(session, category, seq)

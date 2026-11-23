@@ -36,6 +36,18 @@ class PrinterReliabilityTest < ActiveSupport::TestCase
     assert_equal 87, score.display_score
   end
 
+  test 'automatic firmware repairs do not affect the score' do
+    add_jobs(5)
+    PrinterServiceLog.log_firmware_changes!(printer: @printer, initial: { 'printer' => '1.0' }, changed: {})
+    PrinterServiceLog.log_firmware_changes!(printer: @printer, initial: {}, changed: { 'ams/0' => %w[a b] })
+
+    score = PrinterReliability.for_printer(@printer)
+
+    assert_equal 2, @printer.service_entries.repairs.count
+    assert_equal 0, score.repairs
+    assert_equal 100, score.display_score
+  end
+
   test 'attentions during an outage do not count, including an outage that is still open' do
     job = add_jobs(5).first
     @printer.service_entries.create!(kind: 'out_of_service', summary: 'Hotend', occurred_at: 5.days.ago, user: @user)

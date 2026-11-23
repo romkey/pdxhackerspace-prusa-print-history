@@ -77,10 +77,16 @@ module Api
         request.authorization.to_s[/\ABearer\s+(\S+)\z/i, 1]
       end
 
+      # A device token acts as no one and gets no shop-network powers either, so every action
+      # flag is false for it; a kiosk session gets member powers without undoing clears. The
+      # actions block in responses therefore matches what the token can really do.
       def access_policy
-        @access_policy ||= AccessPolicy.new(user: current_user,
-                                            internal_network: InternalNetworks.include?(request.remote_ip),
-                                            admin_allowed: !current_token.kiosk_session?)
+        @access_policy ||= AccessPolicy.new(
+          user: current_user,
+          internal_network: !current_token.device? && InternalNetworks.include?(request.remote_ip),
+          admin_allowed: !current_token.kiosk_session?,
+          undo_allowed: !current_token.kiosk_session?
+        )
       end
 
       # Actions taken in a kiosk session are recorded against the kiosk's device token, so

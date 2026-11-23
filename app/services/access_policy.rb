@@ -5,11 +5,13 @@ class AccessPolicy
   attr_reader :user
 
   # `admin_allowed: false` treats an admin as a member, for kiosk sessions: a shared kiosk
-  # never gets admin powers, whoever scanned in.
-  def initialize(user:, internal_network: false, admin_allowed: true)
+  # never gets admin powers, whoever scanned in. `undo_allowed: false` takes away undoing a
+  # clear, which kiosk sessions cannot do.
+  def initialize(user:, internal_network: false, admin_allowed: true, undo_allowed: true)
     @user = user
     @internal_network = internal_network
     @admin_allowed = admin_allowed
+    @undo_allowed = undo_allowed
   end
 
   def signed_in?
@@ -59,6 +61,7 @@ class AccessPolicy
   # Undoing a clear is for admins, and for members when the members_can_undo_clear setting
   # is on. Never for anonymous visitors.
   def can_undo_clears?
+    return false unless @undo_allowed
     return true if admin?
 
     signed_in? && Setting.members_can_undo_clear?

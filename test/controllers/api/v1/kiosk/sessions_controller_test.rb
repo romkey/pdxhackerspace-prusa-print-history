@@ -115,6 +115,26 @@ module Api
           assert_raises(ApiTokenLifecycle::Error) { ApiTokenLifecycle.new(actor: @admin).renew!(session) }
         end
 
+        test 'action flags match what kiosk tokens can really do' do
+          job = jobs(:finished)
+          job.update!(cleared_at: 1.hour.ago, clear_outcome: 'success')
+          secret = start_session
+
+          get api_v1_job_path(job), headers: api_headers(secret)
+
+          assert_not json_body.dig('job', 'actions', 'can_undo_clear')
+
+          get api_v1_job_path(jobs(:finished_unclaimed)), headers: api_headers(@device)
+
+          assert_equal [false], json_body.dig('job', 'actions').values.uniq
+        end
+
+        test 'mine=true finds nothing for a device token' do
+          get api_v1_jobs_path(mine: true), headers: api_headers(@device)
+
+          assert_empty json_body['jobs']
+        end
+
         test 'a long kiosk name still starts sessions' do
           @device.update!(name: 'K' * 100)
 

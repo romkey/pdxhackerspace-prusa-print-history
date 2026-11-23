@@ -32,6 +32,16 @@ class MemberIdClaimTest < ActiveSupport::TestCase
     assert_nil users(:other_viewer).reload.member_id
   end
 
+  test 'a failed sign-in does not take the ID from another account' do
+    users(:other_viewer).update!(member_id: 'ak-member-42')
+    user = users(:viewer)
+    user.member_id = 'ak-member-42'
+    user.email = nil
+
+    assert_raises(ActiveRecord::RecordInvalid) { user.save! }
+    assert_equal 'ak-member-42', users(:other_viewer).reload.member_id
+  end
+
   test 'non-Authentik accounts are left alone' do
     user = User.new(provider: 'developer', member_id: 'keep')
 

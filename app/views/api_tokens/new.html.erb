@@ -1,0 +1,60 @@
+<div class="container py-4" style="max-width: 640px;">
+  <div class="mb-3">
+    <div class="text-13 text-secondary">
+      <%= link_to 'API tokens', api_tokens_path, class: 'text-decoration-none' %> /
+    </div>
+    <h1 class="h-page-title mb-0">New API token</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <% if admin? %>
+        <%= form_with url: new_api_token_path, method: :get, local: true,
+                      data: { controller: 'auto-submit', turbo: false } do %>
+          <div class="mb-3">
+            <%= label_tag :user_id, 'Owner', class: 'form-label' %>
+            <%= select_tag :user_id, options_from_collection_for_select(User.in_display_name_order, :id, :display_name, @owner.id),
+                           class: 'form-select', data: { action: 'auto-submit#submit' } %>
+            <div class="form-text">The token can never do more than this user can. Access and expiry choices follow the owner.</div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <%= form_with model: @token, url: api_tokens_path, method: :post, local: true do |f| %>
+        <% if admin? %>
+          <%= hidden_field_tag 'api_token[user_id]', @owner.id %>
+        <% end %>
+
+        <div class="mb-3">
+          <%= f.label :name, class: 'form-label' %>
+          <%= f.text_field :name, class: 'form-control', required: true, maxlength: 100,
+                                  placeholder: 'Kiosk by the door, my print script…' %>
+        </div>
+
+        <div class="mb-3">
+          <%= f.label :access_level, 'Access', class: 'form-label' %>
+          <%= f.select :access_level, api_token_level_options(@owner), {}, class: 'form-select' %>
+          <div class="form-text">
+            Read lists printers and prints. Write claims, clears and reports problems. Delete releases claims
+            and undoes clears.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <%= label_tag 'api_token[expires_in_days]', 'Expires after (days)', class: 'form-label' %>
+          <%= number_field_tag 'api_token[expires_in_days]', @expires_in_days, class: 'form-control', min: 1,
+                                                                               max: ApiTokenRules.max_days_for(@owner) %>
+          <div class="form-text"><%= api_token_lifetime_hint(@owner) %></div>
+        </div>
+
+        <div class="mb-3">
+          <%= f.label :allowed_cidrs_text, 'Allowed addresses', class: 'form-label' %>
+          <%= f.text_field :allowed_cidrs_text, class: 'form-control', placeholder: '192.168.1.0/24, 10.0.0.5' %>
+          <div class="form-text">Optional. Leave blank to allow requests from any address.</div>
+        </div>
+
+        <%= f.submit 'Create token', class: 'btn btn-primary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="container py-4">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <h1 class="h-page-title mb-0">API tokens</h1>
+      <div class="text-13 text-secondary mt-1">
+        <span class="text-body"><%= @tokens.size %></span> <%= @state ? @state : 'total' %>
+        &middot; <%= link_to 'API reference', api_v1_docs_path, class: 'text-decoration-none' %>
+        <% unless Setting.api_enabled? %>
+          &middot; <span class="text-warning">The API is turned off<%= admin? ? ' in Settings' : '' %>.</span>
+        <% end %>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <% if @can_create %>
+        <%= link_to '+ New token', new_api_token_path(user_id: params[:user_id]), class: 'btn btn-primary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <%= link_to 'All', api_tokens_path(user_id: params[:user_id]), class: "filter-chip #{'active' unless @state}" %>
+    <% ApiTokensController::STATE_FILTERS.each do |state| %>
+      <%= link_to state.capitalize, api_tokens_path(state: state, user_id: params[:user_id]),
+                  class: "filter-chip #{'active' if @state == state}" %>
+    <% end %>
+  </div>
+
+  <% if @tokens.any? %>
+    <div class="card">
+      <table class="table table-compact table-hover mb-0">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <% if admin? %><th>Owner</th><% end %>
+            <th>Access</th>
+            <th>Expires</th>
+            <th>Last used</th>
+            <th>Token</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tokens.each do |token| %>
+            <tr>
+              <td><%= api_token_state_dot(token) %></td>
+              <td>
+                <%= link_to token.name, api_token_path(token), class: 'fw-medium text-decoration-none' %>
+                <%= api_token_state_badge(token) %>
+              </td>
+              <% if admin? %>
+                <td class="text-13">
+                  <%= link_to token.user.display_name, api_tokens_path(user_id: token.user_id),
+                              class: 'text-decoration-none text-body' %>
+                  <% if token.user.admin? %><span class="text-12 text-secondary">admin</span><% end %>
+                </td>
+              <% end %>
+              <td class="text-13 text-secondary"><%= token.access_level_label %></td>
+              <td class="text-13"><%= api_token_expiry_label(token) %></td>
+              <td class="text-13"><%= api_token_last_used_label(token) %></td>
+              <td class="text-12 text-secondary"><code><%= token.token_prefix %>&hellip;</code></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-secondary text-13">
+      No tokens<%= @state ? " that are #{@state}" : '' %>.
+      <% unless @can_create %>Ask an admin if you need one.<% end %>
+    </p>
+  <% end %>
+</div>

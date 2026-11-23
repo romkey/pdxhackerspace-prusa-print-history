@@ -1,4 +1,6 @@
 class Setting < ApplicationRecord
+  extend ApiSettings
+
   DEFAULT_PRUSA_UNTRAINED_MESSAGE =
     "You don't appear to be trained on the Prusa printers. If you haven't completed training yet, " \
     "please don't use the printers — request training in #3dprinting on Slack.".freeze
@@ -22,7 +24,7 @@ class Setting < ApplicationRecord
     ha_last_polled_at
     ha_last_error
     ha_last_status
-  ].freeze
+  ].concat(ApiSettings::KEYS).freeze
 
   validates :key, presence: true, uniqueness: true, inclusion: { in: KEYS }
 

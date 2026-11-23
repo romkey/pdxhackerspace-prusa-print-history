@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   helper_method :current_user, :logged_in?, :admin?, :internal_network?, :can_clear_prints?,
-                :logged_in_or_internal?
+                :can_undo_clears?, :logged_in_or_internal?, :access_policy
 
   private
 
@@ -29,8 +29,17 @@ class ApplicationController < ActionController::Base
     InternalNetworks.include?(request.remote_ip)
   end
 
+  # Claim and clear rules shared with the JSON API. See AccessPolicy.
+  def access_policy
+    @access_policy ||= AccessPolicy.new(user: current_user, internal_network: internal_network?)
+  end
+
   def can_clear_prints?
-    admin? || internal_network?
+    access_policy.can_clear_prints?
+  end
+
+  def can_undo_clears?
+    access_policy.can_undo_clears?
   end
 
   # Everyone except anonymous visitors from outside INTERNAL_NETWORKS, who only ever

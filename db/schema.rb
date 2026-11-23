@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_100100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_150000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "api_token_events", force: :cascade do |t|
+    t.bigint "api_token_id"
+    t.bigint "actor_id"
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.string "action", null: false
+    t.string "ip"
+    t.jsonb "detail", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_api_token_events_on_actor_id"
+    t.index ["api_token_id", "occurred_at"], name: "index_api_token_events_on_api_token_id_and_occurred_at"
+    t.index ["occurred_at"], name: "index_api_token_events_on_occurred_at"
+    t.index ["subject_type", "subject_id"], name: "index_api_token_events_on_subject"
+  end
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "created_by_id"
+    t.string "name", null: false
+    t.string "kind", default: "personal", null: false
+    t.string "token_digest", null: false
+    t.string "token_prefix", null: false
+    t.string "access_level", default: "read", null: false
+    t.datetime "expires_at"
+    t.datetime "paused_at"
+    t.datetime "revoked_at"
+    t.string "allowed_cidrs", default: [], null: false, array: true
+    t.datetime "last_used_at"
+    t.string "last_used_ip"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_api_tokens_on_created_by_id"
+    t.index ["kind"], name: "index_api_tokens_on_kind"
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
   create_table "job_events", force: :cascade do |t|
@@ -269,6 +308,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_150000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "api_token_events", "api_tokens", on_delete: :nullify
+  add_foreign_key "api_token_events", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "api_tokens", "users"
+  add_foreign_key "api_tokens", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "job_events", "jobs"
   add_foreign_key "jobs", "printers"
   add_foreign_key "jobs", "users", column: "cleared_by_id"

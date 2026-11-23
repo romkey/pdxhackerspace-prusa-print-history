@@ -48,6 +48,37 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'Ask for Prusa on your account.', Setting.prusa_trained_account_message
   end
 
+  test 'admins can update the API settings without touching the others' do
+    Setting.dashboard_heading = 'Keep me'
+    login_as(users(:admin))
+
+    patch settings_path, params: {
+      settings: {
+        api_enabled: '1', api_members_can_create_tokens: '0', members_can_undo_clear: '0',
+        api_member_max_access_level: 'read', api_member_token_default_days: '30',
+        api_member_token_max_days: '', api_token_max_login_age_days: '14'
+      }
+    }
+
+    assert_redirected_to settings_path
+    assert Setting.api_enabled?
+    assert_not Setting.api_members_can_create_tokens?
+    assert_not Setting.members_can_undo_clear?
+    assert_equal 'read', Setting.api_member_max_access_level
+    assert_equal 30, Setting.api_member_token_default_days
+    assert_nil Setting.api_member_token_max_days
+    assert_equal 14, Setting.api_token_max_login_age_days
+    assert_equal 'Keep me', Setting.dashboard_heading
+  end
+
+  test 'settings page shows the API section' do
+    login_as(users(:admin))
+
+    get settings_path
+
+    assert_select '#api input[name=?]', 'settings[api_enabled]'
+  end
+
   test 'non-admins cannot update settings' do
     login_as(users(:viewer))
     patch settings_path, params: { settings: { default_ambient_sensor: 'sensor.nope' } }

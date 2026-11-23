@@ -166,6 +166,15 @@ without notice and is strictly best-effort.
 
 Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
 
+## JSON API
+
+The app has a token-authenticated JSON API under `/api/v1`. It is off until an admin turns it
+on under Settings → API and tokens, where token lifetimes, access caps and network rules are
+also set. Members and admins create tokens from the API tokens page in the user menu.
+
+The full reference is [`docs/api.md`](docs/api.md), also served by the app at
+`/api/v1/docs` for people and LLM agents.
+
 ## Local development
 
 The dev stack runs Postgres, Redis, the Rails web server, a CSS watcher,

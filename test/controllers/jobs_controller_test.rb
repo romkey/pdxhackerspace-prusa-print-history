@@ -395,15 +395,55 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'form[action=?] button[type=submit]', claim_job_path(@job), text: 'Release'
   end
 
-  test 'clear_print requires sign-in or admin off the internal network' do
+  test 'clear_print requires sign-in off the internal network' do
     post clear_print_job_path(@job), params: { outcome: 'success' }, headers: external_request_headers
 
     assert_redirected_to login_path
+  end
 
+  test 'a member can clear a print from outside the internal network' do
+    LabelPrinter.update_all(default_printer: false) # rubocop:disable Rails/SkipsModelValidations
     login_as(users(:viewer))
-    post clear_print_job_path(@job), params: { outcome: 'success' }, headers: external_request_headers
 
-    assert_response :forbidden
+    JobNotificationService.stub(:notify_print_cleared, JobNotificationService::Result.new(
+                                                         email_sent: false, slack_sent: false, errors: []
+                                                       )) do
+      post clear_print_job_path(@job), params: { outcome: 'failed', failure_reason: 'spaghetti' },
+                                       headers: external_request_headers
+    end
+
+    assert_redirected_to job_path(@job)
+    assert @job.reload.cleared?
+    assert_equal users(:viewer), @job.cleared_by
+  end
+
+  test 'a member cannot take over someone else\'s claim' do
+    @job.update!(owner: users(:other_viewer))
+    login_as(users(:viewer))
+
+    patch claim_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_match(/already claimed/i, flash[:alert])
+    assert_equal users(:other_viewer).id, @job.reload.owner_id
+  end
+
+  test 'an admin can take over someone else\'s claim' do
+    @job.update!(owner: users(:other_viewer))
+    login_as(users(:admin))
+
+    patch claim_job_path(@job)
+
+    assert_equal users(:admin).id, @job.reload.owner_id
+  end
+
+  test 'the claim button is hidden on a print someone else owns' do
+    @job.update!(owner: users(:other_viewer))
+    login_as(users(:viewer))
+
+    get job_path(@job)
+
+    assert_select 'button[data-bs-target=?]', "##{dom_id(@job, :claim_modal)}", count: 0
   end
 
   test 'admin can clear print successfully' do
@@ -603,7 +643,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/cannot be reprinted/i, flash[:alert])
   end
 
-  test 'unclear_print requires sign-in or admin off the internal network' do
+  test 'unclear_print requires sign-in, and members need the setting' do
     @job.update!(
       status: 'finished',
       cleared_at: 1.hour.ago,
@@ -615,10 +655,18 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_path
 
+    Setting.members_can_undo_clear = false
     login_as(users(:viewer))
     post unclear_print_job_path(@job), headers: external_request_headers
 
     assert_response :forbidden
+    assert @job.reload.cleared?
+
+    Setting.members_can_undo_clear = true
+    post unclear_print_job_path(@job), headers: external_request_headers
+
+    assert_redirected_to job_path(@job)
+    assert_not @job.reload.cleared?
   end
 
   test 'admin can unclear a cleared print' do

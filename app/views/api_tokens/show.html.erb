@@ -1,0 +1,106 @@
+<div class="container py-4" style="max-width: 880px;">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <div class="text-13 text-secondary">
+        <%= link_to 'API tokens', api_tokens_path, class: 'text-decoration-none' %> /
+      </div>
+      <h1 class="h-page-title mb-0 d-flex align-items-center gap-2">
+        <%= api_token_state_dot(@token) %> <%= @token.name %> <%= api_token_state_badge(@token) %>
+      </h1>
+      <div class="text-13 text-secondary mt-1">
+        <%= @token.user.display_name %> &middot; <%= @token.access_level_label.downcase %>
+        <% if @token.kind == 'device' %>&middot; device<% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if @secret %>
+    <div class="card mb-3 border-warning">
+      <div class="card-body">
+        <div class="h-section-label">Your token</div>
+        <p class="text-13 mb-2">Copy it now. It will not be shown again.</p>
+        <div class="input-group" data-controller="clipboard">
+          <input type="text" class="form-control font-monospace" value="<%= @secret %>" readonly
+                 aria-label="API token" data-clipboard-target="source" data-action="click->clipboard#select">
+          <button type="button" class="btn btn-outline-secondary"
+                  data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+        </div>
+        <div class="text-12 text-secondary mt-2">
+          Send it as <code>Authorization: Bearer &lt;token&gt;</code>. See the
+          <%= link_to 'API reference', api_v1_docs_path %>.
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <dl class="row text-13 mb-0">
+        <dt class="col-sm-3 text-secondary fw-normal">Token</dt>
+        <dd class="col-sm-9"><code><%= @token.token_prefix %>&hellip;</code></dd>
+        <dt class="col-sm-3 text-secondary fw-normal">Access</dt>
+        <dd class="col-sm-9">
+          <%= @token.access_level_label %>
+          <% effective = ApiTokenRules.effective_level(@token) %>
+          <% if effective != @token.access_level %>
+            <span class="text-warning">· limited to <%= ApiToken::ACCESS_LEVEL_LABELS[effective].downcase %> by settings</span>
+          <% end %>
+        </dd>
+        <dt class="col-sm-3 text-secondary fw-normal">Expires</dt>
+        <dd class="col-sm-9"><%= api_token_expiry_label(@token) %></dd>
+        <dt class="col-sm-3 text-secondary fw-normal">Allowed addresses</dt>
+        <dd class="col-sm-9"><%= @token.allowed_cidrs.any? ? @token.allowed_cidrs_text : tag.span('Any', class: 'text-secondary') %></dd>
+        <dt class="col-sm-3 text-secondary fw-normal">Last used</dt>
+        <dd class="col-sm-9">
+          <%= api_token_last_used_label(@token) %>
+          <% if @token.last_used_ip %><span class="text-secondary">from <%= @token.last_used_ip %></span><% end %>
+        </dd>
+      </dl>
+
+      <% unless @token.revoked? %>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <% if @token.paused? %>
+            <%= button_to 'Resume', resume_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm' %>
+          <% else %>
+            <%= button_to 'Pause', pause_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm' %>
+          <% end %>
+          <% if ApiTokenRules.renewable?(@token) && (@token.expires_at || ApiTokenRules.default_days_for(@token.user)) %>
+            <%= button_to 'Renew', renew_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm',
+                                                                 title: 'Extend the expiry; the secret stays the same' %>
+          <% end %>
+          <%= button_to 'Rotate secret', rotate_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm',
+                        form: { data: { turbo_confirm: 'Replace the secret? Clients using the old one will stop working.' } } %>
+          <%= button_to 'Revoke', revoke_api_token_path(@token), class: 'btn btn-outline-danger btn-sm',
+                        form: { data: { turbo_confirm: 'Revoke this token permanently?' } } %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="h-section-label">Activity</div>
+  <% if @events.any? %>
+    <div class="card">
+      <table class="table table-compact mb-0">
+        <tbody>
+          <% @events.each do |event| %>
+            <tr>
+              <td class="text-13"><%= event.label %></td>
+              <td class="text-13 text-secondary"><%= event.actor&.display_name %></td>
+              <td class="text-12 text-secondary"><%= event.ip %></td>
+              <td class="text-12 text-secondary text-end" title="<%= l(event.occurred_at.in_time_zone, format: :long) %>">
+                <%= relative_timestamp(event.occurred_at) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="text-13 text-secondary">No activity yet.</p>
+  <% end %>
+
+  <div class="text-12 text-secondary mt-3">
+    Created <%= relative_timestamp(@token.created_at) %>
+    <% if @token.created_by && @token.created_by != @token.user %>by <%= @token.created_by.display_name %><% end %>
+  </div>
+</div>

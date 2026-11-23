@@ -1,0 +1,5 @@
+<div class="col-md-4">
+  <%= label_tag "settings[#{key}]", label, class: 'form-label' %>
+  <%= number_field_tag "settings[#{key}]", value, class: 'form-control', min: 1 %>
+  <div class="form-text">Blank: <%= blank %>.</div>
+</div>

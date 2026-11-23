@@ -1,9 +1,10 @@
 class JobsController < ApplicationController
   include JobHistoryExport
+  include JobClearNotices
 
-  before_action :require_login_or_internal, only: %i[index show]
+  before_action :require_login_or_internal, only: %i[index show clear_print]
   before_action :require_login, only: %i[claim unclaim export]
-  before_action :require_admin_or_internal, only: %i[clear_print unclear_print]
+  before_action :require_undo_clear_permission, only: %i[unclear_print]
   before_action :require_admin, only: %i[update reprint_label]
   before_action :set_job, only: %i[show update claim unclaim clear_print unclear_print reprint_label]
 
@@ -35,13 +36,18 @@ class JobsController < ApplicationController
   end
 
   def claim
+    unless access_policy.can_claim?(@job)
+      redirect_to @job, alert: 'This print is already claimed by someone else.'
+      return
+    end
+
     private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?
     @job.update!(owner: current_user, private: private_claim)
     redirect_to @job, notice: private_claim ? 'Claimed as private.' : 'Claimed.'
   end
 
   def unclaim
-    if admin? || @job.owner_id == current_user.id
+    if access_policy.can_release_claim?(@job)
       # A private print with no owner would be visible to admins only and to nobody else,
       # with no way back, so releasing always makes the print public again.
       @job.update!(owner: nil, private: false)
@@ -113,6 +119,12 @@ class JobsController < ApplicationController
 
   private
 
+  def require_undo_clear_permission
+    return if can_undo_clears?
+
+    logged_in? ? head(:forbidden) : require_login
+  end
+
   def perform_clear_print(outcome, print_label)
     JobClearPrintService.call(
       job: @job,
@@ -123,22 +135,6 @@ class JobsController < ApplicationController
       failure_detail: params[:failure_detail],
       print_label:
     )
-  end
-
-  def clear_notice(result, outcome)
-    parts = [clear_outcome_notice(result, outcome)]
-    parts << "Label job #{result.cups_job_id}." if result.cups_job_id.present?
-    parts << 'Owner notified by email.' if result.notification.email_sent
-    parts << 'Owner notified on Slack.' if result.notification.slack_sent
-    parts << "Notifications: #{result.notification.errors.join('; ')}." if result.notification.errors.any?
-    parts.join(' ')
-  end
-
-  def clear_outcome_notice(result, outcome)
-    return 'Print marked failed.' unless outcome == 'success'
-    return 'Print cleared and label sent.' if result.cups_job_id.present?
-
-    'Print cleared without a receipt.'
   end
 
   def label_printer_for_clear

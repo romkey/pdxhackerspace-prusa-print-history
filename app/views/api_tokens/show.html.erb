@@ -69,7 +69,8 @@
                                                                  title: 'Extend the expiry; the secret stays the same' %>
           <% end %>
           <%= button_to 'Rotate secret', rotate_api_token_path(@token), class: 'btn btn-outline-secondary btn-sm',
-                        form: { data: { turbo_confirm: 'Replace the secret? Clients using the old one will stop working.' } } %>
+                        form: { data: { turbo: false, controller: 'confirm', action: 'submit->confirm#ask',
+                                        confirm_message_value: 'Replace the secret? Clients using the old one will stop working.' } } %>
           <%= button_to 'Revoke', revoke_api_token_path(@token), class: 'btn btn-outline-danger btn-sm',
                         form: { data: { turbo_confirm: 'Revoke this token permanently?' } } %>
         </div>

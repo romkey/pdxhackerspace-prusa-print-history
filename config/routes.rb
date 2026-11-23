@@ -80,6 +80,16 @@ Rails.application.routes.draw do
       get '/', to: 'docs#index'
       get 'docs', to: 'docs#show', defaults: { format: :text }
       get 'me', to: 'me#show'
+      get 'clear_options', to: 'clear_options#show'
+
+      resources :printers, only: %i[index show] do
+        resources :problems, only: %i[create]
+      end
+
+      resources :jobs, only: %i[index show] do
+        resource :claim, only: %i[update destroy], controller: 'job_claims'
+        resource :clearance, only: %i[create destroy], controller: 'job_clearances'
+      end
     end
   end
 

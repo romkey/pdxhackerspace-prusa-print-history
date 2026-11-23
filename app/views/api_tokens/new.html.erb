@@ -20,7 +20,8 @@
         <% end %>
       <% end %>
 
-      <%= form_with model: @token, url: api_tokens_path, method: :post, local: true do |f| %>
+      <%# Not through Turbo: the response shows the new secret directly instead of redirecting. %>
+      <%= form_with model: @token, url: api_tokens_path, method: :post, local: true, data: { turbo: false } do |f| %>
         <% if admin? %>
           <%= hidden_field_tag 'api_token[user_id]', @owner.id %>
         <% end %>

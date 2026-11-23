@@ -17,7 +17,7 @@ class PrinterReliabilityCounts
     grouped(<<~SQL.squish)
       SELECT printer_id, COUNT(*) AS count
       FROM service_entries
-      WHERE kind = #{quote(kind)} AND occurred_at >= #{quote(@window_start)}
+      WHERE kind = #{quote(kind)} AND NOT automatic AND occurred_at >= #{quote(@window_start)}
       GROUP BY printer_id
     SQL
   end

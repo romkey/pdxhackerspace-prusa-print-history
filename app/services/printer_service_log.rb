@@ -45,7 +45,7 @@ class PrinterServiceLog
       write_initial_firmware!(printer, initial) if initial.any?
       changed.each do |component, (old, new)|
         write_entry(printer, nil, 'repair', summary: "#{firmware_label(component)} firmware updated: #{old} → #{new}",
-                                            occurred_at: Time.current)
+                                            occurred_at: Time.current, automatic: true)
       end
     end
   end
@@ -85,7 +85,7 @@ class PrinterServiceLog
               end
     details = initial.map { |c, v| "#{firmware_label(c)}: #{v}" }.join("\n")
     write_entry(printer, nil, 'repair', summary:, details: "First firmware readings from the printer.\n#{details}",
-                                        occurred_at: Time.current)
+                                        occurred_at: Time.current, automatic: true)
   end
 
   def firmware_label(component)
@@ -138,7 +138,8 @@ class PrinterServiceLog
       printer:, user:, kind:,
       summary: fields[:summary].to_s.strip,
       details: fields[:details].to_s.strip.presence,
-      occurred_at: parse_time(fields[:occurred_at])
+      occurred_at: parse_time(fields[:occurred_at]),
+      automatic: fields[:automatic] == true
     )
   end
 

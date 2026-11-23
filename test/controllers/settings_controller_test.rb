@@ -56,7 +56,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       settings: {
         api_enabled: '1', api_members_can_create_tokens: '0', members_can_undo_clear: '0',
         api_member_max_access_level: 'read', api_member_token_default_days: '30',
-        api_member_token_max_days: '', api_token_max_login_age_days: '14'
+        api_member_token_max_days: '', api_token_max_login_age_days: '14', api_kiosk_session_minutes: '5',
+        login_link_ttl_minutes: '30', login_links_allow_admins: '1'
       }
     }
 
@@ -68,6 +69,9 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 30, Setting.api_member_token_default_days
     assert_nil Setting.api_member_token_max_days
     assert_equal 14, Setting.api_token_max_login_age_days
+    assert_equal 5, Setting.api_kiosk_session_minutes
+    assert_equal 30, Setting.login_link_ttl_minutes
+    assert Setting.login_links_allow_admins?
     assert_equal 'Keep me', Setting.dashboard_heading
   end
 

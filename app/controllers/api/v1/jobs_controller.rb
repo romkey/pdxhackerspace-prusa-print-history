@@ -1,6 +1,9 @@
 module Api
   module V1
     class JobsController < BaseController
+      allow_device_tokens :index, :show
+      allow_kiosk_sessions :index, :show
+
       DEFAULT_LIMIT = 50
       MAX_LIMIT = 200
       STATES = %w[all active uncleared].freeze
@@ -30,7 +33,10 @@ module Api
 
       def filtered(scope)
         scope = scope.where(printer_id: params[:printer_id]) if params[:printer_id].present?
-        scope = scope.owned_by(current_user) if ActiveModel::Type::Boolean.new.cast(params[:mine])
+        if ActiveModel::Type::Boolean.new.cast(params[:mine])
+          # A device token acts as no one, so it owns nothing (owned_by(nil) would mean unclaimed).
+          scope = current_user ? scope.owned_by(current_user) : scope.none
+        end
         scope
       end
 

@@ -71,6 +71,18 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'Keep me', Setting.dashboard_heading
   end
 
+  test 'admins can update sign-in link and kiosk settings' do
+    login_as(users(:admin))
+
+    patch settings_path, params: {
+      settings: { api_kiosk_session_minutes: '5', login_link_ttl_minutes: '30', login_links_allow_admins: '1' }
+    }
+
+    assert_equal 5, Setting.api_kiosk_session_minutes
+    assert_equal 30, Setting.login_link_ttl_minutes
+    assert Setting.login_links_allow_admins?
+  end
+
   test 'settings page shows the API section' do
     login_as(users(:admin))
 

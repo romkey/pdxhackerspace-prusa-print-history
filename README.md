@@ -65,6 +65,9 @@ for the full list; the values you must set on a fresh install are:
   `AUTHENTIK_REDIRECT_URI` &mdash; OpenID Connect credentials from your
   Authentik application. Admin access is granted only when Authentik
   returns `is_admin: true` in the OIDC userinfo response when the user has admin access.
+  Optionally return a `member_id` claim: a stable identifier for the member that does not
+  change with their email or username. Keyfob kiosks use it to start API sessions for
+  members (see [JSON API](#json-api)); it is read at each sign-in.
 - `LOCAL_ADMIN_EMAIL`, `LOCAL_ADMIN_PASSWORD`, and optionally
   `LOCAL_ADMIN_NAME` — when email and password are both set, the login
   page shows a password form that signs in as a local admin account
@@ -171,6 +174,9 @@ Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
 The app has a token-authenticated JSON API under `/api/v1`. It is off until an admin turns it
 on under Settings → API and tokens, where token lifetimes, access caps and network rules are
 also set. Members and admins create tokens from the API tokens page in the user menu.
+
+Kiosks get a *device* token from an admin and start short per-member sessions by sending
+the member's Authentik `member_id`; the kiosk maps keyfobs to member IDs itself.
 
 The full reference is [`docs/api.md`](docs/api.md), also served by the app at
 `/api/v1/docs` for people and LLM agents.

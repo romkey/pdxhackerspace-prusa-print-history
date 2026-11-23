@@ -48,7 +48,7 @@ module Api
       end
 
       def job(job, policy:, include_printer: true)
-        visible = job.details_visible_to?(policy.user)
+        visible = policy.can_see_details?(job)
         json = job_core(job, visible:).merge(
           owner: visible ? user(job.owner) : nil,
           clearance: clearance(job),

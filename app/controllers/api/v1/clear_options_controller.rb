@@ -2,6 +2,9 @@ module Api
   module V1
     # The choices a clearing form needs, so clients never hardcode them.
     class ClearOptionsController < BaseController
+      allow_device_tokens :show
+      allow_kiosk_sessions :show
+
       def show
         render json: {
           outcomes: Job::CLEAR_OUTCOMES,

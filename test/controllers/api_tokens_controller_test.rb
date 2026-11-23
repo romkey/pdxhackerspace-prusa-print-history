@@ -111,6 +111,33 @@ class ApiTokensControllerTest < ActionDispatch::IntegrationTest
     assert_equal @admin, @member.api_tokens.last.created_by
   end
 
+  test 'an admin can create a kiosk device token, which they own' do
+    login_as(@admin)
+
+    post api_tokens_path, params: { api_token: { user_id: @member.id, kind: 'device', name: 'Door kiosk',
+                                                 access_level: 'read_write', expires_in_days: '',
+                                                 can_display_login_links: '1' } }
+
+    token = ApiToken.last
+
+    assert_response :success
+    assert token.device?
+    assert_equal @admin, token.user
+    assert token.can_display_login_links?
+  end
+
+  test 'members cannot create kiosk device tokens' do
+    login_as(@member)
+
+    post api_tokens_path, params: { api_token: { kind: 'device', name: 'Mine', access_level: 'read',
+                                                 expires_in_days: '5', can_display_login_links: '1' } }
+
+    token = @member.api_tokens.last
+
+    assert_equal 'personal', token.kind
+    assert_not token.can_display_login_links?
+  end
+
   test 'pause, resume, renew and revoke from the token page' do
     token = create_api_token(@member, expires_at: 1.day.from_now)
     login_as(@member)

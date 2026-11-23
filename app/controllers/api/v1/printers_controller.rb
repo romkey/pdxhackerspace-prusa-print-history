@@ -1,6 +1,9 @@
 module Api
   module V1
     class PrintersController < BaseController
+      allow_device_tokens :index, :show
+      allow_kiosk_sessions :index, :show
+
       def index
         printers = Printer.ordered.to_a
         jobs = ActionableJobs.by_printer(printers)

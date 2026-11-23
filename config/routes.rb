@@ -84,6 +84,10 @@ Rails.application.routes.draw do
       post 'login_links', to: 'login_links#create'
       post 'problem_report_links', to: 'login_links#create_problem_report'
 
+      namespace :kiosk do
+        resources :sessions, only: %i[create]
+      end
+
       resources :printers, only: %i[index show] do
         resources :problems, only: %i[create]
       end

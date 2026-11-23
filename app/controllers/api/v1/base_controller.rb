@@ -12,6 +12,20 @@ module Api
 
       before_action :authenticate_api_token!
       before_action :require_access_level!
+      before_action :restrict_token_kind!
+
+      # Personal tokens may call every endpoint. Kiosk device tokens and the short kiosk
+      # sessions they start may call only the actions a controller lists here.
+      class_attribute :device_token_actions, instance_writer: false, default: [].freeze
+      class_attribute :kiosk_session_actions, instance_writer: false, default: [].freeze
+
+      def self.allow_device_tokens(*actions)
+        self.device_token_actions = actions.map(&:to_s).freeze
+      end
+
+      def self.allow_kiosk_sessions(*actions)
+        self.kiosk_session_actions = actions.map(&:to_s).freeze
+      end
 
       rescue_from ActiveRecord::RecordNotFound do
         render_error(:not_found, 'not_found', 'Not found.')
@@ -49,17 +63,38 @@ module Api
                      "#{request.method} needs #{ApiToken::ACCESS_LEVEL_LABELS[needed].downcase}.")
       end
 
+      def restrict_token_kind!
+        allowed = if current_token.device? then device_token_actions
+                  elsif current_token.kiosk_session? then kiosk_session_actions
+                  end
+        return if allowed.nil? || allowed.include?(action_name)
+
+        render_error(:forbidden, 'not_allowed_for_token_kind',
+                     "A #{current_token.kind.tr('_', ' ')} token cannot use this endpoint.")
+      end
+
       def bearer_secret
         request.authorization.to_s[/\ABearer\s+(\S+)\z/i, 1]
       end
 
+      # A device token acts as no one and gets no shop-network powers either, so every action
+      # flag is false for it; a kiosk session gets member powers without undoing clears. The
+      # actions block in responses therefore matches what the token can really do.
       def access_policy
-        @access_policy ||= AccessPolicy.new(user: current_user,
-                                            internal_network: InternalNetworks.include?(request.remote_ip))
+        @access_policy ||= AccessPolicy.new(
+          user: current_user,
+          internal_network: !current_token.device? && InternalNetworks.include?(request.remote_ip),
+          admin_allowed: !current_token.kiosk_session?,
+          undo_allowed: !current_token.kiosk_session?
+        )
       end
 
+      # Actions taken in a kiosk session are recorded against the kiosk's device token, so
+      # its activity page shows "member X via kiosk Y".
       def audit!(action, subject: nil, detail: {})
-        ApiTokenEvent.record!(action: "api.#{action}", token: current_token, actor: current_user, subject:,
+        token = current_token.kiosk_session? ? current_token.parent_token : current_token
+        detail = detail.merge(kiosk_session_id: current_token.id) if current_token.kiosk_session?
+        ApiTokenEvent.record!(action: "api.#{action}", token:, actor: current_user, subject:,
                               ip: request.remote_ip, detail:)
       end
 

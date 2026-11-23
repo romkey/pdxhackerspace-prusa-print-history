@@ -3,6 +3,8 @@ module Api
     # Sends the token's owner a single-use sign-in link. The link always goes to the owner;
     # these endpoints take no email address, so they cannot be used to mail anyone else.
     class LoginLinksController < BaseController
+      allow_kiosk_sessions :create, :create_problem_report
+
       def create
         issue(return_to: LoginLink.safe_return_to(params[:return_to].presence || '/'), purpose: 'sign_in')
       end
@@ -26,8 +28,9 @@ module Api
         render_error(e.status, e.code, e.message)
       end
 
+      # Only a kiosk, and only one an admin has allowed, may show a link on its own screen.
       def display_allowed?
-        false
+        current_token.kiosk_session? && current_token.parent_token.can_display_login_links?
       end
 
       def link_response(result)

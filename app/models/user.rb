@@ -1,12 +1,12 @@
 class User < ApplicationRecord
-  encrypts :email, deterministic: true
-  encrypts :slack_id, deterministic: true
+  include MemberIdentity
+
+  encrypts :email, :slack_id, :member_id, deterministic: true
   encrypts :name, :username, :slack_handle
 
   has_many :owned_jobs, class_name: 'Job', foreign_key: :owner_id, dependent: :nullify, inverse_of: :owner
   has_many :cleared_jobs, class_name: 'Job', foreign_key: :cleared_by_id, dependent: :nullify, inverse_of: :cleared_by
   has_many :api_tokens, dependent: :destroy
-  has_many :login_links, dependent: :delete_all
 
   validates :email, presence: true, uniqueness: { case_sensitive: false }
   validates :provider, presence: true
@@ -43,6 +43,7 @@ class User < ApplicationRecord
     apply_admin_from_auth(user, claims)
     apply_trained_on_from_auth(user, auth)
     apply_slack_from_auth(user, claims)
+    MemberIdClaim.apply(user, claims)
   end
 
   def self.apply_username_from_auth(user, auth, claims)

@@ -39,13 +39,14 @@ module ApiTokenRules
   # current setting. A member promoted to admin gets the token's full level; an admin
   # demoted to member gets the cap.
   def effective_level(token)
-    return token.access_level if admin_owner?(token.user)
+    return token.access_level if admin_owner?(token.user) && !token.kiosk_session?
 
     ApiToken.min_level(token.access_level, Setting.api_member_max_access_level)
   end
 
-  def can_create_for?(actor, owner)
+  def can_create_for?(actor, owner, kind: 'personal')
     return false if actor.nil? || owner.nil?
+    return actor.admin? && owner == actor if kind == 'device'
     return true if actor.admin?
 
     actor == owner && Setting.api_members_can_create_tokens?
@@ -57,8 +58,10 @@ module ApiTokenRules
     actor.admin? || Setting.api_members_can_create_tokens?
   end
 
+  # Kiosk sessions are never managed by hand: they are short-lived by design, and renewing
+  # or rotating one would turn a two-minute kiosk credential into a long-lived token.
   def can_manage?(actor, token)
-    return false if actor.nil?
+    return false if actor.nil? || token.kiosk_session?
 
     actor.admin? || token.user_id == actor.id
   end

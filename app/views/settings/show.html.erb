@@ -162,6 +162,12 @@
                                             value: Setting.login_link_qr_ttl_minutes, blank: '5 minutes' %>
         </div>
 
+        <div class="h-section-label mt-4">Kiosks</div>
+        <div class="row g-3 mb-3">
+          <%= render 'settings/days_field', key: :api_kiosk_session_minutes, label: 'Kiosk sessions last (minutes)',
+                                            value: Setting.api_kiosk_session_minutes, blank: '2 minutes' %>
+        </div>
+
         <%= f.submit 'Save API settings', class: 'btn btn-outline-secondary' %>
       <% end %>
     </div>

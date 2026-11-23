@@ -2,6 +2,8 @@ module Api
   module V1
     # Files a problem report in a printer's service log, as the token's owner.
     class ProblemsController < BaseController
+      allow_kiosk_sessions :create
+
       def create
         printer = Printer.find(params.expect(:printer_id))
         entry = PrinterServiceLog.report_problem!(printer:, user: current_user, **problem_attributes)

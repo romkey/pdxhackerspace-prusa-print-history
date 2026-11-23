@@ -8,7 +8,7 @@ class ApiTokensController < ApplicationController
   before_action :set_token, only: %i[show pause resume renew rotate revoke]
 
   def index
-    @tokens = filtered_tokens.includes(:user, :created_by).recent
+    @tokens = filtered_tokens.listed.includes(:user, :created_by).recent
     @state = params[:state].to_s.presence_in(STATE_FILTERS)
     @tokens = @tokens.select { |token| token.state == @state } if @state
     @can_create = ApiTokenRules.can_create_any?(current_user)
@@ -32,7 +32,7 @@ class ApiTokensController < ApplicationController
     @secret = @token.secret
     render_show
   rescue ApiTokenLifecycle::Error => e
-    @token = ApiToken.new(user: @owner, name: token_params[:name], access_level: token_params[:access_level])
+    @token = ApiToken.new(user: @owner, **token_params.slice(:name, :access_level, :kind, :can_display_login_links))
     @token.allowed_cidrs_text = token_params[:allowed_cidrs_text]
     @expires_in_days = token_params[:expires_in_days]
     flash.now[:alert] = e.message
@@ -56,7 +56,7 @@ class ApiTokensController < ApplicationController
   private
 
   def set_token
-    @token = ApiToken.find(params.expect(:id))
+    @token = ApiToken.listed.find(params.expect(:id))
     head :forbidden unless ApiTokenRules.can_manage?(current_user, @token)
   end
 
@@ -73,7 +73,9 @@ class ApiTokensController < ApplicationController
   end
 
   def token_params
-    params.expect(api_token: %i[name access_level expires_in_days allowed_cidrs_text]).to_h.symbolize_keys
+    permitted = %i[name access_level expires_in_days allowed_cidrs_text]
+    permitted += %i[kind can_display_login_links] if admin?
+    params.expect(api_token: permitted).to_h.symbolize_keys
   end
 
   def lifecycle

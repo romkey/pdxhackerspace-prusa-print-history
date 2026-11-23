@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,8 +76,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_110000) do
     t.string "last_used_ip"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "parent_token_id"
+    t.boolean "can_display_login_links", default: false, null: false
     t.index ["created_by_id"], name: "index_api_tokens_on_created_by_id"
+    t.index ["kind", "expires_at"], name: "index_api_tokens_on_kind_and_expires_at"
     t.index ["kind"], name: "index_api_tokens_on_kind"
+    t.index ["parent_token_id"], name: "index_api_tokens_on_parent_token_id"
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -319,8 +323,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_110000) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.text "username"
+    t.text "member_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_login_at"], name: "index_users_on_last_login_at"
+    t.index ["member_id"], name: "index_users_on_member_id", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
 
@@ -328,6 +334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_110000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_token_events", "api_tokens", on_delete: :nullify
   add_foreign_key "api_token_events", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "api_tokens", "api_tokens", column: "parent_token_id", on_delete: :cascade
   add_foreign_key "api_tokens", "users"
   add_foreign_key "api_tokens", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "job_events", "jobs"

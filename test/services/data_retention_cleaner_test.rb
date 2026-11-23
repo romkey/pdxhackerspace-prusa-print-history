@@ -8,6 +8,24 @@ class DataRetentionCleanerTest < ActiveSupport::TestCase
     Setting.delete_job_history = '0'
   end
 
+  test 'removes kiosk sessions and sign-in links a day after they expire' do
+    device = create_api_token(users(:admin), kind: 'device')
+    old_session = create_api_token(users(:viewer), kind: 'kiosk_session', parent_token: device,
+                                                   expires_at: 2.days.ago)
+    fresh_session = create_api_token(users(:viewer), kind: 'kiosk_session', parent_token: device,
+                                                     expires_at: 1.hour.ago)
+    old_link = LoginLink.create!(user: users(:viewer), expires_at: 2.days.ago)
+    fresh_link = LoginLink.create!(user: users(:viewer), expires_at: 1.hour.from_now)
+
+    DataRetentionCleaner.new.run!
+
+    assert_not ApiToken.exists?(old_session.id)
+    assert ApiToken.exists?(fresh_session.id)
+    assert ApiToken.exists?(device.id)
+    assert_not LoginLink.exists?(old_link.id)
+    assert LoginLink.exists?(fresh_link.id)
+  end
+
   test 'destroys photo captures older than the retention window only' do
     old = PhotoCapture.create!(printer: @printer, captured_at: 4.months.ago)
     recent = PhotoCapture.create!(printer: @printer, captured_at: 1.month.ago)

@@ -19,6 +19,8 @@ module Api
           render json: session_json(session), status: :created
         rescue KioskSessionIssuer::Error => e
           render_error(e.status, e.code, e.message)
+        rescue ActiveRecord::RecordInvalid => e
+          render_error(:unprocessable_content, 'unprocessable', e.record.errors.full_messages.to_sentence)
         end
 
         private

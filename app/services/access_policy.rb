@@ -24,6 +24,15 @@ class AccessPolicy
     @internal_network
   end
 
+  # Filename, owner, progress and photos of a private print: its owner and admins only. Uses
+  # admin? so a kiosk session never reveals them, even when an admin scanned in.
+  def can_see_details?(job)
+    return true unless job.private?
+    return false unless signed_in?
+
+    admin? || job.owner_id == user.id
+  end
+
   # Members claim unclaimed prints, or re-claim their own to switch between public and
   # private. Taking over someone else's claim is an admin-only reassignment.
   def can_claim?(job)

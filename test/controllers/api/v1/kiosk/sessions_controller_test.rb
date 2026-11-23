@@ -83,6 +83,47 @@ module Api
           assert_equal users(:other_viewer), job.reload.owner
         end
 
+        test 'an admin who scans in does not see other members\' private prints' do
+          @admin.update!(member_id: 'ak-admin')
+          jobs(:active_xl).update!(private: true)
+          secret = start_session('ak-admin')
+
+          get api_v1_job_path(jobs(:active_xl)), headers: api_headers(secret)
+
+          assert_nil json_body.dig('job', 'filename')
+          assert_nil json_body.dig('job', 'owner')
+
+          get api_v1_me_path, headers: api_headers(secret)
+
+          assert_not json_body.dig('user', 'admin')
+        end
+
+        test 'a member cannot open, rotate or renew their kiosk session on the web' do
+          start_session
+          session = ApiToken.find_by!(kind: 'kiosk_session')
+          login_as(@member)
+
+          get api_token_path(session)
+
+          assert_response :not_found
+          post rotate_api_token_path(session)
+
+          assert_response :not_found
+          post renew_api_token_path(session)
+
+          assert_response :not_found
+          assert_raises(ApiTokenLifecycle::Error) { ApiTokenLifecycle.new(actor: @admin).renew!(session) }
+        end
+
+        test 'a long kiosk name still starts sessions' do
+          @device.update!(name: 'K' * 100)
+
+          start_session
+
+          assert_response :created
+          assert_operator ApiToken.find_by!(kind: 'kiosk_session').name.length, :<=, 100
+        end
+
         test 'the device token on its own can read but not act' do
           get api_v1_printers_path, headers: api_headers(@device)
 

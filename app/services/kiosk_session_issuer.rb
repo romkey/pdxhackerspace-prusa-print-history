@@ -28,7 +28,8 @@ class KioskSessionIssuer
   def call
     member = find_member!
     session = ApiToken.create!(kind: 'kiosk_session', user: member, parent_token: @device_token,
-                               name: "Kiosk session: #{@device_token.name}", access_level: @device_token.access_level,
+                               name: "Kiosk session: #{@device_token.name}".truncate(100),
+                               access_level: @device_token.access_level,
                                allowed_cidrs: @device_token.allowed_cidrs, expires_at: lifetime.from_now)
     ApiTokenEvent.record!(action: 'api.kiosk.session_started', token: @device_token, actor: member, subject: member,
                           ip: @ip, detail: { kiosk_session_id: session.id })

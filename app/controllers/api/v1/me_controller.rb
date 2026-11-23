@@ -7,7 +7,7 @@ module Api
 
       def show
         render json: {
-          user: Api::V1::Json.user(current_user, include_admin: true),
+          user: current_user && Api::V1::Json.user(current_user).merge(admin: access_policy.admin?),
           token: Api::V1::Json.token(current_token, effective_access_level: current_access_level)
         }
       end

@@ -56,7 +56,7 @@ class ApiTokensController < ApplicationController
   private
 
   def set_token
-    @token = ApiToken.find(params.expect(:id))
+    @token = ApiToken.listed.find(params.expect(:id))
     head :forbidden unless ApiTokenRules.can_manage?(current_user, @token)
   end
 

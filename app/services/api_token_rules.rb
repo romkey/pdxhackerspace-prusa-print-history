@@ -58,8 +58,10 @@ module ApiTokenRules
     actor.admin? || Setting.api_members_can_create_tokens?
   end
 
+  # Kiosk sessions are never managed by hand: they are short-lived by design, and renewing
+  # or rotating one would turn a two-minute kiosk credential into a long-lived token.
   def can_manage?(actor, token)
-    return false if actor.nil?
+    return false if actor.nil? || token.kiosk_session?
 
     actor.admin? || token.user_id == actor.id
   end

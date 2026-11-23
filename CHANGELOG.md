@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - API tokens. Open your name in the top right and choose API tokens to create one, then use it with the new JSON API (`/api/v1`). Each token is read only, read and write, or read, write and delete, can be limited to certain network addresses, and can be paused, renewed, rotated or revoked. Admins see and manage everyone's tokens and can create tokens for any member.
 - An API and tokens section in Settings: turn the API on (it starts off), let members create their own tokens or not, cap what member tokens can do, set default and maximum token lifetimes separately for members and admins, choose how long an expired token can still be renewed, require tokens to come from the shop network, and require owners to have signed in recently for their tokens to keep working.
 - API endpoints to list printers and prints, claim and release prints, clear a print (successful, or failed with a reason) and undo a clear, and report a problem with a printer. Every print in a response says which of those actions the caller may take.
+- Sign-in links: through the API a member can have a single-use sign-in link emailed to them, or a link that opens the problem report form for a printer. Opening the link asks them to confirm before signing in. Admins can turn links off, allow them for admins (off by default), and set how long they last (one hour by default).
 - An API reference at `/api/v1/docs`, written for both people and AI agents.
 
 ### Changed

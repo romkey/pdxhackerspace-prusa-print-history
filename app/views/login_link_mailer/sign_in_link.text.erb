@@ -1,0 +1,13 @@
+Hi <%= @user.display_name %>,
+
+<% if @purpose == 'problem_report' %>
+Use this link to report a problem with a printer. It signs you in and opens the problem report form:
+<% else %>
+Use this link to sign in:
+<% end %>
+
+<%= @url %>
+
+The link works once and expires at <%= l(@expires_at.in_time_zone, format: :long) %>.
+
+If you did not ask for it, you can ignore this email. Nobody can use it without access to your inbox.

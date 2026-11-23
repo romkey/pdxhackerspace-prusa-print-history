@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_100100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_100100) do
     t.datetime "updated_at", null: false
     t.index ["cups_printer_name", "cups_printer_server"], name: "idx_on_cups_printer_name_cups_printer_server_8a21ab59a5", unique: true
     t.index ["name"], name: "index_label_printers_on_name", unique: true
+  end
+
+  create_table "login_links", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "requested_by_token_id"
+    t.string "token_digest", null: false
+    t.string "return_to", default: "/", null: false
+    t.string "delivery", default: "email", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_login_links_on_expires_at"
+    t.index ["requested_by_token_id"], name: "index_login_links_on_requested_by_token_id"
+    t.index ["token_digest"], name: "index_login_links_on_token_digest", unique: true
+    t.index ["user_id", "created_at"], name: "index_login_links_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_login_links_on_user_id"
   end
 
   create_table "photo_captures", force: :cascade do |t|
@@ -317,6 +334,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_100100) do
   add_foreign_key "jobs", "printers"
   add_foreign_key "jobs", "users", column: "cleared_by_id"
   add_foreign_key "jobs", "users", column: "owner_id"
+  add_foreign_key "login_links", "api_tokens", column: "requested_by_token_id", on_delete: :nullify
+  add_foreign_key "login_links", "users", on_delete: :cascade
   add_foreign_key "photo_captures", "job_events"
   add_foreign_key "photo_captures", "jobs"
   add_foreign_key "photo_captures", "printers"

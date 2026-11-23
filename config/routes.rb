@@ -81,6 +81,8 @@ Rails.application.routes.draw do
       get 'docs', to: 'docs#show', defaults: { format: :text }
       get 'me', to: 'me#show'
       get 'clear_options', to: 'clear_options#show'
+      post 'login_links', to: 'login_links#create'
+      post 'problem_report_links', to: 'login_links#create_problem_report'
 
       resources :printers, only: %i[index show] do
         resources :problems, only: %i[create]
@@ -107,6 +109,8 @@ Rails.application.routes.draw do
   get    '/auth/:provider/callback', to: 'sessions#create', as: :auth_callback
   post   '/auth/:provider/callback', to: 'sessions#create'
   get    '/auth/failure',            to: 'sessions#failure'
+  get    '/login/link/:token',       to: 'login_links#show', as: :login_link
+  post   '/login/link/:token',       to: 'login_links#create'
   delete '/logout',                  to: 'sessions#destroy', as: :logout
 
   constraints AdminConstraint.new do

@@ -1,4 +1,6 @@
 class SessionsController < ApplicationController
+  include EstablishesSession
+
   skip_forgery_protection only: %i[create failure]
 
   def new
@@ -74,14 +76,6 @@ class SessionsController < ApplicationController
     warnings << admin_access_revoked_message if user.authentik_admin_revoked
     flash[:warning] = warnings.join(' ') if warnings.any?
     redirect_to stored_return_path
-  end
-
-  def establish_session(user)
-    return_to = session[:return_to]
-    reset_session
-    session[:user_id] = user.id
-    user.record_login!
-    session[:return_to] = return_to if return_to.present?
   end
 
   def admin_access_revoked_message

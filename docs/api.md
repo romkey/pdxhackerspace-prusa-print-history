@@ -354,6 +354,63 @@ the token owner's name.
 
 Status `201`. **Errors:** `404`; `422 unprocessable` (missing summary).
 
+## Sign-in links
+
+These endpoints send the token's owner a single-use link that signs them in to the web app,
+for example so a member at a kiosk can continue on their phone. A link always goes to the
+token's owner; there is no way to name another recipient.
+
+Opening a link shows a "Sign in as …?" page; the member presses **Sign in** to use it. That
+extra step stops email scanners that open links from using them up. A link works once, and
+expires after a time set by admins (one hour by default for emailed links).
+
+Admin settings decide whether links are available at all and whether admins may use them (off
+by default, because a link signs in without Authentik).
+
+### `POST /api/v1/login_links`
+
+**Purpose:** Send the token's owner a sign-in link.
+**Access level:** `read_write`
+
+| Body field | Type | Notes |
+| --- | --- | --- |
+| `return_to` | string | A path in this app to open after signing in, such as `/jobs?owner=me`. Anything else becomes `/` |
+| `delivery` | string | `email` (default) or `display`. `display` returns the link in the response for showing as a QR code. Only kiosks that an admin has allowed to display links may use it |
+
+**Response** (status `202`):
+
+```json
+{ "delivery": "email", "expires_at": "2026-11-24T19:40:00Z", "sent_to": "a***@example.org" }
+```
+
+With `delivery: display` the response has `url` instead of `sent_to`, and the link expires
+sooner (five minutes by default).
+
+**Errors**
+
+| Status | `code` | Meaning |
+| --- | --- | --- |
+| 403 | `login_links_disabled` | An admin has turned sign-in links off |
+| 403 | `admin_login_links_disabled` | The token's owner is an admin and admin links are off. Sign in normally |
+| 403 | `display_not_allowed` | This client may not receive links to display |
+| 400 | `bad_request` | Unknown `delivery` |
+| 429 | `rate_limited` | More than 3 links in 15 minutes for this member |
+| 503 | `email_unavailable` | Email is not set up on the server, or the member has no email address |
+
+### `POST /api/v1/problem_report_links`
+
+**Purpose:** Like `login_links`, but the link opens the problem report form with the printer
+already chosen.
+**Access level:** `read_write`
+
+| Body field | Type | Notes |
+| --- | --- | --- |
+| `printer_id` | integer, required | The printer to report |
+| `delivery` | string | As above |
+
+Response and errors are the same as `POST /api/v1/login_links`, plus `404` for an unknown
+printer. To file a report without a link, use `POST /api/v1/printers/:id/problems`.
+
 ## Recipe: a claim-and-clear client
 
 1. `GET /api/v1/printers?active=true` and show each printer with its `job`.

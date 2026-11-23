@@ -2,6 +2,8 @@ module Api
   module V1
     # POST clears a print off the printer and records how it turned out; DELETE undoes that.
     class JobClearancesController < BaseController
+      allow_kiosk_sessions :create
+
       before_action :set_job
 
       def create

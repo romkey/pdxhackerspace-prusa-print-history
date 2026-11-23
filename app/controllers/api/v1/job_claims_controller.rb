@@ -2,6 +2,8 @@ module Api
   module V1
     # PUT claims a print for the token's owner; DELETE releases the claim.
     class JobClaimsController < BaseController
+      allow_kiosk_sessions :update, :destroy
+
       before_action :set_job
 
       def update

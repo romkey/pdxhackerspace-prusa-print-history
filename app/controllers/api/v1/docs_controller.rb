@@ -7,6 +7,7 @@ module Api
 
       skip_before_action :authenticate_api_token!
       skip_before_action :require_access_level!
+      skip_before_action :restrict_token_kind!
 
       def index
         render json: {

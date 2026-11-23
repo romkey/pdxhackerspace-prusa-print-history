@@ -4,9 +4,12 @@
 class AccessPolicy
   attr_reader :user
 
-  def initialize(user:, internal_network: false)
+  # `admin_allowed: false` treats an admin as a member, for kiosk sessions: a shared kiosk
+  # never gets admin powers, whoever scanned in.
+  def initialize(user:, internal_network: false, admin_allowed: true)
     @user = user
     @internal_network = internal_network
+    @admin_allowed = admin_allowed
   end
 
   def signed_in?
@@ -14,7 +17,7 @@ class AccessPolicy
   end
 
   def admin?
-    user&.admin? || false
+    (@admin_allowed && user&.admin?) || false
   end
 
   def internal_network?

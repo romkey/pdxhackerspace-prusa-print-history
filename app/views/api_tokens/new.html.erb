@@ -32,6 +32,22 @@
                                   placeholder: 'Kiosk by the door, my print script…' %>
         </div>
 
+        <% if admin? %>
+          <div class="mb-3">
+            <%= f.label :kind, 'Type', class: 'form-label' %>
+            <%= f.select :kind, [['Personal token', 'personal'], ['Kiosk device', 'device']], {}, class: 'form-select' %>
+            <div class="form-text">
+              A kiosk device token belongs to you, acts as no one by itself, and can only read and start
+              short sessions for members who scan in. Give it read and write access.
+            </div>
+          </div>
+          <div class="form-check mb-3">
+            <%= f.check_box :can_display_login_links, class: 'form-check-input' %>
+            <%= f.label :can_display_login_links, 'Kiosk may show sign-in links as QR codes', class: 'form-check-label' %>
+            <div class="form-text mt-0">Kiosk device tokens only. Otherwise links are emailed.</div>
+          </div>
+        <% end %>
+
         <div class="mb-3">
           <%= f.label :access_level, 'Access', class: 'form-label' %>
           <%= f.select :access_level, api_token_level_options(@owner), {}, class: 'form-select' %>

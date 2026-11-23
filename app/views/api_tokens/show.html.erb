@@ -9,7 +9,7 @@
       </h1>
       <div class="text-13 text-secondary mt-1">
         <%= @token.user.display_name %> &middot; <%= @token.access_level_label.downcase %>
-        <% if @token.kind == 'device' %>&middot; device<% end %>
+        <% if @token.device? %>&middot; kiosk device<% end %>
       </div>
     </div>
   </div>
@@ -48,6 +48,10 @@
         </dd>
         <dt class="col-sm-3 text-secondary fw-normal">Expires</dt>
         <dd class="col-sm-9"><%= api_token_expiry_label(@token) %></dd>
+        <% if @token.device? %>
+          <dt class="col-sm-3 text-secondary fw-normal">QR sign-in links</dt>
+          <dd class="col-sm-9"><%= @token.can_display_login_links? ? 'Allowed' : tag.span('Not allowed; links are emailed', class: 'text-secondary') %></dd>
+        <% end %>
         <dt class="col-sm-3 text-secondary fw-normal">Allowed addresses</dt>
         <dd class="col-sm-9"><%= @token.allowed_cidrs.any? ? @token.allowed_cidrs_text : tag.span('Any', class: 'text-secondary') %></dd>
         <dt class="col-sm-3 text-secondary fw-normal">Last used</dt>

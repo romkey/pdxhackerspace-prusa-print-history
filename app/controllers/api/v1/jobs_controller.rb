@@ -1,6 +1,9 @@
 module Api
   module V1
     class JobsController < BaseController
+      allow_device_tokens :index, :show
+      allow_kiosk_sessions :index, :show
+
       DEFAULT_LIMIT = 50
       MAX_LIMIT = 200
       STATES = %w[all active uncleared].freeze

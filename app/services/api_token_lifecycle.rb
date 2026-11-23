@@ -9,15 +9,16 @@ class ApiTokenLifecycle
     @ip = ip
   end
 
-  def issue!(owner:, name:, access_level:, expires_in_days: nil, allowed_cidrs_text: '')
-    raise Error, 'You cannot create tokens for this user.' unless ApiTokenRules.can_create_for?(@actor, owner)
+  # `options` may carry :expires_in_days, :allowed_cidrs_text, :kind ('personal' or 'device')
+  # and :can_display_login_links (device tokens only).
+  def issue!(owner:, name:, access_level:, **options)
+    kind = options[:kind].presence_in(%w[personal device]) || 'personal'
+    owner = @actor if kind == 'device'
+    raise Error, 'You cannot create this token.' unless ApiTokenRules.can_create_for?(@actor, owner, kind:)
     raise Error, 'That access level is not allowed for this user.' unless level_allowed?(owner, access_level)
 
-    days = lifetime_days_for(owner, expires_in_days)
-    token = ApiToken.new(user: owner, created_by: @actor, name: name.to_s.strip, access_level: access_level.to_s,
-                         lifetime_days: days, expires_at: days&.days&.from_now)
-    token.allowed_cidrs_text = allowed_cidrs_text
-    save_with_event!(token, 'created', access_level: token.access_level, expires_at: token.expires_at&.iso8601)
+    token = build_token(owner, name, access_level, kind, options)
+    save_with_event!(token, 'created', kind:, access_level: token.access_level, expires_at: token.expires_at&.iso8601)
   end
 
   def pause!(token)
@@ -67,6 +68,19 @@ class ApiTokenLifecycle
   end
 
   private
+
+  def build_token(owner, name, access_level, kind, options)
+    days = lifetime_days_for(owner, options[:expires_in_days])
+    token = ApiToken.new(user: owner, created_by: @actor, name: name.to_s.strip, access_level: access_level.to_s,
+                         kind:, lifetime_days: days, expires_at: days&.days&.from_now,
+                         can_display_login_links: kind == 'device' && truthy?(options[:can_display_login_links]))
+    token.allowed_cidrs_text = options[:allowed_cidrs_text]
+    token
+  end
+
+  def truthy?(value)
+    ActiveModel::Type::Boolean.new.cast(value).present?
+  end
 
   def authorize!(token)
     raise Error, 'You cannot manage this token.' unless ApiTokenRules.can_manage?(@actor, token)

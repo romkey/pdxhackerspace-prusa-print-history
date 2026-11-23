@@ -73,6 +73,9 @@
               <td class="text-secondary text-12">
                 <%= user.provider %>
                 <div><%= user.uid %></div>
+                <% if user.member_id.present? %>
+                  <div title="Authentik member_id claim, used by kiosks">Member ID <%= user.member_id %></div>
+                <% end %>
                 <div class="mt-1" title="<%= l(user.created_at, format: :precise) %>">
                   Created <%= l(user.created_at, format: :short) %>
                 </div>

@@ -9,7 +9,9 @@ class ApiToken < ApplicationRecord
     'read_write' => 'Read and write',
     'read_write_delete' => 'Read, write and delete'
   }.freeze
-  KINDS = %w[personal device].freeze
+  # personal: a member's or admin's own token. device: a kiosk's token, issued by an admin.
+  # kiosk_session: minted by a device token for one member, valid for a couple of minutes.
+  KINDS = %w[personal device kiosk_session].freeze
   STATES = %w[active paused expired revoked].freeze
   SECRET_PREFIX = 'pph_'.freeze
   DISPLAY_PREFIX_LENGTH = 12
@@ -17,6 +19,9 @@ class ApiToken < ApplicationRecord
 
   belongs_to :user
   belongs_to :created_by, class_name: 'User', optional: true
+  belongs_to :parent_token, class_name: 'ApiToken', optional: true
+  has_many :kiosk_sessions, class_name: 'ApiToken', foreign_key: :parent_token_id, dependent: :delete_all,
+                            inverse_of: :parent_token
   has_many :events, -> { order(occurred_at: :desc) }, class_name: 'ApiTokenEvent', dependent: :nullify,
                                                       inverse_of: :api_token
 
@@ -30,9 +35,11 @@ class ApiToken < ApplicationRecord
   validates :token_digest, presence: true, uniqueness: true
   validates :token_prefix, presence: true
   validate :allowed_cidrs_are_valid
+  validates :parent_token, presence: true, if: :kiosk_session?
 
   scope :recent, -> { order(created_at: :desc) }
   scope :not_revoked, -> { where(revoked_at: nil) }
+  scope :listed, -> { where.not(kind: 'kiosk_session') }
 
   def self.digest(secret)
     OpenSSL::Digest::SHA256.hexdigest(secret.to_s)
@@ -55,6 +62,7 @@ class ApiToken < ApplicationRecord
 
   def state(at = Time.current)
     return 'revoked' if revoked?
+    return parent_token.state(at) if kiosk_session? && parent_token && !parent_token.active?(at)
     return 'expired' if expired?(at)
     return 'paused' if paused?
 
@@ -79,6 +87,10 @@ class ApiToken < ApplicationRecord
 
   def device?
     kind == 'device'
+  end
+
+  def kiosk_session?
+    kind == 'kiosk_session'
   end
 
   def access_level_label

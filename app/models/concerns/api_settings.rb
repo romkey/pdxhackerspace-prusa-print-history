@@ -22,7 +22,8 @@ module ApiSettings
     api_token_renew_grace_days: 30,
     api_token_max_login_age_days: nil,
     login_link_ttl_minutes: 60,
-    login_link_qr_ttl_minutes: 5
+    login_link_qr_ttl_minutes: 5,
+    api_kiosk_session_minutes: 2
   }.freeze
 
   DEFAULT_MEMBER_MAX_ACCESS_LEVEL = 'read_write_delete'.freeze

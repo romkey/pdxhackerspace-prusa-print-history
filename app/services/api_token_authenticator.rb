@@ -38,7 +38,9 @@ class ApiTokenAuthenticator
     return failure(reason, token) if reason
 
     token.record_use!(@ip, at: @at)
-    Result.new(token:, user: token.user, access_level: ApiTokenRules.effective_level(token), failure: nil)
+    # A device token acts as no one; it can only read and start kiosk sessions.
+    user = token.device? ? nil : token.user
+    Result.new(token:, user:, access_level: ApiTokenRules.effective_level(token), failure: nil)
   end
 
   private
@@ -48,7 +50,7 @@ class ApiTokenAuthenticator
     return :address_not_allowed unless token.allows_ip?(@ip)
     return :external_network if Setting.api_require_internal_network? && InternalNetworks.exclude?(@ip)
 
-    :login_too_old if ApiTokenRules.login_too_old?(token.user, at: @at)
+    :login_too_old if !token.device? && ApiTokenRules.login_too_old?(token.user, at: @at)
   end
 
   def failure(reason, token = nil)

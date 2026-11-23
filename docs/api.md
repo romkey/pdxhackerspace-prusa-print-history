@@ -22,6 +22,7 @@ curl -H "Authorization: Bearer pph_YOUR_TOKEN" https://printers.example.org/api/
 | Base URL | `https://<your app host>/api/v1` |
 | Format | JSON request bodies (`Content-Type: application/json`) and JSON responses |
 | Authentication | `Authorization: Bearer <token>` on every request except `GET /api/v1` and `GET /api/v1/docs` |
+| Token kinds | `personal` tokens act as their owner. Kiosk `device` tokens and the `kiosk_session` tokens they start are limited to the endpoints listed under [Kiosks](#kiosks) |
 | Times | ISO 8601 in UTC, for example `2026-11-24T18:30:00Z` |
 | IDs | Integers |
 | Unknown fields | Ignored in requests. Responses may gain new fields within v1; existing fields are not renamed or removed |
@@ -410,6 +411,76 @@ already chosen.
 
 Response and errors are the same as `POST /api/v1/login_links`, plus `404` for an unknown
 printer. To file a report without a link, use `POST /api/v1/printers/:id/problems`.
+
+## Kiosks
+
+A kiosk is a shared screen in the shop where members scan a keyfob, see the printers, and
+claim or clear a print. This app never sees keyfob numbers. The kiosk maps a scanned fob to
+the member's **member ID**, a stable Authentik identifier that this app learns from the
+`member_id` claim when the member signs in, and sends only that.
+
+### Kiosk tokens
+
+| Kind | Created by | Acts as | Can call |
+| --- | --- | --- | --- |
+| `device` | An admin, choosing *Kiosk device* when creating a token | No one | The read endpoints (`GET /me`, `/printers`, `/jobs`, `/clear_options`) and `POST /kiosk/sessions` |
+| `kiosk_session` | The kiosk, with `POST /kiosk/sessions` | The member who scanned in, with member powers even if they are an admin | Reads, claim and release, clear (not undo), problem reports, sign-in and problem-report links |
+
+Any other endpoint answers `403` with code `not_allowed_for_token_kind`.
+
+A session lasts two minutes by default (admins can change this), uses the device token's
+access level and address limits, and stops working as soon as the device token is paused,
+expired or revoked. Everything a session does is recorded on the device token's activity page
+as "member via kiosk".
+
+### `POST /api/v1/kiosk/sessions`
+
+**Purpose:** Start a session for the member who just scanned in.
+**Token:** A `device` token.
+**Access level:** `read_write`
+
+| Body field | Type | Notes |
+| --- | --- | --- |
+| `member_id` | string, required | The member's Authentik member ID |
+
+**Response** (status `201`):
+
+```json
+{
+  "token": "pph_8mQ...",
+  "expires_at": "2026-11-24T18:32:00Z",
+  "access_level": "read_write_delete",
+  "can_display_login_links": true,
+  "user": { "id": 7, "display_name": "Ada Lovelace", "username": "ada" }
+}
+```
+
+Use `token` as the bearer token for the member's requests until `expires_at`. Start a new
+session on the next scan. `can_display_login_links` says whether this kiosk may ask for sign-in
+links with `delivery: "display"` (to show as a QR code).
+
+**Errors**
+
+| Status | `code` | Meaning |
+| --- | --- | --- |
+| 400 | `bad_request` | `member_id` missing |
+| 403 | `forbidden` / `not_allowed_for_token_kind` | Not a device token |
+| 403 | `member_sign_in_required` | The member has not signed in on the web recently enough (an admin setting) |
+| 404 | `member_not_found` | No member with this ID has signed in to the app yet. They need to sign in on the web once |
+| 429 | `rate_limited` | More than 30 scans a minute from this kiosk |
+
+### Recipe: a keyfob kiosk
+
+1. An admin creates a *Kiosk device* token (read and write, ideally limited to the kiosk's
+   address) and, if wanted, allows it to show sign-in links as QR codes.
+2. On a scan, look up the fob's member ID in your own system and call
+   `POST /api/v1/kiosk/sessions`. Show `user.display_name`.
+3. With the session token, `GET /api/v1/printers?active=true` and follow the claim-and-clear
+   recipe below.
+4. For "report a problem", either `POST /api/v1/printers/:id/problems` with a typed summary,
+   or `POST /api/v1/problem_report_links` with `delivery: "display"` and show `url` as a QR
+   code (or `delivery: "email"`).
+5. Forget the session token when the member walks away or it expires.
 
 ## Recipe: a claim-and-clear client
 

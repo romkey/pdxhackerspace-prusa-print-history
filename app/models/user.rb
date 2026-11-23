@@ -1,6 +1,5 @@
 class User < ApplicationRecord
-  encrypts :email, deterministic: true
-  encrypts :slack_id, deterministic: true
+  encrypts :email, :slack_id, :member_id, deterministic: true
   encrypts :name, :username, :slack_handle
 
   has_many :owned_jobs, class_name: 'Job', foreign_key: :owner_id, dependent: :nullify, inverse_of: :owner
@@ -43,6 +42,7 @@ class User < ApplicationRecord
     apply_admin_from_auth(user, claims)
     apply_trained_on_from_auth(user, auth)
     apply_slack_from_auth(user, claims)
+    MemberIdClaim.apply(user, claims)
   end
 
   def self.apply_username_from_auth(user, auth, claims)

@@ -51,6 +51,19 @@ class ApiTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select 'input[data-clipboard-target=source]', count: 0
   end
 
+  test 'the create form and rotate button bypass Turbo, which ignores a rendered secret page' do
+    token = create_api_token(@member)
+    login_as(@member)
+
+    get new_api_token_path
+
+    assert_select 'form[action=?][data-turbo=false]', api_tokens_path
+
+    get api_token_path(token)
+
+    assert_select 'form[action=?][data-turbo=false]', rotate_api_token_path(token)
+  end
+
   test 'invalid choices re-render the form with the reason' do
     Setting.api_member_token_max_days = '10'
     login_as(@member)

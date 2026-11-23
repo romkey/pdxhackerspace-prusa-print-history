@@ -73,7 +73,7 @@ module ApiTokenRules
 
   def built_in_default_days(owner)
     key = admin_owner?(owner) ? :api_admin_token_default_days : :api_member_token_default_days
-    ApiSettings::DAYS_DEFAULTS.fetch(key)
+    ApiSettings::NUMBER_DEFAULTS.fetch(key)
   end
 
   def renewable?(token, at: Time.current)

@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :owned_jobs, class_name: 'Job', foreign_key: :owner_id, dependent: :nullify, inverse_of: :owner
   has_many :cleared_jobs, class_name: 'Job', foreign_key: :cleared_by_id, dependent: :nullify, inverse_of: :cleared_by
   has_many :api_tokens, dependent: :destroy
+  has_many :login_links, dependent: :delete_all
 
   validates :email, presence: true, uniqueness: { case_sensitive: false }
   validates :provider, presence: true

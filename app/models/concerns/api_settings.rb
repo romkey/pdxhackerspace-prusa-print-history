@@ -1,38 +1,42 @@
-# API and token policy settings, mixed into Setting with `extend` so they read as
-# Setting.api_enabled?, Setting.api_member_token_default_days, and so on.
+# API, token and login-link policy settings, mixed into Setting with `extend` so they read
+# as Setting.api_enabled?, Setting.api_member_token_default_days, and so on.
 #
-# Day counts distinguish "never set" (use the default) from "set blank" (no limit / no
-# expiry / no grace period). Only positive whole numbers are stored; anything else is
-# stored blank.
+# Numbers (days, minutes) distinguish "never set" (use the default) from "set blank" (no
+# limit / no expiry / no grace period). Only positive whole numbers are stored; anything
+# else is stored blank.
 module ApiSettings
   BOOLEAN_DEFAULTS = {
     api_enabled: false,
     api_members_can_create_tokens: true,
     api_require_internal_network: false,
-    members_can_undo_clear: true
+    members_can_undo_clear: true,
+    login_links_enabled: true,
+    login_links_allow_admins: false
   }.freeze
 
-  DAYS_DEFAULTS = {
+  NUMBER_DEFAULTS = {
     api_member_token_default_days: 365,
     api_member_token_max_days: nil,
     api_admin_token_default_days: 90,
     api_admin_token_max_days: nil,
     api_token_renew_grace_days: 30,
-    api_token_max_login_age_days: nil
+    api_token_max_login_age_days: nil,
+    login_link_ttl_minutes: 60,
+    login_link_qr_ttl_minutes: 5
   }.freeze
 
   DEFAULT_MEMBER_MAX_ACCESS_LEVEL = 'read_write_delete'.freeze
 
-  KEYS = (BOOLEAN_DEFAULTS.keys + DAYS_DEFAULTS.keys + %i[api_member_max_access_level]).map(&:to_s).freeze
+  KEYS = (BOOLEAN_DEFAULTS.keys + NUMBER_DEFAULTS.keys + %i[api_member_max_access_level]).map(&:to_s).freeze
 
   BOOLEAN_DEFAULTS.each do |key, default|
     define_method(:"#{key}?") { boolean_setting(key, default) }
     define_method(:"#{key}=") { |value| set(key, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false') }
   end
 
-  DAYS_DEFAULTS.each do |key, default|
-    define_method(key) { days_setting(key, default) }
-    define_method(:"#{key}=") { |value| set(key, normalize_days(value)) }
+  NUMBER_DEFAULTS.each do |key, default|
+    define_method(key) { number_setting(key, default) }
+    define_method(:"#{key}=") { |value| set(key, normalize_number(value)) }
   end
 
   # The highest access level a member's token can use, whatever level the token was issued
@@ -56,7 +60,7 @@ module ApiSettings
     value == 'true'
   end
 
-  def days_setting(key, default)
+  def number_setting(key, default)
     record = find_by(key: key.to_s)
     return default if record.nil?
 
@@ -64,7 +68,7 @@ module ApiSettings
     number.positive? ? number : nil
   end
 
-  def normalize_days(value)
+  def normalize_number(value)
     number = Integer(value.to_s.strip, 10, exception: false)
     number&.positive? ? number.to_s : ''
   end

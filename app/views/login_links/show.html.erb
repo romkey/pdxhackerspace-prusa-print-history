@@ -1,0 +1,21 @@
+<div class="container py-5" style="max-width: 520px;">
+  <div class="card">
+    <div class="card-body text-center">
+      <% if @link %>
+        <h1 class="h-page-title mb-1">Sign in as <%= @link.user.display_name %>?</h1>
+        <p class="text-13 text-secondary mb-4">
+          This link works once<% if @link.return_to != '/' %> and takes you straight to where you were going<% end %>.
+        </p>
+        <%= button_to 'Sign in', login_link_path(params[:token]), method: :post, class: 'btn btn-primary w-100',
+                                                                  data: { turbo: false } %>
+        <p class="text-12 text-secondary mt-3 mb-0">Not you? Close this page; the link stays unused until it expires.</p>
+      <% else %>
+        <h1 class="h-page-title mb-1">This link no longer works</h1>
+        <p class="text-13 text-secondary mb-4">
+          Sign-in links work once and expire after a short time. Ask for a new one, or sign in normally.
+        </p>
+        <%= link_to 'Sign in', login_path, class: 'btn btn-outline-secondary w-100' %>
+      <% end %>
+    </div>
+  </div>
+</div>

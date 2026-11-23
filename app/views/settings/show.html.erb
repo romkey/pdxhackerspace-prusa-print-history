@@ -148,6 +148,20 @@
                                             blank: 'off. When set, a token stops working if its owner has not signed in for this long' %>
         </div>
 
+        <div class="h-section-label mt-4">Sign-in links</div>
+        <%= render 'settings/check_box', key: :login_links_enabled, label: 'Members can ask for a sign-in link through the API',
+                                         checked: Setting.login_links_enabled?,
+                                         hint: 'Emailed to the member, or shown as a QR code on a kiosk allowed to do so. Single use.' %>
+        <%= render 'settings/check_box', key: :login_links_allow_admins, label: 'Admins can use sign-in links too',
+                                         checked: Setting.login_links_allow_admins?,
+                                         hint: 'Off by default: a link signs in without Authentik, so admin rights are not re-checked.' %>
+        <div class="row g-3 mb-3">
+          <%= render 'settings/days_field', key: :login_link_ttl_minutes, label: 'Emailed links expire after (minutes)',
+                                            value: Setting.login_link_ttl_minutes, blank: '60 minutes' %>
+          <%= render 'settings/days_field', key: :login_link_qr_ttl_minutes, label: 'QR code links expire after (minutes)',
+                                            value: Setting.login_link_qr_ttl_minutes, blank: '5 minutes' %>
+        </div>
+
         <%= f.submit 'Save API settings', class: 'btn btn-outline-secondary' %>
       <% end %>
     </div>

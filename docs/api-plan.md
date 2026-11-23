@@ -1,6 +1,9 @@
 # API and token management plan
 
-Status: being built. `docs/api.md` is the reference for what has shipped.
+Status: built. This was the design document; `docs/api.md` is the reference for what
+shipped. Differences from the plan below: the member identifier claim is `member_id`;
+Renew extends a token by the lifetime it was issued with (capped by the current maximum);
+kiosk session length is the `api_kiosk_session_minutes` setting (default 2).
 
 ## Goals
 

@@ -1,6 +1,8 @@
 # Aggregate counts for PrinterReliability. Attentions count only while the
 # printer was in service. A period that started before the window and has
-# not ended still excludes attentions inside the window.
+# not ended still excludes attentions inside the window. Problems and repairs
+# marked as not counting toward reliability (e.g. the printer was unplugged,
+# not faulty) are left out.
 class PrinterReliabilityCounts
   def initialize(window_start)
     @window_start = window_start
@@ -18,6 +20,7 @@ class PrinterReliabilityCounts
       SELECT printer_id, COUNT(*) AS count
       FROM service_entries
       WHERE kind = #{quote(kind)} AND NOT automatic AND occurred_at >= #{quote(@window_start)}
+        AND counts_toward_reliability
       GROUP BY printer_id
     SQL
   end

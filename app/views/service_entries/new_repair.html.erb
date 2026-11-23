@@ -60,6 +60,16 @@
             </div>
           <% end %>
 
+          <div class="form-check mb-3">
+            <%= check_box_tag 'service_entry[penalize]', '0', skip_reliability_checked?,
+                              class: 'form-check-input', id: 'skip_reliability' %>
+            <%= label_tag 'skip_reliability', "Don't count against reliability", class: 'form-check-label' %>
+            <div class="form-text">
+              For issues that weren't the printer's fault, like a loose cable after a move. Applies to this
+              repair and the problems it resolves. You can change it later from the service log.
+            </div>
+          </div>
+
           <%= f.submit 'Log a repair', class: 'btn btn-primary btn-sm' %>
         <% end %>
       <% else %>

@@ -71,6 +71,14 @@ module ServiceEntriesHelper
     tag.span(pluralize(count.to_i, noun), class: css)
   end
 
+  def service_entry_reliability_label(entry)
+    entry.excluded_from_reliability? ? 'Count against reliability' : "Don't count against reliability"
+  end
+
+  def skip_reliability_checked?
+    params.dig(:service_entry, :penalize).to_s == '0'
+  end
+
   def repair_occurred_at_value(entry)
     submitted = params.dig(:service_entry, :occurred_at)
     return submitted if submitted.present?

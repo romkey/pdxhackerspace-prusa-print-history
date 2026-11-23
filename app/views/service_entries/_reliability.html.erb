@@ -24,7 +24,8 @@
 </div>
 <% if score && !local_assigns[:compact] %>
   <p class="text-12 text-secondary mb-3">
-    Attentions count only while the printer is in service. A score needs at least
+    Attentions count only while the printer is in service. Problems and repairs marked
+    “not counted” are left out. A score needs at least
     <%= PrinterReliability::MIN_JOBS %> prints in the last <%= PrinterReliability::WINDOW.in_days.to_i %> days.
   </p>
 <% end %>

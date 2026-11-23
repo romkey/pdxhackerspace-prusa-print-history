@@ -84,6 +84,48 @@ class PrinterServiceLogTest < ActiveSupport::TestCase
     assert_raises(PrinterServiceLog::Error) { PrinterServiceLog.resolve_problem!(problem, user: @user) }
   end
 
+  test 'resolving without a penalty keeps the problem out of reliability' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Ethernet unplugged')
+
+    PrinterServiceLog.resolve_problem!(problem, user: @user, penalize: false)
+
+    assert problem.reload.resolved_problem?
+    assert problem.excluded_from_reliability?
+  end
+
+  test 'a repair without a penalty skips the repair and the problems it resolves' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Offline')
+    other = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Still counts')
+
+    repair = PrinterServiceLog.log_repair!(
+      printer: @printer, user: @user, summary: 'Plugged it back in', resolves: [problem.id], penalize: false
+    )
+
+    assert repair.excluded_from_reliability?
+    assert problem.reload.excluded_from_reliability?
+    assert other.reload.counts_toward_reliability?
+  end
+
+  test 'past problems and repairs can be switched in and out of reliability' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Old')
+    PrinterServiceLog.resolve_problem!(problem, user: @user)
+
+    PrinterServiceLog.set_reliability!(problem, user: @user, counts: false)
+
+    assert problem.reload.excluded_from_reliability?
+
+    PrinterServiceLog.set_reliability!(problem, user: @user, counts: true)
+
+    assert problem.reload.counts_toward_reliability?
+
+    assert_raises(PrinterServiceLog::Error) { PrinterServiceLog.set_reliability!(problem, user: nil, counts: false) }
+    PrinterServiceLog.log_firmware_changes!(printer: @printer, initial: { 'printer' => '1.0' }, changed: {})
+    automatic = @printer.service_entries.find_by(automatic: true)
+    assert_raises(PrinterServiceLog::Error) { PrinterServiceLog.set_reliability!(automatic, user: @user, counts: false) }
+    outage = PrinterServiceLog.take_out_of_service!(printer: @printer, user: @user, reason: 'Moving')
+    assert_raises(PrinterServiceLog::Error) { PrinterServiceLog.set_reliability!(outage, user: @user, counts: false) }
+  end
+
   test 'a repair requires a signed-in user and a real time' do
     assert_raises(PrinterServiceLog::Error) do
       PrinterServiceLog.log_repair!(printer: @printer, user: nil, summary: 'Nope')

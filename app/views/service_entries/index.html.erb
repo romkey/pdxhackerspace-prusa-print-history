@@ -73,6 +73,11 @@
                 <% elsif entry.resolved_problem? %>
                   <span class="text-secondary text-12 ms-1">Resolved</span>
                 <% end %>
+                <% if entry.excluded_from_reliability? %>
+                  <span class="text-secondary text-12 ms-1" title="Doesn't lower the printer's reliability score">
+                    · not counted
+                  </span>
+                <% end %>
               </td>
               <td>
                 <%= entry.summary %>
@@ -86,10 +91,7 @@
               <td class="text-13"><%= service_entry_author(entry) %></td>
               <% if logged_in? %>
                 <td class="text-end">
-                  <% if entry.open_problem? %>
-                    <%= button_to 'Resolve', resolve_problem_path(entry), method: :patch,
-                                  class: 'btn btn-outline-secondary btn-sm' %>
-                  <% end %>
+                  <%= render 'entry_actions', entry: %>
                 </td>
               <% end %>
             </tr>

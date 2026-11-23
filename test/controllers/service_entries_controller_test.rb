@@ -81,6 +81,46 @@ class ServiceEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_not @printer.reload.out_of_service?
   end
 
+  test 'a signed-in user can resolve a problem without counting it and switch it back later' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Ethernet unplugged')
+    login_as(@user)
+
+    get service_printer_path(@printer)
+
+    assert_select 'button', text: "Resolve, don't count against reliability"
+
+    patch resolve_problem_path(problem, penalize: 0)
+
+    assert problem.reload.resolved_problem?
+    assert problem.excluded_from_reliability?
+    follow_redirect!
+
+    assert_match 'not counted', response.body
+
+    patch service_entry_reliability_path(problem, counts_toward_reliability: true)
+
+    assert problem.reload.counts_toward_reliability?
+  end
+
+  test 'a repair can be logged without counting against reliability' do
+    login_as(@user)
+
+    post repair_entries_path, params: repair_params(summary: 'Plugged in ethernet').deep_merge(
+      service_entry: { penalize: '0' }
+    )
+
+    assert @printer.service_entries.repairs.last.excluded_from_reliability?
+  end
+
+  test 'changing reliability requires signing in' do
+    problem = PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Offline')
+
+    patch service_entry_reliability_path(problem, counts_toward_reliability: false)
+
+    assert_redirected_to login_path
+    assert problem.reload.counts_toward_reliability?
+  end
+
   test 'filter chips limit the log and clear back to the full list' do
     PrinterServiceLog.report_problem!(printer: @printer, user: @user, summary: 'Extruder clicking')
     PrinterServiceLog.log_repair!(printer: @printer, user: @user, summary: 'Nozzle replaced')

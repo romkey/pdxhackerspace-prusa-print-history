@@ -13,6 +13,7 @@ class ServiceEntry < ApplicationRecord
   validates :occurred_at, presence: true
   validate :resolution_fits_kind
   validate :resolving_repair_is_repair
+  validate :only_faults_skip_reliability
 
   scope :problems, -> { where(kind: 'problem') }
   scope :repairs, -> { where(kind: 'repair') }
@@ -24,6 +25,8 @@ class ServiceEntry < ApplicationRecord
   def repair? = kind == 'repair'
   def open_problem? = problem? && resolved_at.nil?
   def resolved_problem? = problem? && resolved_at.present?
+  def reliability_relevant? = (problem? || repair?) && !automatic?
+  def excluded_from_reliability? = reliability_relevant? && !counts_toward_reliability?
 
   private
 
@@ -32,6 +35,12 @@ class ServiceEntry < ApplicationRecord
     return if resolved_at.blank? && resolved_by_id.blank? && resolving_repair_id.blank?
 
     errors.add(:base, 'Only problem reports can be resolved')
+  end
+
+  def only_faults_skip_reliability
+    return if counts_toward_reliability? || reliability_relevant?
+
+    errors.add(:counts_toward_reliability, 'applies only to problems and repairs')
   end
 
   def resolving_repair_is_repair

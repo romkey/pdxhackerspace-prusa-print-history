@@ -16,6 +16,7 @@ class PrinterServiceLog
   end
 
   def self.resolve_problem!(...) = new.resolve_problem!(...)
+  def self.set_reliability!(...) = new.set_reliability!(...)
   def self.take_out_of_service!(...) = new.take_out_of_service!(...)
   def self.return_to_service!(...) = new.return_to_service!(...)
 
@@ -32,7 +33,7 @@ class PrinterServiceLog
 
     ServiceEntry.transaction do
       repair = write_entry(printer, user, 'repair', **repair_fields(attributes))
-      resolve_selected!(repair, printer, user, attributes[:resolves])
+      resolve_selected!(repair, printer, user, attributes[:resolves], penalize: attributes.fetch(:penalize, true))
       return_from_repair!(printer, user, attributes)
       repair
     end
@@ -50,11 +51,20 @@ class PrinterServiceLog
     end
   end
 
-  def resolve_problem!(problem, user:)
+  def resolve_problem!(problem, user:, penalize: true)
     raise Error, 'Sign in to resolve a problem report.' if user.blank?
     raise Error, 'Only an open problem report can be resolved.' unless problem.open_problem?
 
-    close_problem!(problem, user:)
+    close_problem!(problem, user:, penalize:)
+  end
+
+  # Whether a problem or repair lowers the printer's reliability score. Can be
+  # changed at any time, e.g. when a "problem" turns out to be an unplugged cable.
+  def set_reliability!(entry, user:, counts:)
+    raise Error, 'Sign in to change how an entry counts toward reliability.' if user.blank?
+    raise Error, 'Only problems and repairs count toward reliability.' unless entry.reliability_relevant?
+
+    entry.update!(counts_toward_reliability: counts)
   end
 
   def take_out_of_service!(printer:, user:, reason:)
@@ -109,18 +119,20 @@ class PrinterServiceLog
     end
   end
 
-  def resolve_selected!(repair, printer, user, ids)
+  def resolve_selected!(repair, printer, user, ids, penalize:)
     selected = Array(ids).filter_map { |id| Integer(id, exception: false) }.uniq.reject(&:zero?)
     return if selected.empty?
 
     problems = printer.service_entries.open.where(id: selected).to_a
     raise Error, 'Choose open problem reports for this printer.' unless problems.size == selected.size
 
-    problems.each { |problem| close_problem!(problem, user:, repair:) }
+    problems.each { |problem| close_problem!(problem, user:, repair:, penalize:) }
   end
 
-  def close_problem!(problem, user:, repair: nil)
-    problem.update!(resolved_at: Time.current, resolved_by: user, resolving_repair: repair)
+  def close_problem!(problem, user:, repair: nil, penalize: true)
+    attributes = { resolved_at: Time.current, resolved_by: user, resolving_repair: repair }
+    attributes[:counts_toward_reliability] = false unless penalize
+    problem.update!(attributes)
   end
 
   def return_from_repair!(printer, user, attributes)
@@ -131,11 +143,13 @@ class PrinterServiceLog
 
   def repair_fields(attributes)
     attributes.slice(:summary, :details, :occurred_at)
+              .merge(counts_toward_reliability: attributes.fetch(:penalize, true))
   end
 
   def write_entry(printer, user, kind, **fields)
     ServiceEntry.create!(
       printer:, user:, kind:,
+      counts_toward_reliability: fields.fetch(:counts_toward_reliability, true),
       summary: fields[:summary].to_s.strip,
       details: fields[:details].to_s.strip.presence,
       occurred_at: parse_time(fields[:occurred_at]),

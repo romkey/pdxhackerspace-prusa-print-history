@@ -1,7 +1,7 @@
 class ServiceEntriesController < ApplicationController
   before_action :require_login_or_internal, only: %i[index new_problem create_problem]
   before_action :require_login,
-                only: %i[new_repair create_repair resolve new_outage out_of_service return_to_service]
+                only: %i[new_repair create_repair new_outage out_of_service return_to_service]
 
   def index
     @printer = printer_from_service_route
@@ -27,14 +27,6 @@ class ServiceEntriesController < ApplicationController
 
   def create_repair
     save_repair || render(:new_repair, status: :unprocessable_content)
-  end
-
-  def resolve
-    problem = ServiceEntry.find(params.expect(:id))
-    PrinterServiceLog.resolve_problem!(problem, user: current_user)
-    redirect_back_or_to service_log_path, notice: 'Resolved the problem report.'
-  rescue PrinterServiceLog::Error, ActiveRecord::RecordInvalid => e
-    redirect_back_or_to service_log_path, alert: e.message
   end
 
   def new_outage
@@ -100,8 +92,14 @@ class ServiceEntriesController < ApplicationController
       details: repair_params[:details],
       occurred_at: repair_params[:occurred_at],
       resolves: resolve_ids,
-      return_to_service: truthy?(repair_params[:return_to_service])
+      return_to_service: truthy?(repair_params[:return_to_service]),
+      penalize: penalize?
     }
+  end
+
+  def penalize?
+    value = params.dig(:service_entry, :penalize).presence
+    value.nil? || truthy?(value)
   end
 
   def problem_notice(printer, already_out)
@@ -162,7 +160,7 @@ class ServiceEntriesController < ApplicationController
   end
 
   def repair_params
-    params.expect(service_entry: %i[printer_id summary details occurred_at return_to_service])
+    params.expect(service_entry: %i[printer_id summary details occurred_at return_to_service penalize])
   end
 
   def outage_reason

@@ -48,6 +48,21 @@ class PrinterReliabilityTest < ActiveSupport::TestCase
     assert_equal 100, score.display_score
   end
 
+  test 'problems and repairs marked as not counting are left out of the score' do
+    add_jobs(5)
+    @printer.service_entries.create!(kind: 'problem', summary: 'Unplugged', occurred_at: 2.days.ago, user: @user,
+                                     counts_toward_reliability: false)
+    @printer.service_entries.create!(kind: 'repair', summary: 'Plugged in', occurred_at: 1.day.ago, user: @user,
+                                     counts_toward_reliability: false)
+    @printer.service_entries.create!(kind: 'problem', summary: 'Real', occurred_at: 1.day.ago, user: @user)
+
+    score = PrinterReliability.for_printer(@printer)
+
+    assert_equal 1, score.problems
+    assert_equal 0, score.repairs
+    assert_equal 95, score.display_score
+  end
+
   test 'attentions during an outage do not count, including an outage that is still open' do
     job = add_jobs(5).first
     @printer.service_entries.create!(kind: 'out_of_service', summary: 'Hotend', occurred_at: 5.days.ago, user: @user)

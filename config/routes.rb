@@ -18,7 +18,8 @@ Rails.application.routes.draw do
   post 'service/problems', to: 'service_entries#create_problem', as: :problem_reports
   get 'service/repairs/new', to: 'service_entries#new_repair', as: :new_repair_entry
   post 'service/repairs', to: 'service_entries#create_repair', as: :repair_entries
-  patch 'service/problems/:id/resolve', to: 'service_entries#resolve', as: :resolve_problem
+  patch 'service/problems/:id/resolve', to: 'service_entry_resolutions#resolve', as: :resolve_problem
+  patch 'service/entries/:id/reliability', to: 'service_entry_resolutions#reliability', as: :service_entry_reliability
 
   resources :printers do
     member do

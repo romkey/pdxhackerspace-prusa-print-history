@@ -1,0 +1,26 @@
+<% entry = local_assigns.fetch(:entry) %>
+<% if entry.open_problem? %>
+  <div class="d-inline-flex align-items-center gap-1">
+    <%= button_to 'Resolve', resolve_problem_path(entry), method: :patch,
+                  class: 'btn btn-outline-secondary btn-sm' %>
+    <div class="dropdown">
+      <button class="btn btn-link btn-sm text-secondary text-decoration-none px-1" type="button"
+              data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions">&#8943;</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <%= button_to "Resolve, don't count against reliability", resolve_problem_path(entry, penalize: 0),
+                        method: :patch, class: 'dropdown-item' %>
+        </li>
+        <li>
+          <%= button_to service_entry_reliability_label(entry),
+                        service_entry_reliability_path(entry, counts_toward_reliability: entry.excluded_from_reliability?),
+                        method: :patch, class: 'dropdown-item' %>
+        </li>
+      </ul>
+    </div>
+  </div>
+<% elsif entry.reliability_relevant? %>
+  <%= button_to service_entry_reliability_label(entry),
+                service_entry_reliability_path(entry, counts_toward_reliability: entry.excluded_from_reliability?),
+                method: :patch, class: 'btn btn-link btn-sm text-secondary text-decoration-none p-0' %>
+<% end %>

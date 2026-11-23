@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Printer firmware versions are read hourly (from PrusaLink, Bambu LAN, or Prusa Connect as a fallback). Bambu printers also track each AMS and toolhead module. The first reading and every later change are logged as repairs in the printer's service log, and the current version is shown on the printer page.
 - The Jobs page's history download is now a menu with CSV and JSON options.
+- Problems and repairs can be kept from lowering a printer's reliability score, for issues that weren't the printer's fault (like a printer left unplugged from the network after a move). Choose "Resolve, don't count against reliability" when resolving a problem, tick "Don't count against reliability" when logging a repair, or switch any past problem or repair either way from the service log.
 
 ## [0.18.0] - 2026-11-22
 

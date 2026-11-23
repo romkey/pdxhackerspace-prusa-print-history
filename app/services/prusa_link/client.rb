@@ -33,6 +33,11 @@ module PrusaLink
       get('/api/v1/info')
     end
 
+    # /api/version carries the printer's firmware string (e.g. "6.3.3-7541").
+    def version
+      get('/api/version')
+    end
+
     def legacy_printer
       get('/api/printer')
     rescue Error => e

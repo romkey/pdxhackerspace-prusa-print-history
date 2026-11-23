@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -170,6 +170,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_180000) do
     t.string "bambu_serial"
     t.text "bambu_access_code"
     t.datetime "out_of_service_since"
+    t.string "firmware_version"
+    t.datetime "firmware_checked_at"
+    t.jsonb "firmware_components", default: {}, null: false
     t.index ["name"], name: "index_printers_on_name", unique: true
     t.index ["out_of_service_since"], name: "index_printers_on_out_of_service_since", where: "(out_of_service_since IS NOT NULL)"
     t.index ["prusa_connect_uuid"], name: "index_printers_on_prusa_connect_uuid"

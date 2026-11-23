@@ -1,12 +1,18 @@
 class PrinterServiceLog
   class Error < StandardError; end
 
+  FIRMWARE_LABELS = { 'printer' => 'Printer', 'th' => 'Toolhead', 'mc' => 'Motion controller' }.freeze
+
   def self.report_problem!(printer:, user:, summary:, details: nil, take_out_of_service: false)
     new.report_problem!(printer:, user:, summary:, details:, take_out_of_service:)
   end
 
   def self.log_repair!(printer:, user:, **attributes)
     new.log_repair!(printer:, user:, **attributes)
+  end
+
+  def self.log_firmware_changes!(printer:, initial:, changed:)
+    new.log_firmware_changes!(printer:, initial:, changed:)
   end
 
   def self.resolve_problem!(...) = new.resolve_problem!(...)
@@ -29,6 +35,18 @@ class PrinterServiceLog
       resolve_selected!(repair, printer, user, attributes[:resolves])
       return_from_repair!(printer, user, attributes)
       repair
+    end
+  end
+
+  # Automatic repair entries (no user) for firmware readings. `initial` is { component => version }
+  # seen for the first time (one grouped entry); `changed` is { component => [old, new] }.
+  def log_firmware_changes!(printer:, initial:, changed:)
+    ServiceEntry.transaction do
+      write_initial_firmware!(printer, initial) if initial.any?
+      changed.each do |component, (old, new)|
+        write_entry(printer, nil, 'repair', summary: "#{firmware_label(component)} firmware updated: #{old} → #{new}",
+                                            occurred_at: Time.current)
+      end
     end
   end
 
@@ -56,6 +74,26 @@ class PrinterServiceLog
   end
 
   private
+
+  def write_initial_firmware!(printer, initial)
+    summary = if initial.size == 1 && initial.key?('printer')
+                "Firmware #{initial['printer']} (initial reading)"
+              else
+                "Firmware initial reading: #{initial.map do |c, v|
+                  "#{firmware_label(c)} #{v}"
+                end.join(', ')}".truncate(200)
+              end
+    details = initial.map { |c, v| "#{firmware_label(c)}: #{v}" }.join("\n")
+    write_entry(printer, nil, 'repair', summary:, details: "First firmware readings from the printer.\n#{details}",
+                                        occurred_at: Time.current)
+  end
+
+  def firmware_label(component)
+    return FIRMWARE_LABELS[component] if FIRMWARE_LABELS.key?(component)
+    return "AMS #{component.split('/').last}" if component.start_with?('ams/')
+
+    component
+  end
 
   def take_out_for_problem!(printer, user, summary)
     return if user.blank? || printer.out_of_service?

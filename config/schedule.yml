@@ -25,3 +25,9 @@ data_retention_cleanup:
   class: 'DataRetentionCleanupJob'
   active_job: true
   description: 'Delete old images and, if enabled, old job history per the retention settings'
+
+check_printer_firmware:
+  cron: '5 * * * *'
+  class: 'FanOutPrinterFirmwareChecksJob'
+  active_job: true
+  description: 'Read each printer firmware version hourly and log changes in the service log'

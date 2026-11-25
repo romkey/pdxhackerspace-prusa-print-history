@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-25
+
 ### Added
 - API tokens. Open your name in the top right and choose API tokens to create one, then use it with the new JSON API (`/api/v1`). Each token is read only, read and write, or read, write and delete, can be limited to certain network addresses, and can be paused, renewed, rotated or revoked. Admins see and manage everyone's tokens and can create tokens for any member.
 - An API and tokens section in Settings: turn the API on (it starts off), let members create their own tokens or not, cap what member tokens can do, set default and maximum token lifetimes separately for members and admins, choose how long an expired token can still be renewed, require tokens to come from the shop network, and require owners to have signed in recently for their tokens to keep working.

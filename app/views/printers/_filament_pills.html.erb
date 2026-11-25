@@ -4,7 +4,7 @@
 <div class="printer-filaments <%= local_assigns[:class] %>">
   <% if allowed.any? %>
     <% allowed.each do |type| %>
-      <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"
+      <span class="badge rounded-pill text-bg-secondary-subtle"
             title="<%= filament_type_title(type) %>"><%= type.name %></span>
     <% end %>
   <% else %>

@@ -140,6 +140,9 @@ Defined in `refresh.scss` — use these rather than inventing new ones:
   control row that overflows into the `⋯` menu
 - `.printer-training` — required-training line (`printers/_required_training`), on the
   dashboard card and the printer page
+- `.printer-filaments` — allowed filament pills (`printers/_filament_pills`), on the dashboard
+  card and the printer page
+- `.print-holds` — why a print is paused by an enforcement setting (`jobs/_hold_flags`)
 - `.job-timeline`, `.job-list-thumb`, `.job-list-thumbs-col` — job views
 - `.dashboard-page`, `.dashboard-title`, `.dashboard-clock`, `.dashboard-printer-card`,
   `.dashboard-printer-name`, `.dashboard-job-filename`, `.dashboard-temps`,

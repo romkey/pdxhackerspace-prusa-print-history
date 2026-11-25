@@ -40,7 +40,7 @@ class JobsController < ApplicationController
     return redirect_to(@job, alert: refusal) if refusal
 
     private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?
-    held = @job.claim_held? && @job.owner_id.nil?
+    held = @job.claim_held? && @job.owner_id.nil? && !@job.filament_held?
     @job.update!(owner: current_user, private: private_claim)
     notice = private_claim ? 'Claimed as private.' : 'Claimed.'
     redirect_to @job, notice: held ? "#{notice} The print will continue shortly." : notice

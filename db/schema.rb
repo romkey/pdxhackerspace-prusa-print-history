@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -86,6 +86,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_150000) do
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
+  create_table "filament_types", force: :cascade do |t|
+    t.string "aliases"
+    t.integer "bed_max_c", null: false
+    t.integer "bed_min_c", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "nozzle_max_c", null: false
+    t.integer "nozzle_min_c", null: false
+    t.boolean "requires_hardened_nozzle", default: false, null: false
+    t.boolean "requires_ventilation", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_filament_types_on_lower_name", unique: true
+  end
+
   create_table "job_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "event_type", null: false
@@ -123,8 +137,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_150000) do
     t.integer "total_duration_seconds"
     t.decimal "total_filament_grams", precision: 10, scale: 2
     t.datetime "updated_at", null: false
+    t.datetime "filament_hold_at"
+    t.string "filament_hold_reason"
     t.index ["claim_hold_at"], name: "index_jobs_on_claim_hold_at", where: "(claim_hold_at IS NOT NULL)"
     t.index ["cleared_by_id"], name: "index_jobs_on_cleared_by_id"
+    t.index ["filament_hold_at"], name: "index_jobs_on_filament_hold_at", where: "(filament_hold_at IS NOT NULL)"
     t.index ["owner_id"], name: "index_jobs_on_owner_id"
     t.index ["printer_id", "prusalink_job_id"], name: "idx_jobs_on_printer_and_prusalink_job_id", unique: true, where: "(prusalink_job_id IS NOT NULL)"
     t.index ["printer_id"], name: "index_jobs_on_printer_id"
@@ -236,6 +253,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_150000) do
     t.string "firmware_version"
     t.datetime "firmware_checked_at"
     t.jsonb "firmware_components", default: {}, null: false
+    t.boolean "hardened_nozzle", default: false, null: false
+    t.boolean "ventilation", default: false, null: false
     t.string "required_training", default: [], null: false, array: true
     t.index ["name"], name: "index_printers_on_name", unique: true
     t.index ["out_of_service_since"], name: "index_printers_on_out_of_service_since", where: "(out_of_service_since IS NOT NULL)"

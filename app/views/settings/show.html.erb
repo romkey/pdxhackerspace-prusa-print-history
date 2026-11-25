@@ -94,10 +94,10 @@
     </div>
   </div>
 
-  <div class="card mb-3" id="enforce-claims">
+  <div class="card mb-3" id="enforcement">
     <div class="card-body">
-      <div class="h-section-label">Claims</div>
       <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+        <div class="h-section-label">Claims</div>
         <%= render 'settings/check_box', key: :enforce_claims, label: 'Enforce claims',
                                          checked: Setting.enforce_claims?,
                                          hint: 'Members need the training each printer requires to claim its prints ' \
@@ -112,6 +112,19 @@
             Choose which ones each printer requires on the printer's edit page.
           </div>
         </div>
+
+        <div class="d-flex justify-content-between align-items-baseline mt-4">
+          <div class="h-section-label">Filament types</div>
+          <div class="text-13">
+            <%= link_to "Edit filament types (#{FilamentType.count})", filament_types_path, class: 'text-decoration-none' %>
+          </div>
+        </div>
+        <%= render 'settings/check_box', key: :enforce_filament_types, label: 'Enforce filament types',
+                                         checked: Setting.enforce_filament_types?,
+                                         hint: "A print is paused when it starts if its printer may not run its filament " \
+                                               "(it needs a hardened nozzle or ventilation the printer lacks). " \
+                                               "The dashboard says why; resume it at the printer once it's sorted out." %>
+
         <div class="row g-3 align-items-end mt-1">
           <div class="col-md-9">
             <%= label_tag 'settings[enforce_claims_webhook_url]', 'Webhook URL (optional)', class: 'form-label' %>
@@ -119,7 +132,7 @@
                               class: 'form-control', placeholder: 'https://example.com/hooks/printers' %>
             <div class="form-text">
               Gets a JSON POST (<code>print_paused</code> or <code>print_continued</code>) whenever a print
-              is paused or continued because of a claim.
+              is paused because it's unclaimed or its filament isn't allowed, or continued once claimed.
             </div>
           </div>
           <div class="col-md-3">

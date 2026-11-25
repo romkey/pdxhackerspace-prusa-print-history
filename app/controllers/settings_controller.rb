@@ -21,7 +21,7 @@ class SettingsController < ApplicationController
     default_ambient_sensor dashboard_heading footer_text footer_link_label footer_link_url
     image_retention_months delete_job_history job_history_retention_months
     prusa_untrained_message prusa_trained_account_message
-    enforce_claims enforce_claims_webhook_url training_topics
+    enforce_claims enforce_claims_webhook_url enforce_filament_types training_topics
   ].concat(ApiSettings::KEYS.map(&:to_sym)).freeze
 
   def update

@@ -184,7 +184,29 @@ the print. An optional webhook URL receives a JSON `POST` for each pause and con
   "job": { "id": 42, "status": "paused", "private": false, "url": "…", "filename": "…", "claimed_by": null } }
 ```
 
-`event` is `print_paused` or `print_continued`. Failed deliveries are retried a few times.
+`event` is `print_paused` or `print_continued`. `reasons` lists every reason (`unclaimed`,
+`filament_not_allowed`, `claimed`), `reason` is the first one, and `job.filament_problem` says
+what was wrong with the filament. Failed deliveries are retried a few times.
+
+## Filament types
+
+**Settings → Filament types** lists the filaments the shop uses, seeded with PLA, PETG, ABS, ASA,
+TPU, PC, PA (nylon), PA-CF, PLA-CF, PETG-CF, PVA and HIPS. Each has nozzle and bed temperature
+ranges, other names it goes by, and whether it needs a hardened nozzle or ventilation. Each
+printer's edit page says whether it has a hardened nozzle and ventilation, and a printer may
+print a type unless the type needs something the printer lacks. The dashboard and printer pages
+show each printer's allowed types.
+
+Materials come from the print file and the printer (the job's tools) and are matched to a type
+by name or alias, ignoring case. A material that starts with a type's name and a space counts
+too ("PLA Basic" is PLA), unless its extra words mark it fiber-filled ("Nylon CF" has to match a
+CF type by name or alias). A material that matches no type isn't judged.
+
+**Enforce filament types** (off by default, in the same Settings card as claims) pauses a print
+when it starts if its printer may not run its filament. The dashboard and printer page flag
+the print and say why. It stays paused until someone resumes it on the printer or from the
+admin controls, which also clears the flag. A print paused for both reasons isn't continued by
+claiming it.
 
 ## JSON API
 

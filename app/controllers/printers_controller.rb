@@ -113,7 +113,8 @@ class PrintersController < ApplicationController
     permitted = params.expect(printer: [:name, :location, :model, :hostname, :printer_type,
                                         :prusalink_key, :prusa_connect_token, :prusa_connect_uuid,
                                         :bambu_serial, :bambu_access_code,
-                                        :ha_base_sensor, :camera_url, { required_training: [] }])
+                                        :ha_base_sensor, :camera_url, :hardened_nozzle, :ventilation,
+                                        { required_training: [] }])
     clear_blank_secret(permitted, :prusalink_key)
     clear_blank_secret(permitted, :prusa_connect_token)
     clear_blank_secret(permitted, :bambu_access_code)

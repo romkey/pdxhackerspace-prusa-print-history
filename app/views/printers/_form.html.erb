@@ -69,6 +69,23 @@
       </div>
     </div>
 
+    <div class="col-12">
+      <div class="form-label mb-1">Filament capabilities</div>
+      <div class="form-check form-check-inline">
+        <%= f.check_box :hardened_nozzle, class: 'form-check-input' %>
+        <%= f.label :hardened_nozzle, 'Hardened nozzle', class: 'form-check-label' %>
+      </div>
+      <div class="form-check form-check-inline">
+        <%= f.check_box :ventilation, class: 'form-check-input' %>
+        <%= f.label :ventilation, 'Ventilation', class: 'form-check-label' %>
+      </div>
+      <div class="form-text">
+        Filament types that need a hardened nozzle (carbon fiber) or ventilation (ABS, ASA, ...) are only
+        allowed on printers that have them.
+        <%= link_to 'Filament types', filament_types_path if admin? %>
+      </div>
+    </div>
+
     <div class="col-12" data-printer-form-target="prusa" <%= 'hidden' if printer.bambu? %>>
       <div class="row g-3">
         <div class="col-md-6">

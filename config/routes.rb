@@ -105,6 +105,7 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :filament_types, path: 'settings/filament_types', except: :show
   resource :settings, only: %i[show update]
   resource :prusa_connect_credential, only: %i[update destroy], path: 'settings/prusa_connect'
 

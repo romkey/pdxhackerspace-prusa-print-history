@@ -115,20 +115,37 @@ body {
   font-weight: 600;
 }
 
-// Required training for a printer (printers/_required_training): neutral badges, no status color.
-.printer-training {
+// Required training (printers/_required_training) and filament types a printer may print
+// (printers/_filament_pills): neutral badges, no status color. Why a print is held
+// (jobs/_hold_flags): hold badges wrap, since the filament reason can be a sentence.
+.printer-training,
+.printer-filaments,
+.print-holds {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-
-  .badge {
-    font-size: 0.875em;
-    font-weight: 500;
-  }
 }
 
-.dashboard-printer-card .printer-training {
+.printer-training .badge {
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.printer-filaments .badge {
+  font-weight: 500;
+}
+
+.print-holds .badge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: start;
+  white-space: normal;
+}
+
+.dashboard-printer-card .printer-training,
+.dashboard-printer-card .printer-filaments,
+.dashboard-printer-card .print-holds {
   justify-content: center;
 }
 

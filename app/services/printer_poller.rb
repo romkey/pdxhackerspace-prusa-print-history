@@ -16,6 +16,9 @@ class PrinterPoller
 
   IDLE_STATES = %w[IDLE READY].freeze
   UNREACHABLE_RECHECK = 50.seconds
+  # How long after PrintStartHolds pauses a print a PRINTING state is still taken as the
+  # printer catching up rather than someone resuming it.
+  HOLD_SETTLE_TIME = 90.seconds
 
   EVENT_TYPE_FOR_STATUS = {
     'paused' => 'paused',
@@ -95,7 +98,7 @@ class PrinterPoller
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
     JobImageCapture.capture_preview!(job, job_payload, client: @client)
-    hold_unclaimed_start(job, detect_status_change(job, mapped_status, status_payload))
+    apply_print_holds(job, detect_status_change(job, mapped_status, status_payload), status_payload)
     finalize_if_terminal(job, job_payload)
     update_printer_environment!(operational_state: 'idle', status_payload: status_payload) if job.reload.terminal?
 
@@ -207,8 +210,7 @@ class PrinterPoller
   end
 
   def idle_state?(status_payload)
-    raw = (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
-    IDLE_STATES.include?(raw)
+    IDLE_STATES.include?(raw_state(status_payload))
   end
 
   def retire_superseded_jobs!(job)
@@ -383,10 +385,28 @@ class PrinterPoller
     event
   end
 
-  def hold_unclaimed_start(job, event)
-    return unless event&.event_type == 'started'
+  # Starting: pause it if an enforcement setting says it must wait. Otherwise, once a held
+  # print is really printing again (state PRINTING, not a transient BUSY, and not just the
+  # printer still catching up with our pause), whatever held it is over: drop the flags.
+  # This looks at the state on every poll rather than at the resumed event, so a BUSY poll
+  # in between can't leave the flags stuck.
+  def apply_print_holds(job, event, status_payload)
+    return PrintStartHolds.apply!(job, client: @client) if event&.event_type == 'started'
 
-    ClaimEnforcement.hold_if_unclaimed!(job, client: @client)
+    clear_print_holds!(job) if raw_state(status_payload) == 'PRINTING' && hold_settled?(job)
+  end
+
+  def hold_settled?(job)
+    held_at = [job.claim_hold_at, job.filament_hold_at].compact.max
+    held_at.present? && held_at <= HOLD_SETTLE_TIME.ago
+  end
+
+  def clear_print_holds!(job)
+    job.update!(claim_hold_at: nil, filament_hold_at: nil, filament_hold_reason: nil)
+  end
+
+  def raw_state(status_payload)
+    (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
   end
 
   def event_attributes(new_status, last_status, status_payload)

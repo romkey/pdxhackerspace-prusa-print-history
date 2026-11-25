@@ -95,7 +95,7 @@ class PrinterPoller
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
     JobImageCapture.capture_preview!(job, job_payload, client: @client)
-    detect_status_change(job, mapped_status, status_payload)
+    hold_unclaimed_start(job, detect_status_change(job, mapped_status, status_payload))
     finalize_if_terminal(job, job_payload)
     update_printer_environment!(operational_state: 'idle', status_payload: status_payload) if job.reload.terminal?
 
@@ -380,6 +380,13 @@ class PrinterPoller
     CaptureEventPhotoJob.perform_later(event.id) if @printer.camera_configured?
     enqueue_connect_error_sync(event, new_status)
     enqueue_attention_notification(job, last_status, new_status)
+    event
+  end
+
+  def hold_unclaimed_start(job, event)
+    return unless event&.event_type == 'started'
+
+    ClaimEnforcement.hold_if_unclaimed!(job, client: @client)
   end
 
   def event_attributes(new_status, last_status, status_payload)

@@ -445,6 +445,41 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal 'ASA', head.material
   end
 
+  test 'pauses an unclaimed print when it starts while claims are enforced' do
+    Setting.enforce_claims = true
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING', 'temp_bed' => 60.0, 'temp_nozzle' => 215.0 } },
+      job: { 'id' => 'pl-900', 'state' => 'PRINTING', 'file' => { 'display_name' => 'held.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    paused = []
+    prusalink.define_singleton_method(:pause_job) { |id| paused << id }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    job = Job.find_by!(prusalink_job_id: 'pl-900')
+
+    assert_equal ['pl-900'], paused
+    assert_equal 'paused', job.status
+    assert_predicate job, :claim_held?
+    assert_equal %w[started paused], job.events.ordered.map(&:event_type)
+  end
+
+  test 'does not pause new prints when claims are not enforced' do
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-901', 'state' => 'PRINTING', 'file' => { 'display_name' => 'free.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    paused = []
+    prusalink.define_singleton_method(:pause_job) { |id| paused << id }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_empty paused
+    assert_equal 'printing', Job.find_by!(prusalink_job_id: 'pl-901').status
+  end
+
   private
 
   def without_environment_columns(&)

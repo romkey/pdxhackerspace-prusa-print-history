@@ -32,6 +32,7 @@ class Job < ApplicationRecord
   scope :owned_by,  ->(user) { where(owner_id: user&.id) }
 
   after_commit :sync_owner_print_time_totals, on: %i[create update]
+  after_update_commit :release_claim_hold, if: :claimed_while_held?
 
   # Filename, owner, progress, preview, and photos of a private print are visible only to
   # its owner and to admins. Everything else about the print stays public.
@@ -73,7 +74,19 @@ class Job < ApplicationRecord
     ((ended_at || Time.current) - started_at).to_i
   end
 
+  def claim_held?
+    claim_hold_at.present?
+  end
+
   private
+
+  def claimed_while_held?
+    saved_change_to_owner_id? && owner_id.present? && claim_hold_at.present?
+  end
+
+  def release_claim_hold
+    ClaimHoldReleaseJob.perform_later(id)
+  end
 
   def sync_owner_print_time_totals
     return unless print_time_totals_dirty?

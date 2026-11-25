@@ -36,14 +36,14 @@ class JobsController < ApplicationController
   end
 
   def claim
-    unless access_policy.can_claim?(@job)
-      redirect_to @job, alert: 'This print is already claimed by someone else.'
-      return
-    end
+    refusal = access_policy.claim_refusal(@job)
+    return redirect_to(@job, alert: AccessPolicy::CLAIM_REFUSAL_MESSAGES.fetch(refusal)) if refusal
 
     private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?
+    held = @job.claim_held? && @job.owner_id.nil?
     @job.update!(owner: current_user, private: private_claim)
-    redirect_to @job, notice: private_claim ? 'Claimed as private.' : 'Claimed.'
+    notice = private_claim ? 'Claimed as private.' : 'Claimed.'
+    redirect_to @job, notice: held ? "#{notice} The print will continue shortly." : notice
   end
 
   def unclaim

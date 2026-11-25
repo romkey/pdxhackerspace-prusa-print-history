@@ -2,6 +2,11 @@
 # the two can never disagree. `user` is the signed-in user (or the API token's owner);
 # `internal_network` is whether the request comes from INTERNAL_NETWORKS.
 class AccessPolicy
+  CLAIM_REFUSAL_MESSAGES = {
+    untrained: 'Only members trained on the printers can claim prints.',
+    claimed: 'This print is already claimed by someone else.'
+  }.freeze
+
   attr_reader :user
 
   # `admin_allowed: false` treats an admin as a member, for kiosk sessions: a shared kiosk
@@ -36,11 +41,28 @@ class AccessPolicy
   end
 
   # Members claim unclaimed prints, or re-claim their own to switch between public and
-  # private. Taking over someone else's claim is an admin-only reassignment.
+  # private. Taking over someone else's claim is an admin-only reassignment. While claims
+  # are enforced, only trained members (and admins) may claim a print they don't own yet.
   def can_claim?(job)
     return false unless signed_in?
+    return true if admin? || job.owner_id == user.id
 
-    job.owner_id.nil? || job.owner_id == user.id || admin?
+    job.owner_id.nil? && trained_to_claim?
+  end
+
+  # Why can_claim? refuses a print, for error messages: :untrained or :claimed.
+  def claim_refusal(job)
+    return nil if can_claim?(job)
+    return :claimed if job.owner_id.present?
+
+    :untrained
+  end
+
+  def trained_to_claim?
+    return false unless signed_in?
+    return true if admin? || !Setting.enforce_claims?
+
+    user.trained_on_prusa == true
   end
 
   def can_release_claim?(job)

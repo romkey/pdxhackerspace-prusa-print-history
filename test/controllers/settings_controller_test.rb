@@ -97,4 +97,21 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :forbidden
   end
+
+  test 'admins can turn on claim enforcement and set its webhook' do
+    login_as(users(:admin))
+
+    assert_not Setting.enforce_claims?
+
+    patch settings_path, params: {
+      settings: { enforce_claims: '1', enforce_claims_webhook_url: ' https://hooks.example.com/claims ' }
+    }
+
+    assert Setting.enforce_claims?
+    assert_equal 'https://hooks.example.com/claims', Setting.enforce_claims_webhook_url
+
+    get settings_path
+
+    assert_select '#enforce-claims input[name=?][checked]', 'settings[enforce_claims]'
+  end
 end

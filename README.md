@@ -169,6 +169,21 @@ without notice and is strictly best-effort.
 
 Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
 
+## Claim enforcement
+
+**Settings → Claims → Enforce claims** (off by default) limits claiming to members whose
+Authentik `trained_on` claim includes Prusa, plus admins. While it is on, a print that is
+unclaimed when the poller first sees it start is paused on the printer; claiming it continues
+the print. An optional webhook URL receives a JSON `POST` for each pause and continue:
+
+```json
+{ "event": "print_paused", "reason": "unclaimed", "occurred_at": "…",
+  "printer": { "id": 1, "name": "XL" },
+  "job": { "id": 42, "status": "paused", "private": false, "url": "…", "filename": "…", "claimed_by": null } }
+```
+
+`event` is `print_paused` or `print_continued`. Failed deliveries are retried a few times.
+
 ## JSON API
 
 The app has a token-authenticated JSON API under `/api/v1`. It is off until an admin turns it

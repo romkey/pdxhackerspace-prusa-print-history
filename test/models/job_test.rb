@@ -1,6 +1,8 @@
 require 'test_helper'
 
 class JobTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @active = jobs(:active_xl)
     @done   = jobs(:finished)
@@ -118,5 +120,23 @@ class JobTest < ActiveSupport::TestCase
     jobs(:active_xl).update!(cleared_at: Time.current, clear_outcome: 'success')
 
     assert_not jobs(:active_xl).reload.clearable?
+  end
+
+  test 'claiming a held print queues continuing it' do
+    job = jobs(:active_xl)
+    job.update!(owner: nil, status: 'paused', claim_hold_at: 1.minute.ago)
+
+    assert_enqueued_with(job: ClaimHoldReleaseJob, args: [job.id]) do
+      job.update!(owner: users(:viewer))
+    end
+  end
+
+  test 'claiming a print that is not held does not queue a release' do
+    job = jobs(:active_xl)
+    job.update!(owner: nil)
+
+    assert_no_enqueued_jobs(only: ClaimHoldReleaseJob) do
+      job.update!(owner: users(:viewer))
+    end
   end
 end

@@ -14,6 +14,10 @@ class JobsHelperTest < ActionView::TestCase
     @logged_in
   end
 
+  def access_policy
+    AccessPolicy.new(user: @logged_in ? users(:viewer) : nil)
+  end
+
   def can_clear_prints?
     @can_clear_prints
   end
@@ -70,6 +74,11 @@ class JobsHelperTest < ActionView::TestCase
 
     assert job_show_clear_button?(@job)
 
+    Setting.enforce_claims = true
+
+    assert_not job_show_claim_button?(@job), 'untrained members cannot claim while claims are enforced'
+
+    Setting.enforce_claims = false
     @job.update!(owner: users(:viewer))
 
     assert_not job_show_claim_button?(@job)

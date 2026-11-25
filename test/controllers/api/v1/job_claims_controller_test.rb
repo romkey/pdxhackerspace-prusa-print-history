@@ -21,6 +21,16 @@ module Api
         assert_equal @token, ApiTokenEvent.last.api_token
       end
 
+      test 'refuses untrained members while claims are enforced' do
+        Setting.enforce_claims = true
+        @member.update!(trained_on_prusa: false)
+
+        put api_v1_job_claim_path(@job), headers: api_headers(@token), as: :json
+
+        assert_response :forbidden
+        assert_nil @job.reload.owner
+      end
+
       test 'refuses to take over someone else\'s claim' do
         @job.update!(owner: users(:other_viewer))
 

@@ -138,6 +138,8 @@ Defined in `refresh.scss` — use these rather than inventing new ones:
 - `.printer-controls__bar`, `.printer-controls__items`, `.printer-controls__item`,
   `.printer-controls__file`, `.printer-controls__more`, `.printer-controls__menu` — printer
   control row that overflows into the `⋯` menu
+- `.printer-training` — required-training line (`printers/_required_training`), on the
+  dashboard card and the printer page
 - `.printer-filaments` — allowed filament pills (`printers/_filament_pills`), on the dashboard
   card and the printer page
 - `.print-holds` — why a print is paused by an enforcement setting (`jobs/_hold_flags`)

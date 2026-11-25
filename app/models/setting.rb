@@ -7,6 +7,8 @@ class Setting < ApplicationRecord
   DEFAULT_PRUSA_TRAINED_ACCOUNT_MESSAGE =
     'If you have already been trained on the Prusa printers, please ask an admin to add Prusa to your account.'.freeze
 
+  DEFAULT_TRAINING_TOPICS = %w[Prusa].freeze
+
   DEFAULT_IMAGE_RETENTION_MONTHS = 3
   DEFAULT_JOB_HISTORY_RETENTION_MONTHS = 12
 
@@ -23,6 +25,7 @@ class Setting < ApplicationRecord
     job_history_retention_months
     enforce_claims
     enforce_claims_webhook_url
+    training_topics
     enforce_filament_types
     ha_last_polled_at
     ha_last_error
@@ -152,6 +155,19 @@ class Setting < ApplicationRecord
 
   def self.enforce_claims_webhook_url=(value)
     set(:enforce_claims_webhook_url, value.to_s.strip.presence)
+  end
+
+  # Training topics admins can require per printer. Names match entries in Authentik's
+  # trained_on claim (case-insensitively). Stored one per line.
+  def self.training_topics
+    value = fetch(:training_topics)
+    return DEFAULT_TRAINING_TOPICS.dup if value.nil?
+
+    TrainingTopics.normalize(value)
+  end
+
+  def self.training_topics=(value)
+    set(:training_topics, TrainingTopics.normalize(value).join("\n"))
   end
 
   def self.positive_integer_for(key, default)

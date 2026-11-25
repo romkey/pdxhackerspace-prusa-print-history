@@ -36,8 +36,8 @@ class JobsController < ApplicationController
   end
 
   def claim
-    refusal = access_policy.claim_refusal(@job)
-    return redirect_to(@job, alert: AccessPolicy::CLAIM_REFUSAL_MESSAGES.fetch(refusal)) if refusal
+    refusal = access_policy.claim_refusal_message(@job)
+    return redirect_to(@job, alert: refusal) if refusal
 
     private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?
     held = @job.claim_held? && @job.owner_id.nil? && !@job.filament_held?

@@ -53,14 +53,17 @@ class AccessPolicyTest < ActiveSupport::TestCase
     assert_not policy(nil, internal: true).can_undo_clears?
   end
 
-  test 'while claims are enforced only trained members and admins can claim' do
+  test 'while claims are enforced members need every topic the printer requires' do
     Setting.enforce_claims = true
+    @job.printer.update!(required_training: %w[Prusa XL])
     @job.update!(owner: nil)
-    @member.update!(trained_on_prusa: false)
-    @other.update!(trained_on_prusa: true)
+    @member.update!(trained_on: %w[prusa])
+    @other.update!(trained_on: %w[Prusa xl Laser])
 
     assert_not policy(@member).can_claim?(@job)
     assert_equal :untrained, policy(@member).claim_refusal(@job)
+    assert_equal 'Only members trained on Prusa and XL can claim prints on Prusa XL.',
+                 policy(@member).claim_refusal_message(@job)
     assert policy(@other).can_claim?(@job)
     assert policy(@admin).can_claim?(@job)
 
@@ -70,9 +73,18 @@ class AccessPolicyTest < ActiveSupport::TestCase
     assert_equal :claimed, policy(@other).claim_refusal(@job)
   end
 
+  test 'a printer that requires no training lets any member claim while claims are enforced' do
+    Setting.enforce_claims = true
+    @job.printer.update!(required_training: [])
+    @job.update!(owner: nil)
+    @member.update!(trained_on: [])
+
+    assert policy(@member).can_claim?(@job)
+  end
+
   test 'untrained members can claim when claims are not enforced' do
     @job.update!(owner: nil)
-    @member.update!(trained_on_prusa: false)
+    @member.update!(trained_on: [])
 
     assert_not Setting.enforce_claims?
     assert policy(@member).can_claim?(@job)

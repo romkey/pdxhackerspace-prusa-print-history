@@ -17,7 +17,7 @@
             <th>Email</th>
             <th>Name</th>
             <th>Admin</th>
-            <th>Prusa</th>
+            <th>Training</th>
             <th>Slack</th>
             <th>Notifications</th>
             <th>Last login</th>
@@ -39,7 +39,7 @@
               <td class="text-secondary text-13"><%= user.email %></td>
               <td class="text-secondary text-13"><%= user.name.presence || '—' %></td>
               <td class="text-13" title="<%= user_access_title(user) %>"><%= user_admin_label(user) %></td>
-              <td class="text-13" title="<%= user_access_title(user) %>"><%= user_prusa_training_label(user) %></td>
+              <td class="text-13" title="<%= user_access_title(user) %>"><%= user_training_label(user) %></td>
               <td class="text-secondary text-13">
                 <% if user.slack_handle.present? || user.slack_id.present? %>
                   <% if user.slack_handle.present? %>

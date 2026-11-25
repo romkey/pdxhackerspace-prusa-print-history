@@ -193,13 +193,16 @@ in progress, or else the most recent print if it is still waiting to be cleared.
       "location": "Shop",
       "status": "printing",
       "out_of_service": false,
+      "required_training": ["Prusa"],
       "job": { "id": 415, "status": "printing", "...": "see the job object" }
     }
   ]
 }
 ```
 
-`job` is `null` for an idle printer with nothing waiting on its bed.
+`job` is `null` for an idle printer with nothing waiting on its bed. `required_training` lists
+the training topics a member needs to claim prints on this printer while claims are enforced
+(empty means none).
 
 ### `GET /api/v1/printers/:id`
 
@@ -235,8 +238,8 @@ Response: `{ "jobs": [ <job>, ... ] }`.
 whether it is private.
 **Access level:** `read_write`
 **Who:** Any member, for an unclaimed print or one they own. Only admins can take over a print
-someone else has claimed. When an admin has turned on **Enforce claims**, only members trained
-on the printers (and admins) can claim; a print that was paused because nobody claimed it
+someone else has claimed. When an admin has turned on **Enforce claims**, a member needs every
+training topic in the printer's `required_training` (admins always can); a print that was paused because nobody claimed it
 continues shortly after it is claimed.
 
 | Body field | Type | Notes |
@@ -249,7 +252,8 @@ curl -X PUT -H "Authorization: Bearer pph_..." -H "Content-Type: application/jso
 ```
 
 Response: `{ "job": <job> }`.
-**Errors:** `403 forbidden` when claims are enforced and the member isn't trained; `404`;
+**Errors:** `403 forbidden` when claims are enforced and the member lacks the printer's
+`required_training`; `404`;
 `409 conflict` when someone else has claimed it (re-read the job: its `actions.can_claim` is
 `false`).
 

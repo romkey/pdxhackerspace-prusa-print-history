@@ -43,6 +43,7 @@ module Api
           location: printer.location,
           status: printer.display_status,
           out_of_service: printer.out_of_service?,
+          required_training: printer.required_training,
           job: job && self.job(job, policy:, include_printer: false)
         }
       end

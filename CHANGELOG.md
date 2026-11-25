@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-25
+
 ### Added
 - Training topics. Admins list them under Settings → Claims (they match the names in Authentik's training list) and choose on each printer's edit page which ones it requires, or none. While Enforce claims is on, a member needs every topic a printer requires to claim prints on it. Every printer, Bambu included, starts out requiring Prusa, matching how Enforce claims worked before, so nothing changes until you edit them.
 - Every printer on the dashboard and on its own page is labeled with the training it requires, or "No training required".

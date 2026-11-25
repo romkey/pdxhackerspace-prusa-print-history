@@ -115,6 +115,32 @@ body {
   font-weight: 600;
 }
 
+// Filament types a printer may print (printers/_filament_pills) and why a print is held
+// (jobs/_hold_flags). Hold badges wrap: the filament reason can be a sentence.
+.printer-filaments,
+.print-holds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.printer-filaments .badge {
+  font-weight: 500;
+}
+
+.print-holds .badge {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: start;
+  white-space: normal;
+}
+
+.dashboard-printer-card .printer-filaments,
+.dashboard-printer-card .print-holds {
+  justify-content: center;
+}
+
 .dashboard-image {
   display: block;
   width: 100%;

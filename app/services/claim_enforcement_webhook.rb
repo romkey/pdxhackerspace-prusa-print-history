@@ -1,8 +1,9 @@
 require 'net/http'
 require 'json'
 
-# POSTs a JSON notice to Setting.enforce_claims_webhook_url when claim enforcement pauses or
-# continues a print. Filename and claimant are left out of private prints.
+# POSTs a JSON notice to Setting.enforce_claims_webhook_url when a print is paused because it
+# is unclaimed or its filament isn't allowed on its printer, or continued once claimed.
+# Filename and claimant are left out of private prints.
 class ClaimEnforcementWebhook
   class Error < StandardError; end
 
@@ -11,15 +12,18 @@ class ClaimEnforcementWebhook
   ACTIONS = [PAUSED, CONTINUED].freeze
   TIMEOUT = 10
 
-  def self.deliver(job, action, url: Setting.enforce_claims_webhook_url)
-    new(job, action, url:).deliver
+  def self.deliver(job, action, reasons: nil, url: Setting.enforce_claims_webhook_url)
+    new(job, action, reasons:, url:).deliver
   end
 
-  def initialize(job, action, url:)
+  # +reasons+: why, e.g. %w[unclaimed filament_not_allowed] or %w[claimed]. Defaults to the
+  # claim reason, which is all notices queued before filament holds existed could mean.
+  def initialize(job, action, url:, reasons: nil)
     raise ArgumentError, "unknown action #{action.inspect}" unless ACTIONS.include?(action)
 
     @job = job
     @action = action
+    @reasons = Array(reasons).presence || [action == PAUSED ? 'unclaimed' : 'claimed']
     @url = url
   end
 
@@ -38,7 +42,8 @@ class ClaimEnforcementWebhook
   def payload
     {
       event: "print_#{@action}",
-      reason: @action == PAUSED ? 'unclaimed' : 'claimed',
+      reason: @reasons.first,
+      reasons: @reasons,
       occurred_at: Time.current.iso8601,
       printer: { id: @job.printer_id, name: @job.printer.name },
       job: job_payload
@@ -48,7 +53,8 @@ class ClaimEnforcementWebhook
   private
 
   def job_payload
-    data = { id: @job.id, status: @job.status, private: @job.private?, url: job_url }
+    data = { id: @job.id, status: @job.status, private: @job.private?, url: job_url,
+             filament_problem: @job.filament_hold_reason }
     return data if @job.private?
 
     data.merge(filename: @job.filename, claimed_by: @job.owner&.display_name)

@@ -3,10 +3,10 @@ class ClaimEnforcementWebhookJob < ApplicationJob
 
   retry_on ClaimEnforcementWebhook::Error, wait: :polynomially_longer, attempts: 5
 
-  def perform(job_id, action)
+  def perform(job_id, action, reasons = nil)
     job = Job.find_by(id: job_id)
     return if job.nil?
 
-    ClaimEnforcementWebhook.deliver(job, action)
+    ClaimEnforcementWebhook.deliver(job, action, reasons:)
   end
 end

@@ -1,0 +1,18 @@
+<%# Why an active print is paused by PrintStartHolds. Renders nothing otherwise. %>
+<% if job&.active? && job.held? %>
+  <div class="print-holds <%= local_assigns[:class] %>">
+    <% if job.filament_held? %>
+      <span class="badge text-bg-danger-subtle"
+            title="<%= job.filament_hold_reason %>">
+        <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+        Paused: wrong filament<% if job.filament_hold_reason.present? %> &middot; <%= job.filament_hold_reason %><% end %>
+      </span>
+    <% end %>
+    <% if job.claim_held? %>
+      <span class="badge text-bg-warning-subtle">
+        <i class="bi bi-person-exclamation" aria-hidden="true"></i>
+        Paused until someone claims it
+      </span>
+    <% end %>
+  </div>
+<% end %>

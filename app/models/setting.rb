@@ -23,6 +23,7 @@ class Setting < ApplicationRecord
     job_history_retention_months
     enforce_claims
     enforce_claims_webhook_url
+    enforce_filament_types
     ha_last_polled_at
     ha_last_error
     ha_last_status
@@ -132,6 +133,16 @@ class Setting < ApplicationRecord
 
   def self.enforce_claims=(value)
     set(:enforce_claims, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false')
+  end
+
+  # When on, a print whose filament the printer can't run (see FilamentType#allowed_on?) is
+  # paused when it starts.
+  def self.enforce_filament_types?
+    fetch(:enforce_filament_types) == 'true'
+  end
+
+  def self.enforce_filament_types=(value)
+    set(:enforce_filament_types, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false')
   end
 
   # Optional URL that gets a JSON POST whenever a print is paused or continued for claim enforcement.

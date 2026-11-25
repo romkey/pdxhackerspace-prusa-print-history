@@ -1,0 +1,13 @@
+<%# The filament types this printer may print (FilamentType#allowed_on?). Neutral pills:
+    which filaments fit is a fact about the printer, not a state. %>
+<% allowed = allowed_filament_types(printer) %>
+<div class="printer-filaments <%= local_assigns[:class] %>">
+  <% if allowed.any? %>
+    <% allowed.each do |type| %>
+      <span class="badge rounded-pill text-bg-secondary-subtle"
+            title="<%= filament_type_title(type) %>"><%= type.name %></span>
+    <% end %>
+  <% else %>
+    <span class="text-secondary">No filament types allowed</span>
+  <% end %>
+</div>

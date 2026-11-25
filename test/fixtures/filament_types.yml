@@ -1,0 +1,32 @@
+pla:
+  name: PLA
+  nozzle_min_c: 190
+  nozzle_max_c: 230
+  bed_min_c: 45
+  bed_max_c: 65
+
+petg:
+  name: PETG
+  aliases: PET-G
+  nozzle_min_c: 220
+  nozzle_max_c: 260
+  bed_min_c: 65
+  bed_max_c: 90
+
+abs:
+  name: ABS
+  nozzle_min_c: 240
+  nozzle_max_c: 280
+  bed_min_c: 90
+  bed_max_c: 110
+  requires_ventilation: true
+
+pa_cf:
+  name: PA-CF
+  aliases: PA6-CF, PAHT-CF
+  nozzle_min_c: 260
+  nozzle_max_c: 300
+  bed_min_c: 80
+  bed_max_c: 110
+  requires_hardened_nozzle: true
+  requires_ventilation: true

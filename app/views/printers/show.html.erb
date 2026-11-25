@@ -17,6 +17,13 @@
         <% if @printer.firmware_version.present? %>&middot; Firmware <%= @printer.firmware_version %><% end %>
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
+      <div class="d-flex flex-wrap align-items-center gap-2 text-13 mt-2">
+        <span class="text-secondary">Filaments</span>
+        <%= render 'printers/filament_pills', printer: @printer %>
+        <% if (capabilities = printer_capabilities_label(@printer)) %>
+          <span class="text-secondary">&middot; <%= capabilities %></span>
+        <% end %>
+      </div>
       <%= render 'service_entries/reliability', score: @reliability, show_link: true, compact: true %>
       <% if @presenter.reported_tools.any? %>
         <div class="text-13 text-secondary mt-1">

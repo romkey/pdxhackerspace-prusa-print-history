@@ -78,6 +78,15 @@ class Job < ApplicationRecord
     claim_hold_at.present?
   end
 
+  def filament_held?
+    filament_hold_at.present?
+  end
+
+  # Paused by PrintStartHolds and not resumed since.
+  def held?
+    claim_held? || filament_held?
+  end
+
   private
 
   def claimed_while_held?

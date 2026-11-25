@@ -32,6 +32,17 @@ class ClaimEnforcementWebhookTest < ActiveSupport::TestCase
     end
   end
 
+  test 'reports every reason a print was paused, and the filament problem' do
+    @job.update!(filament_hold_reason: 'ABS needs ventilation.')
+
+    payload = ClaimEnforcementWebhook.new(@job, 'paused', url: @url,
+                                                          reasons: %w[filament_not_allowed unclaimed]).payload
+
+    assert_equal 'filament_not_allowed', payload[:reason]
+    assert_equal %w[filament_not_allowed unclaimed], payload[:reasons]
+    assert_equal 'ABS needs ventilation.', payload.dig(:job, :filament_problem)
+  end
+
   test 'leaves filename and claimant out of private prints' do
     @job.update!(private: true)
 

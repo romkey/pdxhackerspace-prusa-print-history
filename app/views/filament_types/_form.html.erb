@@ -1,0 +1,59 @@
+<%= form_with model: filament_type, local: true do |f| %>
+  <% if filament_type.errors.any? %>
+    <div class="alert alert-danger text-13">
+      <ul class="mb-0">
+        <% filament_type.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <%= f.label :name, class: 'form-label' %>
+      <%= f.text_field :name, class: 'form-control', required: true, placeholder: 'PETG' %>
+    </div>
+    <div class="col-md-8">
+      <%= f.label :aliases, 'Also matches', class: 'form-label' %>
+      <%= f.text_field :aliases, class: 'form-control', placeholder: 'PET-G, PETG HF' %>
+      <div class="form-text">
+        Other names printers and slicers use for it, comma-separated. Case doesn't matter, and a material
+        that starts with a name ("PETG Basic") matches too.
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <%= f.label :nozzle_min_c, 'Nozzle min (°C)', class: 'form-label' %>
+      <%= f.number_field :nozzle_min_c, class: 'form-control', required: true, min: 0, max: 500 %>
+    </div>
+    <div class="col-6 col-md-3">
+      <%= f.label :nozzle_max_c, 'Nozzle max (°C)', class: 'form-label' %>
+      <%= f.number_field :nozzle_max_c, class: 'form-control', required: true, min: 0, max: 500 %>
+    </div>
+    <div class="col-6 col-md-3">
+      <%= f.label :bed_min_c, 'Bed min (°C)', class: 'form-label' %>
+      <%= f.number_field :bed_min_c, class: 'form-control', required: true, min: 0, max: 500 %>
+    </div>
+    <div class="col-6 col-md-3">
+      <%= f.label :bed_max_c, 'Bed max (°C)', class: 'form-label' %>
+      <%= f.number_field :bed_max_c, class: 'form-control', required: true, min: 0, max: 500 %>
+    </div>
+
+    <div class="col-12">
+      <div class="form-check">
+        <%= f.check_box :requires_hardened_nozzle, class: 'form-check-input' %>
+        <%= f.label :requires_hardened_nozzle, 'Needs a hardened nozzle', class: 'form-check-label' %>
+      </div>
+      <div class="form-check">
+        <%= f.check_box :requires_ventilation, class: 'form-check-input' %>
+        <%= f.label :requires_ventilation, 'Needs ventilation', class: 'form-check-label' %>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <%= f.submit class: 'btn btn-primary' %>
+    <%= link_to 'Cancel', filament_types_path, class: 'btn btn-outline-secondary' %>
+  </div>
+<% end %>

@@ -1,0 +1,88 @@
+<div class="container py-4" style="max-width: 880px;">
+  <div class="d-flex align-items-end justify-content-between mb-3">
+    <div>
+      <div class="text-13 text-secondary">
+        <%= link_to 'Settings', settings_path, class: 'text-decoration-none' %> / Filament types
+      </div>
+      <h1 class="h-page-title mb-0">Filament types</h1>
+      <div class="text-13 text-secondary mt-1">
+        A printer may print a type unless the type needs a hardened nozzle or ventilation the printer lacks.
+        Enforcement is <%= Setting.enforce_filament_types? ? 'on' : 'off' %>
+        (<%= link_to 'change', settings_path(anchor: 'enforcement'), class: 'text-decoration-none' %>).
+      </div>
+    </div>
+    <div>
+      <%= link_to '+ Add filament type', new_filament_type_path, class: 'btn btn-primary btn-sm' %>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <% if @filament_types.any? %>
+        <table class="table table-compact mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th class="num">Nozzle</th>
+              <th class="num">Bed</th>
+              <th>Hardened nozzle</th>
+              <th>Ventilation</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @filament_types.each do |type| %>
+              <tr>
+                <td>
+                  <span class="fw-medium"><%= type.name %></span>
+                  <% if type.aliases.present? %>
+                    <div class="text-12 text-secondary">Also matches <%= type.aliases %></div>
+                  <% end %>
+                </td>
+                <td class="num"><%= type.nozzle_range_label %></td>
+                <td class="num"><%= type.bed_range_label %></td>
+                <td class="<%= 'text-secondary' unless type.requires_hardened_nozzle? %>"><%= type.requires_hardened_nozzle? ? 'Required' : 'No' %></td>
+                <td class="<%= 'text-secondary' unless type.requires_ventilation? %>"><%= type.requires_ventilation? ? 'Required' : 'No' %></td>
+                <td class="text-end">
+                  <%= link_to 'Edit', edit_filament_type_path(type), class: 'btn btn-outline-secondary btn-sm' %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-secondary mb-0">No filament types yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="h-section-label">Printers</div>
+      <table class="table table-compact mb-0">
+        <thead>
+          <tr>
+            <th>Printer</th>
+            <th>Has</th>
+            <th>Allowed filaments</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @printers.each do |printer| %>
+            <tr>
+              <td class="fw-medium"><%= printer.name %></td>
+              <td class="text-13 <%= 'text-secondary' unless printer_capabilities_label(printer) %>">
+                <%= printer_capabilities_label(printer) || 'Neither' %>
+              </td>
+              <td><%= render 'printers/filament_pills', printer: printer %></td>
+              <td class="text-end">
+                <%= link_to 'Edit', edit_printer_path(printer), class: 'btn btn-outline-secondary btn-sm' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

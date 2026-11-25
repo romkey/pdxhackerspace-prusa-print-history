@@ -112,6 +112,16 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     get settings_path
 
-    assert_select '#enforce-claims input[name=?][checked]', 'settings[enforce_claims]'
+    assert_select '#enforcement input[name=?][checked]', 'settings[enforce_claims]'
+  end
+
+  test 'admins can turn on filament type enforcement' do
+    login_as(users(:admin))
+
+    assert_not Setting.enforce_filament_types?
+
+    patch settings_path, params: { settings: { enforce_filament_types: '1' } }
+
+    assert Setting.enforce_filament_types?
   end
 end

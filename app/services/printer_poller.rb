@@ -95,7 +95,7 @@ class PrinterPoller
     record_telemetry(job, status_payload)
     PrinterToolSync.sync!(job, head_entries)
     JobImageCapture.capture_preview!(job, job_payload, client: @client)
-    hold_unclaimed_start(job, detect_status_change(job, mapped_status, status_payload))
+    apply_print_holds(job, detect_status_change(job, mapped_status, status_payload), status_payload)
     finalize_if_terminal(job, job_payload)
     update_printer_environment!(operational_state: 'idle', status_payload: status_payload) if job.reload.terminal?
 
@@ -207,8 +207,7 @@ class PrinterPoller
   end
 
   def idle_state?(status_payload)
-    raw = (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
-    IDLE_STATES.include?(raw)
+    IDLE_STATES.include?(raw_state(status_payload))
   end
 
   def retire_superseded_jobs!(job)
@@ -383,10 +382,23 @@ class PrinterPoller
     event
   end
 
-  def hold_unclaimed_start(job, event)
-    return unless event&.event_type == 'started'
+  # Starting: pause it if an enforcement setting says it must wait. Resuming for real (not a
+  # transient BUSY): whatever held it is over, so drop the hold flags.
+  def apply_print_holds(job, event, status_payload)
+    case event&.event_type
+    when 'started' then PrintStartHolds.apply!(job, client: @client)
+    when 'resumed' then clear_print_holds!(job) if raw_state(status_payload) == 'PRINTING'
+    end
+  end
 
-    ClaimEnforcement.hold_if_unclaimed!(job, client: @client)
+  def clear_print_holds!(job)
+    return unless job.held?
+
+    job.update!(claim_hold_at: nil, filament_hold_at: nil, filament_hold_reason: nil)
+  end
+
+  def raw_state(status_payload)
+    (status_payload.dig('printer', 'state') || status_payload['state']).to_s.upcase
   end
 
   def event_attributes(new_status, last_status, status_payload)

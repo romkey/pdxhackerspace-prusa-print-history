@@ -432,6 +432,29 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to printers_path
   end
 
+  test 'admins set a printer\'s hardened nozzle and ventilation' do
+    login_as(users(:admin))
+
+    patch printer_path(@printer), params: { printer: { hardened_nozzle: '1', ventilation: '1' } }
+
+    @printer.reload
+
+    assert_predicate @printer, :hardened_nozzle?
+    assert_predicate @printer, :ventilation?
+  end
+
+  test 'printer page lists allowed filaments at the top and flags a held print' do
+    @printer.update!(hardened_nozzle: false, ventilation: false)
+    jobs(:active_xl).update!(status: 'paused', filament_hold_at: 1.minute.ago,
+                             filament_hold_reason: 'ABS needs ventilation.')
+
+    get printer_path(@printer)
+
+    assert_select '.printer-filaments .badge', text: 'PLA'
+    assert_select '.printer-filaments .badge', text: 'ABS', count: 0
+    assert_select '.print-holds .badge', text: /wrong filament.*ABS needs ventilation/m
+  end
+
   private
 
   # Makes the printer's active job private and gives it a stored camera photo.

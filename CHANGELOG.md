@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Filament types, under Settings → Filament types. The list starts with PLA, PETG, ABS, ASA, TPU, PC, PA (nylon), PA-CF, PLA-CF, PETG-CF, PVA and HIPS. Each has nozzle and bed temperature ranges, other names it goes by, and whether it needs a hardened nozzle or ventilation. Admins can add, edit and remove types.
+- Each printer's edit page says whether it has a hardened nozzle and ventilation. The dashboard shows pills under each printer for the filament types it may print, and the printer page shows them at the top.
+- An **Enforce filament types** setting (off by default). When it's on, a print whose filament its printer may not run (say ABS on a printer without ventilation) is paused when it starts. The dashboard and the printer page flag it and say why. Resume it on the printer once it's sorted out.
+- Prints paused because nobody has claimed them are now flagged on the dashboard and printer page too.
+
+### Changed
+- The claim-enforcement webhook also fires when a print is paused for its filament. Its JSON has a new `reasons` list and a `job.filament_problem` field.
+
 ## [0.20.0] - 2026-11-25
 
 ### Added

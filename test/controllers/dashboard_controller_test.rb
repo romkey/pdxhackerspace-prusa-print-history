@@ -545,6 +545,24 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'link[rel=?][href=?]', 'apple-touch-icon', '/icon.svg'
   end
 
+  test 'each printer card shows its allowed filaments and why a print is held' do
+    printers(:prusa_xl).update!(hardened_nozzle: true, ventilation: true)
+    printers(:prusa_mk4).update!(hardened_nozzle: false, ventilation: false)
+    jobs(:active_xl).update!(status: 'paused', owner: nil, claim_hold_at: 1.minute.ago)
+
+    get root_path
+
+    assert_response :success
+    assert_select '.dashboard-printer-card', text: /Prusa XL/ do
+      assert_select '.printer-filaments .badge', text: 'PA-CF'
+      assert_select '.print-holds .badge', text: /Paused until someone claims it/
+    end
+    assert_select '.dashboard-printer-card', text: /Prusa MK4/ do
+      assert_select '.printer-filaments .badge', text: 'PA-CF', count: 0
+      assert_select '.printer-filaments .badge', text: 'PLA'
+    end
+  end
+
   private
 
   def app_version_from_repo

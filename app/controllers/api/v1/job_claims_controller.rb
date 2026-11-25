@@ -7,8 +7,11 @@ module Api
       before_action :set_job
 
       def update
+        if access_policy.claim_refusal(@job) == :untrained
+          return forbidden!(AccessPolicy::CLAIM_REFUSAL_MESSAGES[:untrained])
+        end
         unless access_policy.can_claim?(@job)
-          return render_error(:conflict, 'conflict', 'This print is already claimed by someone else.')
+          return render_error(:conflict, 'conflict', AccessPolicy::CLAIM_REFUSAL_MESSAGES[:claimed])
         end
 
         private_claim = ActiveModel::Type::Boolean.new.cast(params[:private]).present?

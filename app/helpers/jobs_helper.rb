@@ -101,7 +101,7 @@ module JobsHelper
   end
 
   def job_show_claim_button?(job)
-    logged_in? && job.owner.nil?
+    logged_in? && job.owner.nil? && access_policy.can_claim?(job)
   end
 
   def job_show_clear_button?(job)

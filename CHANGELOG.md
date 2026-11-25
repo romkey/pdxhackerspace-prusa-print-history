@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Keyfob kiosks: an admin can create a kiosk device token. When a member scans in, the kiosk exchanges the member's Authentik member ID for a two-minute session that can list printers, claim, release, clear, report a problem, and request sign-in links, with member powers only, even for admins. An admin can allow a kiosk to show sign-in and problem-report links as QR codes, which expire after five minutes by default.
 - The app reads a new `member_id` claim from Authentik at sign-in and shows it on the Users page. Kiosks use it to identify members.
 - An API reference at `/api/v1/docs`, written for both people and AI agents.
+- An **Enforce claims** setting (off by default). When it's on, only members trained on the printers (and admins) can claim prints, and a print that nobody has claimed when it starts is paused automatically. As soon as someone claims it, the print continues. An optional webhook URL gets a JSON notice (`print_paused` or `print_continued`) each time this happens.
 
 ### Changed
 - Any signed-in member can now clear a print, from anywhere. Before, clearing needed an admin or a computer on the shop network.

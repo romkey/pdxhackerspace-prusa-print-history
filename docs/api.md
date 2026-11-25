@@ -235,7 +235,9 @@ Response: `{ "jobs": [ <job>, ... ] }`.
 whether it is private.
 **Access level:** `read_write`
 **Who:** Any member, for an unclaimed print or one they own. Only admins can take over a print
-someone else has claimed.
+someone else has claimed. When an admin has turned on **Enforce claims**, only members trained
+on the printers (and admins) can claim; a print that was paused because nobody claimed it
+continues shortly after it is claimed.
 
 | Body field | Type | Notes |
 | --- | --- | --- |
@@ -247,8 +249,9 @@ curl -X PUT -H "Authorization: Bearer pph_..." -H "Content-Type: application/jso
 ```
 
 Response: `{ "job": <job> }`.
-**Errors:** `404`; `409 conflict` when someone else has claimed it (re-read the job: its
-`actions.can_claim` is `false`).
+**Errors:** `403 forbidden` when claims are enforced and the member isn't trained; `404`;
+`409 conflict` when someone else has claimed it (re-read the job: its `actions.can_claim` is
+`false`).
 
 ### `DELETE /api/v1/jobs/:id/claim`
 

@@ -94,6 +94,33 @@
     </div>
   </div>
 
+  <div class="card mb-3" id="enforce-claims">
+    <div class="card-body">
+      <div class="h-section-label">Claims</div>
+      <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+        <%= render 'settings/check_box', key: :enforce_claims, label: 'Enforce claims',
+                                         checked: Setting.enforce_claims?,
+                                         hint: 'Only members trained on the printers (and admins) can claim prints. ' \
+                                               'A print that is unclaimed when it starts is paused, and continues ' \
+                                               'once someone claims it.' %>
+        <div class="row g-3 align-items-end mt-1">
+          <div class="col-md-9">
+            <%= label_tag 'settings[enforce_claims_webhook_url]', 'Webhook URL (optional)', class: 'form-label' %>
+            <%= url_field_tag 'settings[enforce_claims_webhook_url]', Setting.enforce_claims_webhook_url,
+                              class: 'form-control', placeholder: 'https://example.com/hooks/printers' %>
+            <div class="form-text">
+              Gets a JSON POST (<code>print_paused</code> or <code>print_continued</code>) whenever a print
+              is paused or continued because of a claim.
+            </div>
+          </div>
+          <div class="col-md-3">
+            <%= f.submit 'Save', class: 'btn btn-primary w-100' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <div class="card mb-3" id="api">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-baseline">

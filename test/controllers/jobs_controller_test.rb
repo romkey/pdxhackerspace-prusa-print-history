@@ -775,6 +775,33 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     assert_equal ['finished'], rows.pluck('status').uniq
   end
 
+  test 'untrained members cannot claim while claims are enforced' do
+    Setting.enforce_claims = true
+    @job.update!(owner: nil)
+    login_as(users(:viewer))
+    users(:viewer).update!(trained_on_prusa: false)
+
+    patch claim_job_path(@job)
+
+    assert_redirected_to job_path(@job)
+    assert_equal 'Only members trained on the printers can claim prints.', flash[:alert]
+    assert_nil @job.reload.owner_id
+  end
+
+  test 'claiming a held print queues continuing it' do
+    Setting.enforce_claims = true
+    @job.update!(owner: nil, status: 'paused', claim_hold_at: 1.minute.ago)
+    login_as(users(:viewer))
+    users(:viewer).update!(trained_on_prusa: true)
+
+    assert_enqueued_with(job: ClaimHoldReleaseJob, args: [@job.id]) do
+      patch claim_job_path(@job)
+    end
+
+    assert_equal users(:viewer).id, @job.reload.owner_id
+    assert_match(/continue/, flash[:notice])
+  end
+
   private
 
   def attach_job_photos(job)

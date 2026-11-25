@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -101,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
   end
 
   create_table "jobs", force: :cascade do |t|
+    t.datetime "claim_hold_at"
     t.text "clear_failure_detail"
     t.string "clear_failure_reason"
     t.string "clear_outcome"
@@ -122,6 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
     t.integer "total_duration_seconds"
     t.decimal "total_filament_grams", precision: 10, scale: 2
     t.datetime "updated_at", null: false
+    t.index ["claim_hold_at"], name: "index_jobs_on_claim_hold_at", where: "(claim_hold_at IS NOT NULL)"
     t.index ["cleared_by_id"], name: "index_jobs_on_cleared_by_id"
     t.index ["owner_id"], name: "index_jobs_on_owner_id"
     t.index ["printer_id", "prusalink_job_id"], name: "idx_jobs_on_printer_and_prusalink_job_id", unique: true, where: "(prusalink_job_id IS NOT NULL)"

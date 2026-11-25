@@ -52,4 +52,29 @@ class AccessPolicyTest < ActiveSupport::TestCase
     assert policy(@admin).can_undo_clears?
     assert_not policy(nil, internal: true).can_undo_clears?
   end
+
+  test 'while claims are enforced only trained members and admins can claim' do
+    Setting.enforce_claims = true
+    @job.update!(owner: nil)
+    @member.update!(trained_on_prusa: false)
+    @other.update!(trained_on_prusa: true)
+
+    assert_not policy(@member).can_claim?(@job)
+    assert_equal :untrained, policy(@member).claim_refusal(@job)
+    assert policy(@other).can_claim?(@job)
+    assert policy(@admin).can_claim?(@job)
+
+    @job.update!(owner: @member)
+
+    assert policy(@member).can_claim?(@job), 'an owner can still switch their claim to private'
+    assert_equal :claimed, policy(@other).claim_refusal(@job)
+  end
+
+  test 'untrained members can claim when claims are not enforced' do
+    @job.update!(owner: nil)
+    @member.update!(trained_on_prusa: false)
+
+    assert_not Setting.enforce_claims?
+    assert policy(@member).can_claim?(@job)
+  end
 end

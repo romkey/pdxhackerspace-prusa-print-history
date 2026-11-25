@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Small status badges such as "Out of service", "Open", "Admin", "Default" and an API token's "Paused", "Expired" or "Revoked" were nearly invisible. They now show a soft colored background in both light and dark mode.
+
 ## [0.20.0] - 2026-11-25
 
 ### Added

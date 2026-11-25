@@ -44,6 +44,17 @@ body {
   &.status-muted   { background-color: var(--bs-secondary-color); }
 }
 
+// Subtle badges for exceptional statuses (see .cursor/rules/ui.mdc). Bootstrap only ships
+// solid `text-bg-*` helpers; these pair its subtle background, emphasis text and subtle
+// border variables, which already switch with the light/dark color mode.
+@each $color in (primary, secondary, success, info, warning, danger) {
+  .text-bg-#{$color}-subtle {
+    color: var(--bs-#{$color}-text-emphasis) !important;
+    background-color: var(--bs-#{$color}-bg-subtle) !important;
+    border: var(--bs-border-width) solid var(--bs-#{$color}-border-subtle);
+  }
+}
+
 .table-compact {
   font-size: 13px;
 

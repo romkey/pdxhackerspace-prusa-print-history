@@ -15,9 +15,9 @@
         &middot; <%= @printer.location.presence || 'No location' %>
         &middot; <%= @printer.hostname %>
         <% if @printer.firmware_version.present? %>&middot; Firmware <%= @printer.firmware_version %><% end %>
-        <% if @printer.required_training.any? %>&middot; Requires <%= @printer.required_training.to_sentence %> training<% end %>
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
+      <%= render 'printers/required_training', printer: @printer, class: 'text-13 mt-1' %>
       <%= render 'service_entries/reliability', score: @reliability, show_link: true, compact: true %>
       <% if @presenter.reported_tools.any? %>
         <div class="text-13 text-secondary mt-1">

@@ -449,6 +449,19 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to printers_path
   end
 
+  test 'printer page shows the training it requires' do
+    @printer.update!(required_training: %w[Prusa])
+
+    get printer_path(@printer)
+
+    assert_select '.printer-training .badge', text: 'Prusa'
+
+    @printer.update!(required_training: [])
+    get printer_path(@printer)
+
+    assert_select '.printer-training', text: /No training required/
+  end
+
   private
 
   # Makes the printer's active job private and gives it a stored camera photo.

@@ -545,6 +545,20 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select 'link[rel=?][href=?]', 'apple-touch-icon', '/icon.svg'
   end
 
+  test 'each printer card shows the training it requires, or none' do
+    printers(:prusa_xl).update!(required_training: %w[Prusa XL])
+    printers(:prusa_mk4).update!(required_training: [])
+
+    get root_path, headers: external_request_headers
+
+    assert_response :success
+    assert_select '.dashboard-printer-card .printer-training[title*=?]', 'Prusa XL' do
+      assert_select '.badge', text: 'Prusa'
+      assert_select '.badge', text: 'XL'
+    end
+    assert_select '.dashboard-printer-card .printer-training[title*=?]', 'Prusa MK4', text: /No training required/
+  end
+
   private
 
   def app_version_from_repo

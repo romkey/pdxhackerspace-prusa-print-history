@@ -23,6 +23,8 @@
     <% end %>
   </h2>
 
+  <%= render 'printers/required_training', printer: printer, class: 'text-13 mb-2' %>
+
   <% if printer.out_of_service? %>
     <div class="mb-2">
       <span class="badge text-bg-warning-subtle">Out of service</span>

@@ -1,0 +1,16 @@
+<%# Which training a member needs to claim prints on this printer. Neutral badges: training
+    is a fact about the printer, not a state, so it carries no status color. %>
+<% topics = printer.required_training %>
+<div class="printer-training <%= local_assigns[:class] %>"
+     title="<%= topics.any? ? "Members need #{topics.to_sentence} training to claim prints on #{printer.name}" : "Any member can claim prints on #{printer.name}" %>">
+  <i class="bi bi-mortarboard text-secondary" aria-hidden="true"></i>
+  <% if topics.any? %>
+    <span class="text-secondary">Requires</span>
+    <% topics.each do |topic| %>
+      <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"><%= topic %></span>
+    <% end %>
+    <span class="text-secondary">training</span>
+  <% else %>
+    <span class="text-secondary">No training required</span>
+  <% end %>
+</div>

@@ -104,6 +104,23 @@ body {
   font-weight: 600;
 }
 
+// Required training for a printer (printers/_required_training): neutral badges, no status color.
+.printer-training {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+
+  .badge {
+    font-size: 0.875em;
+    font-weight: 500;
+  }
+}
+
+.dashboard-printer-card .printer-training {
+  justify-content: center;
+}
+
 .dashboard-image {
   display: block;
   width: 100%;

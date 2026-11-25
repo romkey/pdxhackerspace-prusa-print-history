@@ -6,9 +6,19 @@ class FilamentTypeTest < ActiveSupport::TestCase
     assert_equal filament_types(:pla), FilamentType.match('PLA Basic')
     assert_equal filament_types(:petg), FilamentType.match('PET-G')
     assert_equal filament_types(:pa_cf), FilamentType.match('PAHT-CF')
+    assert_equal filament_types(:petg), FilamentType.match('PETG HF')
     assert_nil FilamentType.match('PLAX')
     assert_nil FilamentType.match('Mystery goo')
     assert_nil FilamentType.match('')
+  end
+
+  test 'a fiber-filled material never falls back to its unfilled base type' do
+    filament_types(:pla).update!(aliases: 'Nylon')
+
+    assert_nil FilamentType.match('Nylon-CF')
+    assert_nil FilamentType.match('Nylon CF')
+    assert_nil FilamentType.match('PLA Glass Fiber')
+    assert_nil FilamentType.match('PLA-S'), 'only a space separates extra words'
   end
 
   test 'a CF variant is not mistaken for its base filament' do

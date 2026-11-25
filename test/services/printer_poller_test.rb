@@ -503,7 +503,7 @@ class PrinterPollerTest < ActiveJob::TestCase
 
   test 'resuming a held print for real clears its hold flags' do
     job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-903',
-                                started_at: 5.minutes.ago, filament_hold_at: 1.minute.ago,
+                                started_at: 5.minutes.ago, filament_hold_at: 3.minutes.ago,
                                 filament_hold_reason: 'ABS needs ventilation.')
     job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 1.minute.ago)
     payloads = {
@@ -524,6 +524,41 @@ class PrinterPollerTest < ActiveJob::TestCase
     payloads = {
       status: { 'printer' => { 'state' => 'BUSY' } },
       job: { 'id' => 'pl-904', 'state' => 'BUSY', 'file' => { 'display_name' => 'held.gcode' } }
+    }
+
+    PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+
+    assert_predicate job.reload, :claim_held?
+  end
+
+  test 'hold flags clear on a later PRINTING poll even after a BUSY poll emitted the resume' do
+    job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-905',
+                                started_at: 5.minutes.ago, claim_hold_at: 3.minutes.ago)
+    job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 3.minutes.ago)
+    poll = lambda do |state|
+      payloads = {
+        status: { 'printer' => { 'state' => state } },
+        job: { 'id' => 'pl-905', 'state' => state, 'file' => { 'display_name' => 'held.gcode' } }
+      }
+      PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!
+    end
+
+    poll.call('BUSY')
+
+    assert_predicate job.reload, :claim_held?
+
+    poll.call('PRINTING')
+
+    assert_not job.reload.held?
+  end
+
+  test 'the printer still printing right after the pause does not clear a fresh hold' do
+    job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-906',
+                                started_at: 1.minute.ago, claim_hold_at: 20.seconds.ago)
+    job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 20.seconds.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-906', 'state' => 'PRINTING', 'file' => { 'display_name' => 'held.gcode' } }
     }
 
     PrinterPoller.new(@printer, prusalink: stub_prusalink(payloads), home_assistant: stub_home_assistant).poll!

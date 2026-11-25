@@ -196,8 +196,9 @@ print a type unless the type needs something the printer lacks. The dashboard an
 show each printer's allowed types.
 
 Materials come from the print file and the printer (the job's tools) and are matched to a type
-by name or alias, ignoring case. A material that starts with a type's name as a whole word
-counts too ("PLA Basic" is PLA). A material that matches no type isn't judged.
+by name or alias, ignoring case. A material that starts with a type's name and a space counts
+too ("PLA Basic" is PLA), unless its extra words mark it fiber-filled ("Nylon CF" has to match a
+CF type by name or alias). A material that matches no type isn't judged.
 
 **Enforce filament types** (off by default, in the same Settings card as claims) pauses a print
 when it starts if its printer may not run its filament. The dashboard and printer page flag

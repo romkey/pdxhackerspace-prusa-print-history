@@ -3,6 +3,8 @@
 # nozzle or ventilation the printer doesn't have. Admins edit the list under Settings.
 class FilamentType < ApplicationRecord
   TEMPERATURE_RANGE = (0..500)
+  # Words that mark a filament as fiber-filled, and so abrasive.
+  FIBER_MARKER = /(?<![[:alnum:]])(CF|GF|CARBON|GLASS)(?![[:alnum:]])/
 
   # Seeded on a new install and by the migration that added the table. Temperatures are
   # typical manufacturer ranges in °C; admins can adjust them.
@@ -54,8 +56,10 @@ class FilamentType < ApplicationRecord
   private_class_method :attributes_from_default
 
   # The type a printer or slicer material string refers to, or nil. Matches a name or alias
-  # exactly (ignoring case), then the longest name or alias the material starts with as a
-  # whole word, so "PLA Basic" is PLA and "PETG-CF" is PETG-CF rather than PETG.
+  # exactly (ignoring case), then the longest name or alias the material starts with,
+  # followed by a space ("PLA Basic" is PLA, "PETG HF" is PETG). A material whose extra words
+  # mark it fiber-filled ("Nylon CF") never falls back to its unfilled base type, which would
+  # skip the hardened-nozzle check; it must match a CF/GF type by name or alias instead.
   def self.match(material, types = ordered.to_a)
     value = material.to_s.strip.upcase
     return nil if value.empty?
@@ -69,10 +73,16 @@ class FilamentType < ApplicationRecord
   end
 
   def self.leading_word_match(candidates, value)
-    candidates.select { |name, _| value.match?(/\A#{Regexp.escape(name)}(?![[:alnum:]])/) }
+    candidates.select { |name, _| leading_word?(value, name) }
               .max_by { |name, _| name.length }&.last
   end
-  private_class_method :exact_match, :leading_word_match
+
+  def self.leading_word?(value, name)
+    return false unless value.start_with?("#{name} ")
+
+    !value.delete_prefix(name).match?(FIBER_MARKER)
+  end
+  private_class_method :exact_match, :leading_word_match, :leading_word?
 
   def match_names
     [name, *aliases.to_s.split(',').map(&:strip)].compact_blank

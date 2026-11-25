@@ -16,6 +16,9 @@ class PrinterPoller
 
   IDLE_STATES = %w[IDLE READY].freeze
   UNREACHABLE_RECHECK = 50.seconds
+  # How long after PrintStartHolds pauses a print a PRINTING state is still taken as the
+  # printer catching up rather than someone resuming it.
+  HOLD_SETTLE_TIME = 90.seconds
 
   EVENT_TYPE_FOR_STATUS = {
     'paused' => 'paused',
@@ -382,18 +385,23 @@ class PrinterPoller
     event
   end
 
-  # Starting: pause it if an enforcement setting says it must wait. Resuming for real (not a
-  # transient BUSY): whatever held it is over, so drop the hold flags.
+  # Starting: pause it if an enforcement setting says it must wait. Otherwise, once a held
+  # print is really printing again (state PRINTING, not a transient BUSY, and not just the
+  # printer still catching up with our pause), whatever held it is over: drop the flags.
+  # This looks at the state on every poll rather than at the resumed event, so a BUSY poll
+  # in between can't leave the flags stuck.
   def apply_print_holds(job, event, status_payload)
-    case event&.event_type
-    when 'started' then PrintStartHolds.apply!(job, client: @client)
-    when 'resumed' then clear_print_holds!(job) if raw_state(status_payload) == 'PRINTING'
-    end
+    return PrintStartHolds.apply!(job, client: @client) if event&.event_type == 'started'
+
+    clear_print_holds!(job) if raw_state(status_payload) == 'PRINTING' && hold_settled?(job)
+  end
+
+  def hold_settled?(job)
+    held_at = [job.claim_hold_at, job.filament_hold_at].compact.max
+    held_at.present? && held_at <= HOLD_SETTLE_TIME.ago
   end
 
   def clear_print_holds!(job)
-    return unless job.held?
-
     job.update!(claim_hold_at: nil, filament_hold_at: nil, filament_hold_reason: nil)
   end
 

@@ -114,4 +114,18 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select '#enforce-claims input[name=?][checked]', 'settings[enforce_claims]'
   end
+
+  test 'admins can set the training topics' do
+    login_as(users(:admin))
+
+    assert_equal %w[Prusa], Setting.training_topics
+
+    patch settings_path, params: { settings: { training_topics: "Prusa\n bambu \n\nPRUSA\nLaser" } }
+
+    assert_equal %w[Prusa bambu Laser], Setting.training_topics
+
+    patch settings_path, params: { settings: { training_topics: '' } }
+
+    assert_empty Setting.training_topics
+  end
 end

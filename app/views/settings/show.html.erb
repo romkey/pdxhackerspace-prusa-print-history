@@ -100,9 +100,18 @@
       <%= form_with url: settings_path, method: :patch, local: true do |f| %>
         <%= render 'settings/check_box', key: :enforce_claims, label: 'Enforce claims',
                                          checked: Setting.enforce_claims?,
-                                         hint: 'Only members trained on the printers (and admins) can claim prints. ' \
-                                               'A print that is unclaimed when it starts is paused, and continues ' \
-                                               'once someone claims it.' %>
+                                         hint: 'Members need the training each printer requires to claim its prints ' \
+                                               '(admins always can). A print that is unclaimed when it starts is ' \
+                                               'paused, and continues once someone claims it.' %>
+        <div class="mt-3">
+          <%= label_tag 'settings[training_topics]', 'Training topics', class: 'form-label' %>
+          <%= text_area_tag 'settings[training_topics]', Setting.training_topics.join("\n"),
+                            class: 'form-control', rows: 3, placeholder: "Prusa\nBambu" %>
+          <div class="form-text">
+            One per line, spelled as in Authentik's <code>trained_on</code> claim (case doesn't matter).
+            Choose which ones each printer requires on the printer's edit page.
+          </div>
+        </div>
         <div class="row g-3 align-items-end mt-1">
           <div class="col-md-9">
             <%= label_tag 'settings[enforce_claims_webhook_url]', 'Webhook URL (optional)', class: 'form-label' %>

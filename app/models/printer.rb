@@ -24,6 +24,8 @@ class Printer < ApplicationRecord
   validates :hostname, presence: true
   validates :operational_state, inclusion: { in: OPERATIONAL_STATES }, if: :environment_tracking?
 
+  normalizes :required_training, with: ->(value) { TrainingTopics.normalize(value) }
+
   scope :ordered, -> { order(:name) }
 
   def self.environment_tracking?

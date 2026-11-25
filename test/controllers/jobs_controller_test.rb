@@ -779,12 +779,13 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     Setting.enforce_claims = true
     @job.update!(owner: nil)
     login_as(users(:viewer))
-    users(:viewer).update!(trained_on_prusa: false)
+    users(:viewer).update!(trained_on: [])
+    @job.printer.update!(required_training: %w[Prusa])
 
     patch claim_job_path(@job)
 
     assert_redirected_to job_path(@job)
-    assert_equal 'Only members trained on the printers can claim prints.', flash[:alert]
+    assert_equal "Only members trained on Prusa can claim prints on #{@job.printer.name}.", flash[:alert]
     assert_nil @job.reload.owner_id
   end
 
@@ -792,7 +793,7 @@ class JobsControllerTest < ActionDispatch::IntegrationTest
     Setting.enforce_claims = true
     @job.update!(owner: nil, status: 'paused', claim_hold_at: 1.minute.ago)
     login_as(users(:viewer))
-    users(:viewer).update!(trained_on_prusa: true)
+    users(:viewer).update!(trained_on: @job.printer.required_training)
 
     assert_enqueued_with(job: ClaimHoldReleaseJob, args: [@job.id]) do
       patch claim_job_path(@job)

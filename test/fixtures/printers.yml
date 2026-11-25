@@ -5,6 +5,7 @@ prusa_xl:
   hostname: prusa-xl.local
   ha_base_sensor: sensor.prusa_xl_monitor
   camera_url: http://prusa-xl.local/snapshot.jpg
+  required_training: '{Prusa}'
 
 prusa_mk4:
   name: Prusa MK4

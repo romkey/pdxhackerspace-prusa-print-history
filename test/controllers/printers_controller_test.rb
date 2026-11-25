@@ -299,6 +299,23 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_match(/••••/, response.body)
   end
 
+  test 'admins choose the training a printer requires, including none' do
+    Setting.training_topics = "Prusa\nBambu"
+    login_as(users(:admin))
+
+    get edit_printer_path(@printer)
+
+    assert_select 'input[type=checkbox][name=?][value=?]', 'printer[required_training][]', 'Bambu'
+
+    patch printer_path(@printer), params: { printer: { required_training: ['', 'Prusa', 'Bambu'] } }
+
+    assert_equal %w[Prusa Bambu], @printer.reload.required_training
+
+    patch printer_path(@printer), params: { printer: { required_training: [''] } }
+
+    assert_empty @printer.reload.required_training
+  end
+
   test 'update keeps existing PrusaLink key when field is left blank' do
     @printer.update!(prusalink_key: 'keep-me')
     login_as(users(:admin))

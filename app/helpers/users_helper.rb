@@ -27,15 +27,11 @@ module UsersHelper
     end
   end
 
-  def user_prusa_training_label(user)
-    case user.trained_on_prusa
-    when true
-      tag.span('Yes', class: 'fw-medium')
-    when false
-      tag.span('No', class: 'text-secondary')
-    else
-      tag.span('—', class: 'text-secondary')
-    end
+  def user_training_label(user)
+    return tag.span(user.trained_on.join(', '), class: 'fw-medium') if user.trained_on.any?
+    return tag.span('—', class: 'text-secondary') if user.trained_on_prusa.nil?
+
+    tag.span('None', class: 'text-secondary')
   end
 
   def user_access_title(user)

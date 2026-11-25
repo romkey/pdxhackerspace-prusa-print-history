@@ -45,18 +45,18 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_operator other_index, :<, viewer_index
   end
 
-  test 'users index shows admin and prusa training from last login' do
+  test 'users index shows admin and training topics from last login' do
     users(:admin).update!(last_login_at: 1.day.ago)
-    users(:viewer).update!(last_login_at: 2.days.ago, trained_on_prusa: true)
+    users(:viewer).update!(last_login_at: 2.days.ago, trained_on_prusa: true, trained_on: %w[Prusa Laser])
 
     login_as(users(:admin))
     get users_path
 
     assert_select 'th', text: 'Admin'
-    assert_select 'th', text: 'Prusa'
+    assert_select 'th', text: 'Training'
     assert_select 'th', text: 'Print time'
     assert_select 'span.badge', text: 'Yes'
-    assert_select 'span.fw-medium', text: 'Yes'
+    assert_select 'span.fw-medium', text: 'Prusa, Laser'
   end
 
   test 'users index shows profile fields claimed jobs and last login' do

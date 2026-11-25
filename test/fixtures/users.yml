@@ -6,6 +6,7 @@ admin:
   uid: admin-uid-1
   admin: true
   trained_on_prusa: true
+  trained_on: '{Prusa}'
   total_print_seconds: 1800
 
 viewer:

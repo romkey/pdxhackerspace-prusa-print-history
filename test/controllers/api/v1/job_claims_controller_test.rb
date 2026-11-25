@@ -23,7 +23,8 @@ module Api
 
       test 'refuses untrained members while claims are enforced' do
         Setting.enforce_claims = true
-        @member.update!(trained_on_prusa: false)
+        @member.update!(trained_on: [])
+        @job.printer.update!(required_training: %w[Prusa])
 
         put api_v1_job_claim_path(@job), headers: api_headers(@token), as: :json
 

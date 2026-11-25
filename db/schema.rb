@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -236,6 +236,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.string "firmware_version"
     t.datetime "firmware_checked_at"
     t.jsonb "firmware_components", default: {}, null: false
+    t.string "required_training", default: [], null: false, array: true
     t.index ["name"], name: "index_printers_on_name", unique: true
     t.index ["out_of_service_since"], name: "index_printers_on_out_of_service_since", where: "(out_of_service_since IS NOT NULL)"
     t.index ["prusa_connect_uuid"], name: "index_printers_on_prusa_connect_uuid"
@@ -326,6 +327,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.datetime "updated_at", null: false
     t.text "username"
     t.text "member_id"
+    t.string "trained_on", default: [], null: false, array: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_login_at"], name: "index_users_on_last_login_at"
     t.index ["member_id"], name: "index_users_on_member_id", unique: true

@@ -15,6 +15,7 @@ class User < ApplicationRecord
   normalizes :email, with: ->(value) { value.to_s.downcase.strip }
   normalizes :username, with: ->(value) { value.to_s.strip.presence }
   normalizes :slack_handle, with: ->(value) { value.to_s.strip.delete_prefix('@').presence }
+  normalizes :trained_on, with: ->(value) { TrainingTopics.normalize(value) }
   normalizes :slack_id, with: ->(value) { value.to_s.strip.presence }
 
   def self.in_display_name_order(relation = all)
@@ -71,7 +72,8 @@ class User < ApplicationRecord
   def self.apply_trained_on_from_auth(user, auth)
     return unless user.provider == 'authentik'
 
-    user.trained_on_prusa = trained_on?(auth, 'Prusa')
+    user.trained_on = trained_on_names(auth)
+    user.trained_on_prusa = TrainingTopics.include?(user.trained_on, 'Prusa')
   end
 
   def self.apply_slack_from_auth(user, claims)
@@ -92,7 +94,7 @@ class User < ApplicationRecord
     claims = auth_claims(auth)
     return [] unless claims.key?('trained_on')
 
-    normalize_trained_on(claims['trained_on'])
+    TrainingTopics.from_claim(claims['trained_on'])
   end
 
   def self.apply_slack_hash(user, slack)
@@ -140,33 +142,16 @@ class User < ApplicationRecord
     value.present?
   end
 
-  def self.normalize_trained_on(value)
-    case value
-    when Array
-      value.filter_map { |entry| trained_on_entry_name(entry) }
-    when String
-      value.split(',').filter_map { |entry| entry.to_s.strip.presence }
-    else
-      name = trained_on_entry_name(value)
-      name ? [name] : []
-    end
-  end
-
-  def self.trained_on_entry_name(entry)
-    case entry
-    when Hash
-      claim_value(entry, 'name') || claim_value(entry, 'title')
-    else
-      entry.to_s.strip.presence
-    end
-  end
   private_class_method :apply_admin_from_auth, :apply_trained_on_from_auth, :apply_slack_from_auth,
                        :apply_slack_hash, :apply_username_from_auth, :apply_profile_from_auth,
-                       :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :normalize_trained_on,
-                       :trained_on_entry_name, :truthy?, :auth_claims
+                       :clear_slack!, :claim_value, :claim_value_present?, :nickname_from_auth, :truthy?, :auth_claims
 
   def display_name
     username.presence || email
+  end
+
+  def trained_for?(topics)
+    TrainingTopics.cover?(trained_on, topics)
   end
 
   def record_login!

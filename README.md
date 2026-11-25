@@ -171,8 +171,10 @@ Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
 
 ## Claim enforcement
 
-**Settings → Claims → Enforce claims** (off by default) limits claiming to members whose
-Authentik `trained_on` claim includes Prusa, plus admins. While it is on, a print that is
+**Settings → Claims** holds a list of training topics, spelled as in Authentik's `trained_on`
+claim. Each printer's edit page picks which of them it requires (any number, including none).
+**Enforce claims** (off by default) limits claiming to members whose `trained_on` claim includes
+every topic the printer requires, plus admins. While it is on, a print that is
 unclaimed when the poller first sees it start is paused on the printer; claiming it continues
 the print. An optional webhook URL receives a JSON `POST` for each pause and continue:
 

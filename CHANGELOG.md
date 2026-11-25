@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Training topics. Admins list them under Settings → Claims (they match the names in Authentik's training list) and choose on each printer's edit page which ones it requires, or none. While Enforce claims is on, a member needs every topic a printer requires to claim prints on it. Prusa printers start out requiring Prusa, so nothing changes until you edit them. A printer's page shows what training it requires.
+- The Users page shows each member's training topics instead of just Prusa yes/no.
+- The API's printer object has a `required_training` list.
+
 ## [0.20.0] - 2026-11-25
 
 ### Added

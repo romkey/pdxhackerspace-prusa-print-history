@@ -259,6 +259,10 @@ class UserTest < ActiveSupport::TestCase
     user = User.find_or_create_from_auth(auth)
 
     assert user.trained_on_prusa?
+    assert_equal %w[Laser Prusa], user.trained_on
+    assert user.trained_for?(%w[prusa laser])
+    assert_not user.trained_for?(%w[Bambu])
+    assert user.trained_for?([])
 
     auth = OmniAuth::AuthHash.new(
       provider: 'authentik',
@@ -270,6 +274,7 @@ class UserTest < ActiveSupport::TestCase
     User.find_or_create_from_auth(auth)
 
     assert_not user.reload.trained_on_prusa?
+    assert_equal %w[Laser], user.trained_on
   end
 
   test 'find_or_create_from_auth clears trained_on_prusa when trained_on claim is absent' do

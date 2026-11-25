@@ -47,6 +47,28 @@
       <%= f.text_field :hostname, class: 'form-control', required: true, placeholder: 'printer.local or 10.0.0.50' %>
     </div>
 
+    <div class="col-12">
+      <div class="form-label mb-1">Required training</div>
+      <%= hidden_field_tag 'printer[required_training][]', '', id: nil %>
+      <% topics = TrainingTopics.normalize(Setting.training_topics + printer.required_training) %>
+      <% topics.each_with_index do |topic, index| %>
+        <div class="form-check form-check-inline">
+          <%= check_box_tag 'printer[required_training][]', topic,
+                            TrainingTopics.include?(printer.required_training, topic),
+                            id: "printer_required_training_#{index}", class: 'form-check-input' %>
+          <%= label_tag "printer_required_training_#{index}", topic, class: 'form-check-label' %>
+        </div>
+      <% end %>
+      <div class="form-text">
+        <% if topics.empty? %>
+          No training topics yet. Add them under Settings &rarr; Claims.
+        <% else %>
+          While Enforce claims is on, members need every checked topic to claim prints on this printer.
+          Leave all unchecked to let any member claim.
+        <% end %>
+      </div>
+    </div>
+
     <div class="col-12" data-printer-form-target="prusa" <%= 'hidden' if printer.bambu? %>>
       <div class="row g-3">
         <div class="col-md-6">

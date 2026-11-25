@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-25
+
 ### Added
 - Filament types, under Settings → Filament types. The list starts with PLA, PETG, ABS, ASA, TPU, PC, PA (nylon), PA-CF, PLA-CF, PETG-CF, PVA and HIPS. Each has nozzle and bed temperature ranges, other names it goes by, and whether it needs a hardened nozzle or ventilation. Admins can add, edit and remove types.
 - Each printer's edit page says whether it has a hardened nozzle and ventilation. The dashboard shows pills under each printer for the filament types it may print, and the printer page shows them at the top.

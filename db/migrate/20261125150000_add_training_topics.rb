@@ -8,8 +8,9 @@ class AddTrainingTopics < ActiveRecord::Migration[8.1]
 
     reversible do |dir|
       dir.up do
-        # Keep today's behaviour: enforcement required Prusa training on every printer.
-        execute "UPDATE printers SET required_training = ARRAY['Prusa'] WHERE printer_type = 'prusa'"
+        # Keep today's behaviour: enforcement required Prusa training on every printer, Bambu
+        # included. Admins can change each printer's requirement afterwards.
+        execute "UPDATE printers SET required_training = ARRAY['Prusa']"
         execute "UPDATE users SET trained_on = ARRAY['Prusa'] WHERE trained_on_prusa = TRUE"
       end
     end

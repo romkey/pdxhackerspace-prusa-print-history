@@ -1,8 +1,9 @@
 class FilamentType
   # The types seeded on a new install; common ones are listed first and on the dashboard.
-  # Temperatures are typical manufacturer ranges in °C (mostly from the Prusa and Bambu slicer
-  # profiles); admins can adjust them. Aliases are the other names printers and slicers report, e.g. Prusa reports TPU as FLEX and Bambu reports
-  # its support filaments as PLA-S, PA-S and ABS-S.
+  # Temperatures are typical manufacturer ranges in °C (mostly from the Prusa and Bambu
+  # slicer profiles); admins can adjust them. Aliases are the other names printers and
+  # slicers report, e.g. Prusa reports TPU as FLEX and Bambu reports its support filaments
+  # as PLA-S, PA-S and ABS-S.
   module Defaults
     ALL = [
       { name: 'PLA', common: true, nozzle: 190..230, bed: 45..65, aliases: 'PLA-AERO, PLA-S, Support W' },

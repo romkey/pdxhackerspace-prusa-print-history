@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-25
+
 ### Added
 - Each printer's edit page has **Enforce claims** and **Enforce filament types** checkboxes, on by default. The settings of the same name still turn each feature on or off everywhere; while one is on, it applies only to printers that have it checked.
 - The dashboard and each printer's page show "Claim required" and "Filament checked" on the printers where those apply. The printer page also says when a printer is exempted.

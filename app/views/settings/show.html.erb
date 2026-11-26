@@ -102,7 +102,7 @@
                                          checked: Setting.enforce_claims?,
                                          hint: 'Members need the training each printer requires to claim its prints ' \
                                                '(admins always can). A print that is unclaimed when it starts is ' \
-                                               'paused, and continues once someone claims it.' %>
+                                               'paused, and continues once someone claims it. Exempt a printer on its edit page.' %>
         <div class="mt-3">
           <%= label_tag 'settings[training_topics]', 'Training topics', class: 'form-label' %>
           <%= text_area_tag 'settings[training_topics]', Setting.training_topics.join("\n"),
@@ -123,7 +123,8 @@
                                          checked: Setting.enforce_filament_types?,
                                          hint: "A print is paused when it starts if its printer may not run its filament " \
                                                "(it needs a hardened nozzle or ventilation the printer lacks). " \
-                                               "The dashboard says why; resume it at the printer once it's sorted out." %>
+                                               "The dashboard says why; resume it at the printer once it's sorted out. " \
+                                               'Exempt a printer on its edit page.' %>
 
         <div class="row g-3 align-items-end mt-1">
           <div class="col-md-9">

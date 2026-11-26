@@ -1,0 +1,28 @@
+<%# Which enforcement settings apply to this printer (Printer#enforces_claims? and
+    #enforces_filament_types?). Compact (the dashboard) lists only what's on; the printer page
+    also says when a global setting is on but this printer is opted out. Neutral badges: these
+    are rules about the printer, not its state. %>
+<% claims = printer.enforces_claims? %>
+<% filaments = printer.enforces_filament_types? %>
+<% opted_out = [] %>
+<% opted_out << 'claims' if Setting.enforce_claims? && !claims %>
+<% opted_out << 'filament types' if Setting.enforce_filament_types? && !filaments %>
+<% if claims || filaments || (opted_out.any? && !local_assigns[:compact]) %>
+  <div class="printer-enforcement <%= local_assigns[:class] %>">
+    <% if claims %>
+      <span class="badge text-bg-secondary-subtle"
+            title="Prints on <%= printer.name %> must be claimed by a trained member; unclaimed prints are paused when they start">
+        <i class="bi bi-person-lock" aria-hidden="true"></i> Claim required
+      </span>
+    <% end %>
+    <% if filaments %>
+      <span class="badge text-bg-secondary-subtle"
+            title="Prints on <%= printer.name %> are paused when they start if it may not run their filament">
+        <i class="bi bi-shield-check" aria-hidden="true"></i> Filament checked
+      </span>
+    <% end %>
+    <% if opted_out.any? && !local_assigns[:compact] %>
+      <span class="text-secondary">Not enforcing <%= opted_out.to_sentence %> on this printer</span>
+    <% end %>
+  </div>
+<% end %>

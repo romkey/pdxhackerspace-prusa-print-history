@@ -316,6 +316,34 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_empty @printer.reload.required_training
   end
 
+  test 'admins exempt a printer from claim and filament enforcement' do
+    login_as(users(:admin))
+
+    get edit_printer_path(@printer)
+
+    assert_select 'input[type=checkbox][name=?][checked]', 'printer[enforce_claims]'
+    assert_select 'input[type=checkbox][name=?][checked]', 'printer[enforce_filament_types]'
+
+    patch printer_path(@printer), params: { printer: { enforce_claims: '0', enforce_filament_types: '0' } }
+
+    @printer.reload
+
+    assert_not @printer.enforce_claims?
+    assert_not @printer.enforce_filament_types?
+  end
+
+  test 'printer page says which enforcement applies and which it is exempted from' do
+    Setting.enforce_claims = true
+    Setting.enforce_filament_types = true
+    @printer.update!(enforce_filament_types: false)
+
+    get printer_path(@printer)
+
+    assert_select '.printer-enforcement .badge', text: /Claim required/
+    assert_select '.printer-enforcement .badge', text: /Filament checked/, count: 0
+    assert_select '.printer-enforcement', text: /Not enforcing filament types on this printer/
+  end
+
   test 'update keeps existing PrusaLink key when field is left blank' do
     @printer.update!(prusalink_key: 'keep-me')
     login_as(users(:admin))

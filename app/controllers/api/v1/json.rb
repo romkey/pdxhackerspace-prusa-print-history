@@ -44,6 +44,8 @@ module Api
           status: printer.display_status,
           out_of_service: printer.out_of_service?,
           required_training: printer.required_training,
+          enforces_claims: printer.enforces_claims?,
+          enforces_filament_types: printer.enforces_filament_types?,
           job: job && self.job(job, policy:, include_printer: false)
         }
       end

@@ -18,6 +18,7 @@
         &middot; <%= render 'shared/printer_status', printer: @printer %>
       </div>
       <%= render 'printers/required_training', printer: @printer, class: 'text-13 mt-1' %>
+      <%= render 'printers/enforcement', printer: @printer, class: 'text-13 mt-1' %>
       <div class="d-flex flex-wrap align-items-center gap-2 text-13 mt-2">
         <span class="text-secondary">Filaments</span>
         <%= render 'printers/filament_pills', printer: @printer %>

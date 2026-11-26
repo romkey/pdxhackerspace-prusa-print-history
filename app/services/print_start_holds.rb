@@ -1,6 +1,6 @@
 # Pauses a print the moment the poller first sees it start, when an enforcement setting says
-# it has to wait: nobody has claimed it (Setting.enforce_claims?), or its printer can't run its
-# filament (Setting.enforce_filament_types?). One pause covers both, and each reason is kept
+# it has to wait: nobody has claimed it (Printer#enforces_claims?), or its printer can't run its
+# filament (Printer#enforces_filament_types?). One pause covers both, and each reason is kept
 # on the job (claim_hold_at, filament_hold_at + filament_hold_reason) so the dashboard can
 # say why. ClaimEnforcement continues a claim-only hold once the print is claimed; a filament
 # hold waits for someone to deal with the printer.
@@ -36,11 +36,11 @@ class PrintStartHolds
   private
 
   def claim_hold?
-    Setting.enforce_claims? && @job.owner_id.nil? && @job.claim_hold_at.nil?
+    @job.printer.enforces_claims? && @job.owner_id.nil? && @job.claim_hold_at.nil?
   end
 
   def filament_problem
-    return nil unless Setting.enforce_filament_types? && @job.filament_hold_at.nil?
+    return nil unless @job.printer.enforces_filament_types? && @job.filament_hold_at.nil?
 
     FilamentCheck.problem(@job)
   end

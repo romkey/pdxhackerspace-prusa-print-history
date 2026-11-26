@@ -140,6 +140,7 @@ body {
 // (jobs/_hold_flags): hold badges wrap, since the filament reason can be a sentence.
 .printer-training,
 .printer-filaments,
+.printer-enforcement,
 .print-holds {
   display: flex;
   flex-wrap: wrap;
@@ -152,7 +153,8 @@ body {
   font-weight: 500;
 }
 
-.printer-filaments .badge {
+.printer-filaments .badge,
+.printer-enforcement .badge {
   font-weight: 500;
 }
 
@@ -183,6 +185,7 @@ body {
 
 .dashboard-printer-card .printer-training,
 .dashboard-printer-card .printer-filaments,
+.dashboard-printer-card .printer-enforcement,
 .dashboard-printer-card .print-holds {
   justify-content: center;
 }

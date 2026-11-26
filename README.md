@@ -188,6 +188,11 @@ the print. An optional webhook URL receives a JSON `POST` for each pause and con
 `filament_not_allowed`, `claimed`), `reason` is the first one, and `job.filament_problem` says
 what was wrong with the filament. Failed deliveries are retried a few times.
 
+Both **Enforce claims** and **Enforce filament types** can also be turned off for a single
+printer on its edit page (each is on by default). A setting applies to a printer only while the
+global setting is on and the printer's own box is checked. The dashboard and printer pages mark
+the printers where each applies ("Claim required", "Filament checked").
+
 ## Filament types
 
 **Settings → Filament types** lists the filaments the shop uses, seeded with the materials Prusa

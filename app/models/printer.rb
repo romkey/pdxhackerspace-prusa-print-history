@@ -28,6 +28,17 @@ class Printer < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
 
+  # Claim enforcement applies to this printer: the global setting is on and the printer
+  # hasn't been opted out.
+  def enforces_claims?
+    Setting.enforce_claims? && enforce_claims?
+  end
+
+  # Filament enforcement applies to this printer, as with enforces_claims?.
+  def enforces_filament_types?
+    Setting.enforce_filament_types? && enforce_filament_types?
+  end
+
   def self.environment_tracking?
     column_names.include?('operational_state')
   end

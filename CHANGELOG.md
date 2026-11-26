@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Each printer's edit page has **Enforce claims** and **Enforce filament types** checkboxes, on by default. The settings of the same name still turn each feature on or off everywhere; while one is on, it applies only to printers that have it checked.
+- The dashboard and each printer's page show "Claim required" and "Filament checked" on the printers where those apply. The printer page also says when a printer is exempted.
+- The API's printer object has `enforces_claims` and `enforces_filament_types`.
 - Filament types can be marked **common**. PLA, PETG, ABS, ASA and TPU start out common. On Settings → Filament types, click a type's star to change it, or use the checkbox on its edit page. Common types are listed first everywhere.
 
 ### Changed

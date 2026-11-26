@@ -597,6 +597,27 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'printer cards are marked with the enforcement that applies to them' do
+    get root_path
+
+    assert_select '.printer-enforcement', count: 0
+
+    Setting.enforce_claims = true
+    Setting.enforce_filament_types = true
+    printers(:prusa_mk4).update!(enforce_claims: false, enforce_filament_types: false)
+    printers(:prusa_xl).update!(enforce_filament_types: false)
+
+    get root_path
+
+    assert_select '.dashboard-printer-card', text: /Prusa XL/ do
+      assert_select '.printer-enforcement .badge', text: /Claim required/
+      assert_select '.printer-enforcement .badge', text: /Filament checked/, count: 0
+    end
+    assert_select '.dashboard-printer-card', text: /Prusa MK4/ do
+      assert_select '.printer-enforcement', count: 0
+    end
+  end
+
   private
 
   def app_version_from_repo

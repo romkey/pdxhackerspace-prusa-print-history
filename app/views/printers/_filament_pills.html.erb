@@ -1,13 +1,34 @@
-<%# The filament types this printer may print (FilamentType#allowed_on?). Neutral pills:
-    which filaments fit is a fact about the printer, not a state. %>
+<%# The filament types this printer may print (FilamentType#allowed_on?), common ones first.
+    Neutral pills: which filaments fit is a fact about the printer, not a state. With
+    compact: true (the dashboard) only common types get pills; the rest are listed in a
+    "+N more" menu so every card's row stays short. %>
 <% allowed = allowed_filament_types(printer) %>
+<% shown, more = local_assigns[:compact] ? allowed.partition(&:common?) : [allowed, []] %>
 <div class="printer-filaments <%= local_assigns[:class] %>">
-  <% if allowed.any? %>
-    <% allowed.each do |type| %>
-      <span class="badge rounded-pill text-bg-secondary-subtle"
-            title="<%= filament_type_title(type) %>"><%= type.name %></span>
-    <% end %>
-  <% else %>
+  <% if allowed.empty? %>
     <span class="text-secondary">No filament types allowed</span>
+  <% end %>
+  <% shown.each do |type| %>
+    <span class="badge rounded-pill text-bg-secondary-subtle"
+          title="<%= filament_type_title(type) %>"><%= type.name %></span>
+  <% end %>
+  <% if more.any? %>
+    <div class="dropdown">
+      <button type="button" class="badge rounded-pill printer-filaments-more" data-bs-toggle="dropdown"
+              aria-expanded="false" title="Other filament types <%= printer.name %> may print">
+        <%= shown.any? ? "+#{more.size} more" : pluralize(more.size, 'filament type') %>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+      </button>
+      <div class="dropdown-menu printer-filaments-menu text-13">
+        <div class="d-flex flex-wrap gap-1 px-2 py-1">
+          <% more.each do |type| %>
+            <span class="badge rounded-pill text-bg-secondary-subtle"
+                  title="<%= filament_type_title(type) %>"><%= type.name %></span>
+          <% end %>
+        </div>
+        <div class="dropdown-divider"></div>
+        <%= link_to 'Printer details', printer_path(printer), class: 'dropdown-item' %>
+      </div>
+    </div>
   <% end %>
 </div>

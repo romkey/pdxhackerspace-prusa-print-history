@@ -1,5 +1,6 @@
 pla:
   name: PLA
+  common: true
   nozzle_min_c: 190
   nozzle_max_c: 230
   bed_min_c: 45
@@ -7,6 +8,7 @@ pla:
 
 petg:
   name: PETG
+  common: true
   aliases: PET-G
   nozzle_min_c: 220
   nozzle_max_c: 260
@@ -15,6 +17,7 @@ petg:
 
 abs:
   name: ABS
+  common: true
   nozzle_min_c: 240
   nozzle_max_c: 280
   bed_min_c: 90

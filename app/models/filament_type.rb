@@ -17,7 +17,8 @@ class FilamentType < ApplicationRecord
   normalizes :name, with: ->(value) { value.to_s.strip }
   normalizes :aliases, with: ->(value) { value.to_s.split(',').filter_map { |a| a.strip.presence }.join(', ') }
 
-  scope :ordered, -> { order(:name) }
+  # Common types first, then by name.
+  scope :ordered, -> { order(common: :desc, name: :asc) }
 
   # Adds any default type that isn't there yet (by name). Existing types are left alone.
   def self.seed_defaults!
@@ -35,7 +36,8 @@ class FilamentType < ApplicationRecord
       nozzle_min_c: attrs[:nozzle].min, nozzle_max_c: attrs[:nozzle].max,
       bed_min_c: attrs[:bed].min, bed_max_c: attrs[:bed].max,
       requires_hardened_nozzle: attrs.fetch(:hardened, false),
-      requires_ventilation: attrs.fetch(:ventilation, false)
+      requires_ventilation: attrs.fetch(:ventilation, false),
+      common: attrs.fetch(:common, false)
     }
   end
   private_class_method :attributes_from_default

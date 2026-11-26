@@ -43,6 +43,6 @@ class FilamentTypesController < ApplicationController
 
   def filament_type_params
     params.expect(filament_type: %i[name aliases nozzle_min_c nozzle_max_c bed_min_c bed_max_c
-                                    requires_hardened_nozzle requires_ventilation])
+                                    requires_hardened_nozzle requires_ventilation common])
   end
 end

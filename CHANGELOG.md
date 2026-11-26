@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- More filament types, covering what Prusa and Bambu sell: PVB, BVOH, PP, PP-GF, PP-CF, PA-GF, PET-CF, PPA-CF, PPS-CF, PC-CF, ABS-GF, ASA-CF, ASA-Aero, PETG-ESD and PEI. Existing installs get them automatically; types you've already added by the same name are left alone.
+- The names Bambu printers report for TPU for AMS, PLA Aero, PC FR and the Bambu support filaments (PLA-S, PA-S, ABS-S) now match TPU, PLA, PC, PLA, PA and ABS.
+
+### Changed
+- TPU now needs ventilation, so it's only allowed on printers marked as having ventilation. Existing installs are updated automatically.
+- PET-CF is its own type (it needs a hardened nozzle and ventilation) instead of another name for PETG-CF.
+
 ## [0.22.0] - 2026-11-25
 
 ### Added

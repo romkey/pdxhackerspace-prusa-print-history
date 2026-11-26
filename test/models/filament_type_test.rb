@@ -66,4 +66,39 @@ class FilamentTypeTest < ActiveSupport::TestCase
     assert FilamentType.find_by(name: 'PETG-CF').requires_hardened_nozzle?
     assert FilamentType.find_by(name: 'ASA').requires_ventilation?
   end
+
+  test 'seed_defaults! adds PVB and BVOH and marks TPU as needing ventilation' do
+    FilamentType.seed_defaults!
+
+    assert FilamentType.find_by(name: 'TPU').requires_ventilation?
+    %w[PVB BVOH].each do |name|
+      type = FilamentType.find_by!(name: name)
+
+      assert_not type.requires_ventilation?
+      assert_not type.requires_hardened_nozzle?
+    end
+  end
+
+  test 'the default types match the names Prusa and Bambu printers report' do
+    FilamentType.delete_all
+    FilamentType.seed_defaults!
+    types = FilamentType.ordered.to_a
+
+    {
+      'FLEX' => 'TPU', 'TPU-AMS' => 'TPU', 'PLA-S' => 'PLA', 'Support W' => 'PLA', 'PA-S' => 'PA',
+      'ABS-S' => 'ABS', 'PET-CF' => 'PET-CF', 'PETG-CF' => 'PETG-CF', 'PA6-GF' => 'PA-GF',
+      'PAHT-CF' => 'PA-CF', 'PC FR' => 'PC', 'ASA Aero' => 'ASA-Aero', 'PLA-AERO' => 'PLA',
+      'PEI 1010' => 'PEI', 'PP' => 'PP', 'PPS-CF' => 'PPS-CF'
+    }.each do |material, expected|
+      assert_equal expected, FilamentType.match(material, types)&.name, material
+    end
+    assert_nil FilamentType.match('PP GF', types), 'a fiber-filled PP must not fall back to PP'
+  end
+
+  test 'every default type has valid temperature ranges' do
+    FilamentType::DEFAULTS.each do |attrs|
+      assert_operator attrs[:nozzle].min, :<, attrs[:nozzle].max, attrs[:name]
+      assert_operator attrs[:bed].min, :<, attrs[:bed].max, attrs[:name]
+    end
+  end
 end

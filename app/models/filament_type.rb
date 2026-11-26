@@ -6,23 +6,8 @@ class FilamentType < ApplicationRecord
   # Words that mark a filament as fiber-filled, and so abrasive.
   FIBER_MARKER = /(?<![[:alnum:]])(CF|GF|CARBON|GLASS)(?![[:alnum:]])/
 
-  # Seeded on a new install and by the migration that added the table. Temperatures are
-  # typical manufacturer ranges in °C; admins can adjust them.
-  DEFAULTS = [
-    { name: 'PLA', nozzle: 190..230, bed: 45..65 },
-    { name: 'PETG', nozzle: 220..260, bed: 65..90, aliases: 'PET-G' },
-    { name: 'ABS', nozzle: 240..280, bed: 90..110, ventilation: true },
-    { name: 'ASA', nozzle: 240..280, bed: 90..110, ventilation: true },
-    { name: 'TPU', nozzle: 200..240, bed: 30..60, aliases: 'FLEX' },
-    { name: 'PC', nozzle: 260..300, bed: 100..120, ventilation: true },
-    { name: 'PA', nozzle: 260..300, bed: 70..110, ventilation: true, aliases: 'Nylon, PA6, PA12' },
-    { name: 'PA-CF', nozzle: 260..300, bed: 80..110, hardened: true, ventilation: true,
-      aliases: 'PA6-CF, PA12-CF, PAHT-CF, PA11-CF' },
-    { name: 'PLA-CF', nozzle: 210..240, bed: 45..65, hardened: true },
-    { name: 'PETG-CF', nozzle: 230..270, bed: 65..90, hardened: true, aliases: 'PET-CF' },
-    { name: 'PVA', nozzle: 190..220, bed: 45..60 },
-    { name: 'HIPS', nozzle: 220..250, bed: 90..110, ventilation: true }
-  ].freeze
+  # Seeded on a new install; see FilamentType::Defaults.
+  DEFAULTS = Defaults::ALL
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :nozzle_min_c, :nozzle_max_c, :bed_min_c, :bed_max_c,

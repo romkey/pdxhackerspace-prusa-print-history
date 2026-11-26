@@ -190,8 +190,9 @@ what was wrong with the filament. Failed deliveries are retried a few times.
 
 ## Filament types
 
-**Settings → Filament types** lists the filaments the shop uses, seeded with PLA, PETG, ABS, ASA,
-TPU, PC, PA (nylon), PA-CF, PLA-CF, PETG-CF, PVA and HIPS. Each has nozzle and bed temperature
+**Settings → Filament types** lists the filaments the shop uses, seeded with the materials Prusa
+and Bambu sell (PLA, PETG, ABS, ASA, TPU, PC, PA, PP, PEI, their carbon- and glass-fiber blends,
+and the PVA, PVB, BVOH and HIPS support materials). Each has nozzle and bed temperature
 ranges, other names it goes by, and whether it needs a hardened nozzle or ventilation. Each
 printer's edit page says whether it has a hardened nozzle and ventilation, and a printer may
 print a type unless the type needs something the printer lacks. The dashboard and printer pages

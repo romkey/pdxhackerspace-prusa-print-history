@@ -7,6 +7,8 @@
       <h1 class="h-page-title mb-0">Filament types</h1>
       <div class="text-13 text-secondary mt-1">
         A printer may print a type unless the type needs a hardened nozzle or ventilation the printer lacks.
+        Common types (<i class="bi bi-star-fill" aria-hidden="true"></i>) are listed first and are the ones
+        the dashboard shows; click a star to change it.
         Enforcement is <%= Setting.enforce_filament_types? ? 'on' : 'off' %>
         (<%= link_to 'change', settings_path(anchor: 'enforcement'), class: 'text-decoration-none' %>).
       </div>
@@ -23,6 +25,7 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Common</th>
               <th class="num">Nozzle</th>
               <th class="num">Bed</th>
               <th>Hardened nozzle</th>
@@ -37,6 +40,16 @@
                   <span class="fw-medium"><%= type.name %></span>
                   <% if type.aliases.present? %>
                     <div class="text-12 text-secondary">Also matches <%= type.aliases %></div>
+                  <% end %>
+                </td>
+                <td>
+                  <%= button_to filament_type_path(type), method: :patch,
+                                params: { filament_type: { common: !type.common? } },
+                                class: "btn btn-link btn-sm p-0 text-decoration-none #{type.common? ? 'text-body' : 'text-secondary'}",
+                                title: type.common? ? "Stop treating #{type.name} as common" : "Mark #{type.name} as common",
+                                form: { class: 'd-inline' } do %>
+                    <i class="bi <%= type.common? ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i>
+                    <span class="<%= 'visually-hidden' unless type.common? %>"><%= type.common? ? 'Common' : 'Mark common' %></span>
                   <% end %>
                 </td>
                 <td class="num"><%= type.nozzle_range_label %></td>

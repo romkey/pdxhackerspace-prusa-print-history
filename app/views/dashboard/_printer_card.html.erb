@@ -7,31 +7,35 @@
 <% job_visible = job_details_visible?(card.preview_job) %>
 <% show_filenames = logged_in_or_internal? && job_visible %>
 
-<div class="dashboard-printer-card h-100 text-center">
-  <h2 class="dashboard-printer-name mb-2">
-    <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
-    <% if logged_in_or_internal? %>
-      <%= link_to service_printer_path(printer),
-                  class: "fs-6 align-middle ms-1 text-decoration-none #{dashboard_service_link_class(printer)}",
-                  title: dashboard_service_link_title(printer) do %>
-        <i class="bi bi-wrench-adjustable" aria-hidden="true"></i>
-        <span class="visually-hidden">Service log for <%= printer.name %></span>
-        <% if open_problem_count(printer).positive? %>
-          <span class="num"><%= open_problem_count(printer) %></span>
+<%# Three parts (head, images, body) so the dashboard grid can line them up across a row:
+    every printer's photos start at the same height whatever its head holds. %>
+<div class="dashboard-printer-card text-center">
+  <div class="dashboard-card-head">
+    <h2 class="dashboard-printer-name mb-2">
+      <%= link_to printer.name, printer_path(printer), class: 'text-decoration-none text-body' %>
+      <% if logged_in_or_internal? %>
+        <%= link_to service_printer_path(printer),
+                    class: "fs-6 align-middle ms-1 text-decoration-none #{dashboard_service_link_class(printer)}",
+                    title: dashboard_service_link_title(printer) do %>
+          <i class="bi bi-wrench-adjustable" aria-hidden="true"></i>
+          <span class="visually-hidden">Service log for <%= printer.name %></span>
+          <% if open_problem_count(printer).positive? %>
+            <span class="num"><%= open_problem_count(printer) %></span>
+          <% end %>
         <% end %>
       <% end %>
+    </h2>
+
+    <%= render 'printers/required_training', printer: printer, class: 'text-13 mb-2' %>
+
+    <%= render 'printers/filament_pills', printer: printer, class: 'mb-2', compact: true %>
+
+    <% if printer.out_of_service? %>
+      <div class="mb-2">
+        <span class="badge text-bg-warning-subtle">Out of service</span>
+      </div>
     <% end %>
-  </h2>
-
-  <%= render 'printers/required_training', printer: printer, class: 'text-13 mb-2' %>
-
-  <%= render 'printers/filament_pills', printer: printer, class: 'mb-2' %>
-
-  <% if printer.out_of_service? %>
-    <div class="mb-2">
-      <span class="badge text-bg-warning-subtle">Out of service</span>
-    </div>
-  <% end %>
+  </div>
 
   <div class="dashboard-images mb-2">
     <div class="dashboard-image-wrap dashboard-image-wrap--<%= card.image_outline_status %> mb-2">
@@ -68,72 +72,74 @@
     </div>
   </div>
 
-  <div class="text-13 mb-1">
-    <%= render 'shared/printer_status', printer: printer %>
-  </div>
-  <%= render 'jobs/hold_flags', job: current_job, class: 'mb-2' %>
-
-  <% if card.current_job %>
-    <div class="dashboard-job-filename text-13 mb-2">
-      <% if show_filenames %>
-        <%= link_to card.current_job.filename, job_path(card.current_job), class: 'fw-medium text-decoration-none' %>
-      <% end %>
-      <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
-        <%= card.current_job.status %>
-      </div>
-      <%= render 'jobs/progress', job: card.current_job, wrapper_class: 'mt-2' %>
+  <div class="dashboard-card-body">
+    <div class="text-13 mb-1">
+      <%= render 'shared/printer_status', printer: printer %>
     </div>
-  <% elsif card.idle? && card.last_job %>
-    <div class="dashboard-job-filename text-13 mb-2">
-      <% if show_filenames %>
-        <%= link_to card.last_job.filename, job_path(card.last_job), class: 'fw-medium text-decoration-none' %>
-      <% end %>
-      <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
-        <%= card.last_job.status %>
-        <% if card.last_job.ended_at %>
-          <span title="<%= l(card.last_job.ended_at, format: :precise) %>">
-            &middot; <%= time_ago_in_words(card.last_job.ended_at) %> ago
-          </span>
+    <%= render 'jobs/hold_flags', job: current_job, class: 'mb-2' %>
+
+    <% if card.current_job %>
+      <div class="dashboard-job-filename text-13 mb-2">
+        <% if show_filenames %>
+          <%= link_to card.current_job.filename, job_path(card.current_job), class: 'fw-medium text-decoration-none' %>
         <% end %>
+        <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
+          <%= card.current_job.status %>
+        </div>
+        <%= render 'jobs/progress', job: card.current_job, wrapper_class: 'mt-2' %>
       </div>
+    <% elsif card.idle? && card.last_job %>
+      <div class="dashboard-job-filename text-13 mb-2">
+        <% if show_filenames %>
+          <%= link_to card.last_job.filename, job_path(card.last_job), class: 'fw-medium text-decoration-none' %>
+        <% end %>
+        <div class="<%= show_filenames ? 'text-12 text-secondary' : 'fw-medium' %>">
+          <%= card.last_job.status %>
+          <% if card.last_job.ended_at %>
+            <span title="<%= l(card.last_job.ended_at, format: :precise) %>">
+              &middot; <%= time_ago_in_words(card.last_job.ended_at) %> ago
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="dashboard-temps text-start mx-auto mb-2">
+      <div class="text-11 text-secondary mb-1">Temperatures &deg;C</div>
+      <table class="table table-compact table-borderless mb-0 w-100">
+        <tbody>
+          <tr>
+            <th class="text-secondary fw-normal">Bed</th>
+            <td class="num text-end"><%= dashboard_temp_label(card.bed_temp_c) %></td>
+          </tr>
+          <tr>
+            <th class="text-secondary fw-normal">Nozzle</th>
+            <td class="num text-end"><%= dashboard_temp_label(card.nozzle_temp_c) %></td>
+          </tr>
+          <tr>
+            <th class="text-secondary fw-normal">Enclosure</th>
+            <td class="num text-end"><%= dashboard_temp_label(card.enclosure_temp_c) %></td>
+          </tr>
+          <tr>
+            <th class="text-secondary fw-normal">Ambient</th>
+            <td class="num text-end"><%= dashboard_temp_label(card.ambient_temp_c) %></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  <% end %>
 
-  <div class="dashboard-temps text-start mx-auto mb-2">
-    <div class="text-11 text-secondary mb-1">Temperatures &deg;C</div>
-    <table class="table table-compact table-borderless mb-0 w-100">
-      <tbody>
-        <tr>
-          <th class="text-secondary fw-normal">Bed</th>
-          <td class="num text-end"><%= dashboard_temp_label(card.bed_temp_c) %></td>
-        </tr>
-        <tr>
-          <th class="text-secondary fw-normal">Nozzle</th>
-          <td class="num text-end"><%= dashboard_temp_label(card.nozzle_temp_c) %></td>
-        </tr>
-        <tr>
-          <th class="text-secondary fw-normal">Enclosure</th>
-          <td class="num text-end"><%= dashboard_temp_label(card.enclosure_temp_c) %></td>
-        </tr>
-        <tr>
-          <th class="text-secondary fw-normal">Ambient</th>
-          <td class="num text-end"><%= dashboard_temp_label(card.ambient_temp_c) %></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="text-13 text-secondary d-flex justify-content-center gap-3">
-    <span><i class="bi bi-disc me-1"></i><%= card.material_label %></span>
-    <span><i class="bi bi-caret-down-fill me-1"></i><%= card.nozzle_label %></span>
-  </div>
-
-  <% if (action_job = dashboard_action_job(card)) && (job_show_claim_button?(action_job) || job_show_clear_button?(action_job)) %>
-    <div class="mt-2">
-      <%= render 'jobs/actions',
-                 job: action_job,
-                 label_printers: @label_printers,
-                 default_label_printer: @default_label_printer %>
+    <div class="text-13 text-secondary d-flex justify-content-center gap-3">
+      <span><i class="bi bi-disc me-1"></i><%= card.material_label %></span>
+      <span><i class="bi bi-caret-down-fill me-1"></i><%= card.nozzle_label %></span>
     </div>
-  <% end %>
+
+    <% if (action_job = dashboard_action_job(card)) && (job_show_claim_button?(action_job) || job_show_clear_button?(action_job)) %>
+      <div class="mt-2">
+        <%= render 'jobs/actions',
+                   job: action_job,
+                   label_printers: @label_printers,
+                   default_label_printer: @default_label_printer %>
+      </div>
+    <% end %>
+  </div>
 </div>

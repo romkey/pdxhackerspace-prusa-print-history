@@ -141,7 +141,10 @@ Defined in `refresh.scss` — use these rather than inventing new ones:
 - `.printer-training` — required-training line (`printers/_required_training`), on the
   dashboard card and the printer page
 - `.printer-filaments` — allowed filament pills (`printers/_filament_pills`), on the dashboard
-  card and the printer page
+  card and the printer page. With `compact: true` (dashboard) only common types get pills; the
+  rest go in a `.printer-filaments-more` dropdown (`.printer-filaments-menu`)
+- `.dashboard-printer-grid` — dashboard card grid; each card is a 3-row subgrid
+  (`.dashboard-card-head`, `.dashboard-images`, `.dashboard-card-body`) so photos align per row
 - `.print-holds` — why a print is paused by an enforcement setting (`jobs/_hold_flags`)
 - `.job-timeline`, `.job-list-thumb`, `.job-list-thumbs-col` — job views
 - `.dashboard-page`, `.dashboard-title`, `.dashboard-clock`, `.dashboard-printer-card`,

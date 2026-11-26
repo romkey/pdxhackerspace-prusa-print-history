@@ -45,11 +45,9 @@
   </div>
 
   <% if @presenter.filtered_cards.any? %>
-    <div class="row g-3 mb-3">
+    <div class="dashboard-printer-grid mb-3">
       <% @presenter.filtered_cards.each do |card| %>
-        <div class="col-6 col-lg-3">
-          <%= render 'dashboard/printer_card', card: card %>
-        </div>
+        <%= render 'dashboard/printer_card', card: card %>
       <% end %>
     </div>
   <% elsif @presenter.printer_count.positive? %>

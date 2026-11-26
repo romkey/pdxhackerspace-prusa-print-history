@@ -40,6 +40,24 @@ class FilamentTypesControllerTest < ActionDispatch::IntegrationTest
     assert_nil FilamentType.find_by(name: 'TPU')
   end
 
+  test 'admins mark a filament type common with the star, and common types are listed first' do
+    login_as(users(:admin))
+
+    get filament_types_path
+
+    assert_select 'tbody tr:first-child td span.fw-medium', text: 'ABS'
+    assert_select "form[action='#{filament_type_path(filament_types(:pa_cf))}'] .bi-star"
+
+    patch filament_type_path(filament_types(:pa_cf)), params: { filament_type: { common: 'true' } }
+
+    assert_redirected_to filament_types_path
+    assert_predicate filament_types(:pa_cf).reload, :common?
+
+    patch filament_type_path(filament_types(:pla)), params: { filament_type: { common: 'false' } }
+
+    assert_not filament_types(:pla).reload.common?
+  end
+
   test 'invalid input re-renders the form' do
     login_as(users(:admin))
 

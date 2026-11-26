@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Filament types can be marked **common**. PLA, PETG, ABS, ASA and TPU start out common. On Settings → Filament types, click a type's star to change it, or use the checkbox on its edit page. Common types are listed first everywhere.
+
+### Changed
+- Dashboard printer cards show pills only for common filament types. The others are in a "+N more" menu next to them. The printer page still lists every type.
+- The camera photos and print previews on the dashboard now line up across each row, however much each printer's name, training and filament list takes up.
+
 ## [0.23.0] - 2026-11-25
 
 ### Added

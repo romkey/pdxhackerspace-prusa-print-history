@@ -577,6 +577,26 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'printer cards show common filaments as pills and the rest behind a more menu' do
+    printers(:prusa_xl).update!(hardened_nozzle: true, ventilation: true)
+    printers(:prusa_mk4).update!(hardened_nozzle: false, ventilation: false)
+
+    get root_path
+
+    assert_select '.dashboard-printer-grid > .dashboard-printer-card > .dashboard-card-head + .dashboard-images'
+    assert_select '.dashboard-printer-card', text: /Prusa XL/ do
+      assert_select '.printer-filaments > .badge', text: 'PLA'
+      assert_select '.printer-filaments > .badge', text: 'ABS'
+      assert_select '.printer-filaments > .badge', text: 'PA-CF', count: 0
+      assert_select '.printer-filaments-more', text: /\+1 more/
+      assert_select '.printer-filaments-menu .badge', text: 'PA-CF'
+    end
+    assert_select '.dashboard-printer-card', text: /Prusa MK4/ do
+      assert_select '.printer-filaments > .badge', text: 'PLA'
+      assert_select '.printer-filaments-more', count: 0
+    end
+  end
+
   private
 
   def app_version_from_repo

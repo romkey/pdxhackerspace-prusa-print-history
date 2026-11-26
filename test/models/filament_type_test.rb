@@ -71,6 +71,7 @@ class FilamentTypeTest < ActiveSupport::TestCase
     FilamentType.seed_defaults!
 
     assert FilamentType.find_by(name: 'TPU').requires_ventilation?
+    assert_equal %w[ABS ASA PETG PLA TPU], FilamentType.where(common: true).order(:name).pluck(:name)
     %w[PVB BVOH].each do |name|
       type = FilamentType.find_by!(name: name)
 

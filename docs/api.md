@@ -194,6 +194,8 @@ in progress, or else the most recent print if it is still waiting to be cleared.
       "status": "printing",
       "out_of_service": false,
       "required_training": ["Prusa"],
+      "enforces_claims": true,
+      "enforces_filament_types": false,
       "job": { "id": 415, "status": "printing", "...": "see the job object" }
     }
   ]
@@ -202,7 +204,9 @@ in progress, or else the most recent print if it is still waiting to be cleared.
 
 `job` is `null` for an idle printer with nothing waiting on its bed. `required_training` lists
 the training topics a member needs to claim prints on this printer while claims are enforced
-(empty means none).
+(empty means none). `enforces_claims` and `enforces_filament_types` say whether claim and
+filament enforcement apply to this printer: the admin setting is on and the printer isn't
+exempted.
 
 ### `GET /api/v1/printers/:id`
 
@@ -239,7 +243,7 @@ whether it is private.
 **Access level:** `read_write`
 **Who:** Any member, for an unclaimed print or one they own. Only admins can take over a print
 someone else has claimed. When an admin has turned on **Enforce claims**, a member needs every
-training topic in the printer's `required_training` (admins always can); a print that was paused because nobody claimed it
+training topic in the printer's `required_training` (admins always can), unless the printer is exempted (`enforces_claims` is false); a print that was paused because nobody claimed it
 continues shortly after it is claimed.
 
 | Body field | Type | Notes |

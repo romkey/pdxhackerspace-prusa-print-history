@@ -82,6 +82,15 @@ class AccessPolicyTest < ActiveSupport::TestCase
     assert policy(@member).can_claim?(@job)
   end
 
+  test 'a printer exempted from claim enforcement lets untrained members claim' do
+    Setting.enforce_claims = true
+    @job.printer.update!(required_training: %w[Prusa], enforce_claims: false)
+    @job.update!(owner: nil)
+    @member.update!(trained_on: [])
+
+    assert policy(@member).can_claim?(@job)
+  end
+
   test 'untrained members can claim when claims are not enforced' do
     @job.update!(owner: nil)
     @member.update!(trained_on: [])

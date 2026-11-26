@@ -43,6 +43,33 @@ class PrintStartHoldsTest < ActiveJob::TestCase
     assert_equal PrintStartHolds::CLAIM_MESSAGE, @job.events.recent.first.message
   end
 
+  test 'leaves a print alone on a printer exempted from both enforcement settings' do
+    Setting.enforce_claims = true
+    Setting.enforce_filament_types = true
+    @printer.update!(enforce_claims: false, enforce_filament_types: false)
+    add_tool('ABS')
+    client = FakeClient.new
+
+    assert_no_enqueued_jobs(only: ClaimEnforcementWebhookJob) do
+      assert_not PrintStartHolds.apply!(@job.reload, client:)
+    end
+    assert_empty client.calls
+    assert_not @job.reload.held?
+  end
+
+  test 'enforces only what a printer is not exempted from' do
+    Setting.enforce_claims = true
+    Setting.enforce_filament_types = true
+    @printer.update!(enforce_claims: false)
+    add_tool('ABS')
+
+    assert PrintStartHolds.apply!(@job.reload, client: FakeClient.new)
+    @job.reload
+
+    assert_predicate @job, :filament_held?
+    assert_not @job.claim_held?
+  end
+
   test 'pauses a print whose filament the printer may not run' do
     Setting.enforce_filament_types = true
     @job.update!(owner: users(:viewer))

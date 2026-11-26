@@ -86,6 +86,23 @@
       </div>
     </div>
 
+    <div class="col-12">
+      <div class="form-label mb-1">Enforcement</div>
+      <div class="form-check form-check-inline">
+        <%= f.check_box :enforce_claims, class: 'form-check-input' %>
+        <%= f.label :enforce_claims, 'Enforce claims', class: 'form-check-label' %>
+      </div>
+      <div class="form-check form-check-inline">
+        <%= f.check_box :enforce_filament_types, class: 'form-check-input' %>
+        <%= f.label :enforce_filament_types, 'Enforce filament types', class: 'form-check-label' %>
+      </div>
+      <div class="form-text">
+        Uncheck to exempt this printer. These only take effect while the matching setting is on
+        (<%= "claims #{Setting.enforce_claims? ? 'on' : 'off'}, filament types #{Setting.enforce_filament_types? ? 'on' : 'off'}" %>
+        <%= link_to('in Settings', settings_path(anchor: 'enforcement')) if admin? %>).
+      </div>
+    </div>
+
     <div class="col-12" data-printer-form-target="prusa" <%= 'hidden' if printer.bambu? %>>
       <div class="row g-3">
         <div class="col-md-6">

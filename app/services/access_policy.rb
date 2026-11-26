@@ -64,7 +64,7 @@ class AccessPolicy
 
   def trained_for?(printer)
     return false unless signed_in?
-    return true if admin? || !Setting.enforce_claims?
+    return true if admin? || !printer.enforces_claims?
 
     user.trained_for?(printer.required_training)
   end

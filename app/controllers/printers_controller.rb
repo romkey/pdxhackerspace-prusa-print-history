@@ -114,6 +114,7 @@ class PrintersController < ApplicationController
                                         :prusalink_key, :prusa_connect_token, :prusa_connect_uuid,
                                         :bambu_serial, :bambu_access_code,
                                         :ha_base_sensor, :camera_url, :hardened_nozzle, :ventilation,
+                                        :enforce_claims, :enforce_filament_types,
                                         { required_training: [] }])
     clear_blank_secret(permitted, :prusalink_key)
     clear_blank_secret(permitted, :prusa_connect_token)

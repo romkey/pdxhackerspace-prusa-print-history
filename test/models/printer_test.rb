@@ -175,6 +175,25 @@ class PrinterTest < ActiveSupport::TestCase
     assert_equal :unconfigured, @mini.prusalink_connection_status
   end
 
+  test 'a printer enforces claims and filament types only while the global setting and its own toggle are both on' do
+    printer = printers(:prusa_xl)
+
+    assert_predicate printer, :enforce_claims?, 'printers default to on'
+    assert_not printer.enforces_claims?
+    assert_not printer.enforces_filament_types?
+
+    Setting.enforce_claims = true
+    Setting.enforce_filament_types = true
+
+    assert_predicate printer, :enforces_claims?
+    assert_predicate printer, :enforces_filament_types?
+
+    printer.update!(enforce_claims: false)
+
+    assert_not printer.enforces_claims?
+    assert_predicate printer, :enforces_filament_types?
+  end
+
   private
 
   def without_environment_columns(&)

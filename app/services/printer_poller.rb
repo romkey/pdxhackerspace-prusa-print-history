@@ -307,7 +307,7 @@ class PrinterPoller
 
     job = find_or_initialize_job(job_payload)
     job.filename     = extract_filename(job_payload) || job.filename || fallback_filename(job_payload)
-    job.status       = status if status.present?
+    job.status       = status if status.present? && !job.claim_cancel_settling?
     job.started_at ||= Time.current
     job.save!
     job
@@ -374,6 +374,8 @@ class PrinterPoller
   end
 
   def detect_status_change(job, new_status, status_payload = nil)
+    return if job.claim_cancel_settling?
+
     last_status = job.events.recent.first&.to_status
     return if new_status.blank? || new_status == last_status
 
@@ -385,20 +387,25 @@ class PrinterPoller
     event
   end
 
-  # Starting: pause it if an enforcement setting says it must wait. Otherwise, once a held
-  # print is really printing again (state PRINTING, not a transient BUSY, and not just the
-  # printer still catching up with our pause), whatever held it is over: drop the flags.
-  # This looks at the state on every poll rather than at the resumed event, so a BUSY poll
-  # in between can't leave the flags stuck.
+  # Starting: pause it if an enforcement setting says it must wait. Otherwise, whenever a
+  # print is really printing (state PRINTING, not a transient BUSY, and not just the printer
+  # still catching up with our pause): pause it again if it's still unclaimed on a
+  # claim-enforcing printer, else whatever held it is over, so drop the flags. This looks at
+  # the state on every poll rather than at the resumed event, so a BUSY poll in between
+  # can't let a resume slip through or leave the flags stuck.
   def apply_print_holds(job, event, status_payload)
     return PrintStartHolds.apply!(job, client: @client) if event&.event_type == 'started'
+    return unless raw_state(status_payload) == 'PRINTING' && hold_settled?(job)
+    # A failed pause leaves the hold in place; the next poll tries again.
+    return PrintStartHolds.reapply_claim!(job, client: @client) if PrintStartHolds.claim_required?(job)
 
-    clear_print_holds!(job) if raw_state(status_payload) == 'PRINTING' && hold_settled?(job)
+    clear_print_holds!(job) if job.held?
   end
 
+  # Not held, or held long enough ago that PRINTING means it really is running again.
   def hold_settled?(job)
     held_at = [job.claim_hold_at, job.filament_hold_at].compact.max
-    held_at.present? && held_at <= HOLD_SETTLE_TIME.ago
+    held_at.nil? || held_at <= HOLD_SETTLE_TIME.ago
   end
 
   def clear_print_holds!(job)

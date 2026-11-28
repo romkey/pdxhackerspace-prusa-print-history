@@ -513,6 +513,15 @@ class PrintersControllerTest < ActionDispatch::IntegrationTest
     assert_select '.print-holds .badge', text: /wrong filament.*ABS needs ventilation/m
   end
 
+  test 'printer page says loudly that a print is waiting for a claim' do
+    Setting.claim_hold_max_pauses = 2
+    jobs(:active_xl).update!(status: 'paused', owner: nil, claim_hold_at: 1.minute.ago, claim_pause_count: 2)
+
+    get printer_path(@printer)
+
+    assert_select '.print-holds--page .claim-hold-alert.alert-danger', text: /Paused: waiting for a claim.*cancelled/m
+  end
+
   private
 
   # Makes the printer's active job private and gives it a stored camera photo.

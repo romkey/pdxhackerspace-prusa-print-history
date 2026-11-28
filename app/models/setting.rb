@@ -1,5 +1,6 @@
 class Setting < ApplicationRecord
   extend ApiSettings
+  extend EnforcementSettings
 
   DEFAULT_PRUSA_UNTRAINED_MESSAGE =
     "You don't appear to be trained on the Prusa printers. If you haven't completed training yet, " \
@@ -23,14 +24,11 @@ class Setting < ApplicationRecord
     image_retention_months
     delete_job_history
     job_history_retention_months
-    enforce_claims
-    enforce_claims_webhook_url
     training_topics
-    enforce_filament_types
     ha_last_polled_at
     ha_last_error
     ha_last_status
-  ].concat(ApiSettings::KEYS).freeze
+  ].concat(ApiSettings::KEYS, EnforcementSettings::KEYS).freeze
 
   validates :key, presence: true, uniqueness: true, inclusion: { in: KEYS }
 
@@ -126,35 +124,6 @@ class Setting < ApplicationRecord
 
   def self.job_history_retention_months=(value)
     set(:job_history_retention_months, value.presence)
-  end
-
-  # When on, only members trained on the printers (and admins) may claim, and a print that is
-  # unclaimed when it starts is paused until someone claims it.
-  def self.enforce_claims?
-    fetch(:enforce_claims) == 'true'
-  end
-
-  def self.enforce_claims=(value)
-    set(:enforce_claims, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false')
-  end
-
-  # When on, a print whose filament the printer can't run (see FilamentType#allowed_on?) is
-  # paused when it starts.
-  def self.enforce_filament_types?
-    fetch(:enforce_filament_types) == 'true'
-  end
-
-  def self.enforce_filament_types=(value)
-    set(:enforce_filament_types, ActiveModel::Type::Boolean.new.cast(value) ? 'true' : 'false')
-  end
-
-  # Optional URL that gets a JSON POST whenever a print is paused or continued for claim enforcement.
-  def self.enforce_claims_webhook_url
-    fetch(:enforce_claims_webhook_url).presence
-  end
-
-  def self.enforce_claims_webhook_url=(value)
-    set(:enforce_claims_webhook_url, value.to_s.strip.presence)
   end
 
   # Training topics admins can require per printer. Names match entries in Authentik's

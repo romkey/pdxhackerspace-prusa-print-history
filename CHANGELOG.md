@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Settings → Claims → Pauses before cancelling** (default 3). An unclaimed print that keeps being continued without a claim is paused again up to this many times; continued once more, it is cancelled. The claim webhook gets a `print_cancelled` notice when that happens.
+
+### Changed
+- A print paused for a claim now shows a large "Paused: waiting for a claim" notice with a **Claim this print** button on the dashboard and its printer's page, and how many pauses it has used. On its last pause the notice turns red and warns that continuing it again without a claim will cancel it.
+
+### Fixed
+- While claims are enforced, an unclaimed print can no longer be kept running by resuming it from the printer or a slicer: the app pauses it again within a minute or two until someone claims it. A print that was already running unclaimed when enforcement was turned on for its printer is paused too. Resuming a print held only for its filament still lets it carry on.
+
 ## [0.24.0] - 2026-11-25
 
 ### Added

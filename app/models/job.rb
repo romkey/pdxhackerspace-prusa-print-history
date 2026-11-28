@@ -1,4 +1,8 @@
 class Job < ApplicationRecord
+  # How long after ClaimHoldCancellation stops a print the poller ignores the printer
+  # still reporting it (see #claim_cancel_settling?).
+  CLAIM_CANCEL_SETTLE_TIME = 5.minutes
+
   STATUSES = %w[pending printing paused attention error finished cancelled].freeze
   ACTIVE_STATUSES   = %w[printing paused attention error].freeze
   TERMINAL_STATUSES = %w[finished cancelled].freeze
@@ -85,6 +89,18 @@ class Job < ApplicationRecord
   # Paused by PrintStartHolds and not resumed since.
   def held?
     claim_held? || filament_held?
+  end
+
+  # Cancelled by ClaimHoldCancellation recently enough that the printer may still be reporting
+  # the print as running: the poller keeps it cancelled rather than reviving it.
+  def claim_cancel_settling?
+    claim_cancelled_at.present? && claim_cancelled_at > CLAIM_CANCEL_SETTLE_TIME.ago
+  end
+
+  # Paused for a claim as many times as Setting.claim_hold_max_pauses allows: continuing it
+  # again without a claim cancels it.
+  def claim_pauses_used_up?
+    claim_pause_count >= Setting.claim_hold_max_pauses
   end
 
   private

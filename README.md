@@ -174,9 +174,14 @@ Optional env overrides: `PRUSA_CONNECT_API_URL`, `PRUSA_ACCOUNT_TOKEN_URL`.
 **Settings → Claims** holds a list of training topics, spelled as in Authentik's `trained_on`
 claim. Each printer's edit page picks which of them it requires (any number, including none).
 **Enforce claims** (off by default) limits claiming to members whose `trained_on` claim includes
-every topic the printer requires, plus admins. While it is on, a print that is
-unclaimed when the poller first sees it start is paused on the printer; claiming it continues
-the print. An optional webhook URL receives a JSON `POST` for each pause and continue:
+every topic the printer requires, plus admins. While it is on, an unclaimed print is paused
+on the printer as soon as the poller sees it start, and again on any later poll that finds it
+printing unclaimed (resumed from the printer or a slicer, or already running when enforcement
+was turned on); claiming it continues the print. **Pauses before cancelling** (default 3)
+caps the claim pauses: continued once more without a claim after the last one, the print is
+cancelled. The dashboard and printer page show a large "Paused: waiting for a claim" notice
+on a held print, which turns red with a cancellation warning on its last pause. An optional
+webhook URL receives a JSON `POST` for each pause, continue and cancel:
 
 ```json
 { "event": "print_paused", "reason": "unclaimed", "occurred_at": "…",
@@ -184,7 +189,7 @@ the print. An optional webhook URL receives a JSON `POST` for each pause and con
   "job": { "id": 42, "status": "paused", "private": false, "url": "…", "filename": "…", "claimed_by": null } }
 ```
 
-`event` is `print_paused` or `print_continued`. `reasons` lists every reason (`unclaimed`,
+`event` is `print_paused`, `print_continued` or `print_cancelled`. `reasons` lists every reason (`unclaimed`,
 `filament_not_allowed`, `claimed`), `reason` is the first one, and `job.filament_problem` says
 what was wrong with the filament. Failed deliveries are retried a few times.
 

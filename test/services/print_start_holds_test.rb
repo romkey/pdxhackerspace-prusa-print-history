@@ -40,7 +40,9 @@ class PrintStartHoldsTest < ActiveJob::TestCase
     assert_equal 'paused', @job.status
     assert_predicate @job, :claim_held?
     assert_not @job.filament_held?
-    assert_equal PrintStartHolds::CLAIM_MESSAGE, @job.events.recent.first.message
+    assert_equal 1, @job.claim_pause_count
+    assert_match(/pause 1 of 3/, @job.events.recent.first.message)
+    assert_no_match(/cancelled/, @job.events.recent.first.message)
   end
 
   test 'leaves a print alone on a printer exempted from both enforcement settings' do
@@ -130,5 +132,65 @@ class PrintStartHoldsTest < ActiveJob::TestCase
 
     assert_not PrintStartHolds.apply!(@job, client:)
     assert_not @job.reload.held?
+  end
+
+  test 'reapply_claim! pauses an unclaimed print even after an earlier claim hold' do
+    Setting.enforce_claims = true
+    @job.update!(claim_hold_at: 10.minutes.ago)
+    client = FakeClient.new
+
+    assert PrintStartHolds.reapply_claim!(@job, client:)
+    assert_equal [[:pause, 5]], client.calls
+    assert_operator @job.reload.claim_hold_at, :>, 1.minute.ago
+  end
+
+  test 'reapply_claim! leaves claimed prints and exempted printers alone' do
+    Setting.enforce_claims = true
+    client = FakeClient.new
+    @printer.update!(enforce_claims: false)
+
+    assert_not PrintStartHolds.reapply_claim!(@job, client:)
+
+    @printer.update!(enforce_claims: true)
+    @job.update!(owner: users(:viewer))
+
+    assert_not PrintStartHolds.reapply_claim!(@job.reload, client:)
+    assert_empty client.calls
+  end
+
+  test 'the last allowed pause warns that continuing again cancels the print' do
+    Setting.enforce_claims = true
+    Setting.claim_hold_max_pauses = 2
+    @job.update!(claim_hold_at: 10.minutes.ago, claim_pause_count: 1)
+
+    assert PrintStartHolds.reapply_claim!(@job, client: FakeClient.new)
+    @job.reload
+
+    assert_equal 2, @job.claim_pause_count
+    assert_predicate @job, :claim_pauses_used_up?
+    assert_includes @job.events.recent.first.message, PrintStartHolds::FINAL_CLAIM_WARNING
+  end
+
+  test 'continuing an unclaimed print after its last pause cancels it' do
+    Setting.enforce_claims = true
+    Setting.claim_hold_max_pauses = 2
+    @job.update!(claim_hold_at: 10.minutes.ago, claim_pause_count: 2)
+    client = FakeClient.new
+    client.define_singleton_method(:stop_job) { |id| calls << [:stop, id] }
+
+    assert_enqueued_with(job: ClaimEnforcementWebhookJob, args: [@job.id, 'cancelled', ['unclaimed']]) do
+      assert PrintStartHolds.reapply_claim!(@job, client:)
+    end
+
+    assert_equal [[:stop, 5]], client.calls
+    @job.reload
+
+    assert_equal 'cancelled', @job.status
+    assert_predicate @job, :claim_cancel_settling?
+    assert_equal 2, @job.claim_pause_count
+    event = @job.events.recent.first
+
+    assert_equal 'cancelled', event.event_type
+    assert_match(/after 2 pauses/, event.message)
   end
 end

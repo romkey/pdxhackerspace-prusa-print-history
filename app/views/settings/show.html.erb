@@ -101,8 +101,18 @@
         <%= render 'settings/check_box', key: :enforce_claims, label: 'Enforce claims',
                                          checked: Setting.enforce_claims?,
                                          hint: 'Members need the training each printer requires to claim its prints ' \
-                                               '(admins always can). A print that is unclaimed when it starts is ' \
-                                               'paused, and continues once someone claims it. Exempt a printer on its edit page.' %>
+                                               '(admins always can). An unclaimed print is paused whenever the app ' \
+                                               'finds it printing, and continues once someone claims it. ' \
+                                               'Exempt a printer on its edit page.' %>
+        <div class="mt-3 col-md-4">
+          <%= label_tag 'settings[claim_hold_max_pauses]', 'Pauses before cancelling', class: 'form-label' %>
+          <%= number_field_tag 'settings[claim_hold_max_pauses]', Setting.claim_hold_max_pauses,
+                               class: 'form-control', min: 1 %>
+        </div>
+        <div class="form-text">
+          An unclaimed print that is continued anyway (at the printer or from a slicer) is paused again,
+          up to this many times. Continued once more without a claim, it is cancelled.
+        </div>
         <div class="mt-3">
           <%= label_tag 'settings[training_topics]', 'Training topics', class: 'form-label' %>
           <%= text_area_tag 'settings[training_topics]', Setting.training_topics.join("\n"),
@@ -133,7 +143,8 @@
                               class: 'form-control', placeholder: 'https://example.com/hooks/printers' %>
             <div class="form-text">
               Gets a JSON POST (<code>print_paused</code> or <code>print_continued</code>) whenever a print
-              is paused because it's unclaimed or its filament isn't allowed, or continued once claimed.
+              is paused because it's unclaimed or its filament isn't allowed, or continued once claimed, and
+              <code>print_cancelled</code> when an unclaimed print runs out of pauses.
             </div>
           </div>
           <div class="col-md-3">

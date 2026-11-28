@@ -1,17 +1,33 @@
 <%# Why an active print is paused by PrintStartHolds. Renders nothing otherwise. %>
 <% if job&.active? && job.held? %>
   <div class="print-holds <%= local_assigns[:class] %>">
+    <% if job.claim_held? && job.owner_id.nil? %>
+      <% final = job.claim_pauses_used_up? %>
+      <div class="claim-hold-alert alert <%= final ? 'alert-danger' : 'alert-warning' %> mb-0" role="alert">
+        <div class="claim-hold-alert-title">
+          <i class="bi bi-pause-circle-fill" aria-hidden="true"></i>
+          Paused: waiting for a claim
+        </div>
+        <div>This print won't continue until someone claims it.</div>
+        <% if final %>
+          <div class="claim-hold-alert-final">
+            <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+            Last pause: if it's continued again without a claim, it will be cancelled.
+          </div>
+        <% else %>
+          <div class="text-12">
+            Pause <%= job.claim_pause_count %> of <%= Setting.claim_hold_max_pauses %>.
+            Continuing it unclaimed only pauses it again.
+          </div>
+        <% end %>
+        <%= link_to 'Claim this print', job_path(job), class: 'btn btn-sm btn-primary mt-2' %>
+      </div>
+    <% end %>
     <% if job.filament_held? %>
       <span class="badge text-bg-danger-subtle"
             title="<%= job.filament_hold_reason %>">
         <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
         Paused: wrong filament<% if job.filament_hold_reason.present? %> &middot; <%= job.filament_hold_reason %><% end %>
-      </span>
-    <% end %>
-    <% if job.claim_held? %>
-      <span class="badge text-bg-warning-subtle">
-        <i class="bi bi-person-exclamation" aria-hidden="true"></i>
-        Paused until someone claims it
       </span>
     <% end %>
   </div>

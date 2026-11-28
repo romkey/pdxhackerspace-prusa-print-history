@@ -35,7 +35,7 @@ class PrinterFirmwareCheckTest < ActiveSupport::TestCase
 
   test 'a failed read changes nothing' do
     assert_no_difference -> { ServiceEntry.count } do
-      PrinterFirmwareCheck.call(@printer, client: FakePrusaLink.new(PrusaLink::Error.new('down')))
+      PrinterFirmwareCheck.call(@printer, client: FakePrusaLink.new(PrinterConnection::Error.new('down')))
     end
     assert_nil @printer.reload.firmware_version
   end

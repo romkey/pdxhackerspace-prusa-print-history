@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -140,6 +140,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
     t.datetime "updated_at", null: false
     t.datetime "filament_hold_at"
     t.string "filament_hold_reason"
+    t.integer "claim_pause_count", default: 0, null: false
     t.index ["claim_hold_at"], name: "index_jobs_on_claim_hold_at", where: "(claim_hold_at IS NOT NULL)"
     t.index ["cleared_by_id"], name: "index_jobs_on_cleared_by_id"
     t.index ["filament_hold_at"], name: "index_jobs_on_filament_hold_at", where: "(filament_hold_at IS NOT NULL)"

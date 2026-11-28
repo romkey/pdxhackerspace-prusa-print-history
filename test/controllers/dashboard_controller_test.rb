@@ -562,18 +562,29 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   test 'each printer card shows its allowed filaments and why a print is held' do
     printers(:prusa_xl).update!(hardened_nozzle: true, ventilation: true)
     printers(:prusa_mk4).update!(hardened_nozzle: false, ventilation: false)
-    jobs(:active_xl).update!(status: 'paused', owner: nil, claim_hold_at: 1.minute.ago)
+    jobs(:active_xl).update!(status: 'paused', owner: nil, claim_hold_at: 1.minute.ago, claim_pause_count: 1)
 
     get root_path
 
     assert_response :success
     assert_select '.dashboard-printer-card', text: /Prusa XL/ do
       assert_select '.printer-filaments .badge', text: 'PA-CF'
-      assert_select '.print-holds .badge', text: /Paused until someone claims it/
+      assert_select '.claim-hold-alert.alert-warning', text: /Paused: waiting for a claim.*Pause 1 of 3/m
+      assert_select '.claim-hold-alert a[href=?]', job_path(jobs(:active_xl)), text: 'Claim this print'
     end
     assert_select '.dashboard-printer-card', text: /Prusa MK4/ do
       assert_select '.printer-filaments .badge', text: 'PA-CF', count: 0
       assert_select '.printer-filaments .badge', text: 'PLA'
+    end
+  end
+
+  test 'the last claim pause warns that continuing again cancels the print' do
+    jobs(:active_xl).update!(status: 'paused', owner: nil, claim_hold_at: 1.minute.ago, claim_pause_count: 3)
+
+    get root_path
+
+    assert_select '.dashboard-printer-card', text: /Prusa XL/ do
+      assert_select '.claim-hold-alert.alert-danger', text: /will be cancelled/
     end
   end
 

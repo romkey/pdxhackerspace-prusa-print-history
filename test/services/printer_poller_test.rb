@@ -566,6 +566,90 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_predicate job.reload, :claim_held?
   end
 
+  test 'pauses an unclaimed print again after someone resumes it from outside the app' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-907',
+                                started_at: 5.minutes.ago, claim_hold_at: 3.minutes.ago)
+    job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 3.minutes.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-907', 'state' => 'PRINTING', 'file' => { 'display_name' => 'held.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    paused = []
+    prusalink.define_singleton_method(:pause_job) { |id| paused << id }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_equal ['pl-907'], paused
+    job.reload
+
+    assert_equal 'paused', job.status
+    assert_predicate job, :claim_held?
+    assert_operator job.claim_hold_at, :>, 1.minute.ago
+    assert_equal %w[paused resumed paused], job.events.ordered.map(&:event_type)
+  end
+
+  test 'pauses an unclaimed print that was already running when claim enforcement came on' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'early.gcode', status: 'printing', prusalink_job_id: 'pl-908',
+                                started_at: 10.minutes.ago)
+    job.events.create!(event_type: 'started', to_status: 'printing', occurred_at: 10.minutes.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-908', 'state' => 'PRINTING', 'file' => { 'display_name' => 'early.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    paused = []
+    prusalink.define_singleton_method(:pause_job) { |id| paused << id }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_equal ['pl-908'], paused
+    assert_predicate job.reload, :claim_held?
+  end
+
+  test 'cancels an unclaimed print continued again after its last pause' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-910',
+                                started_at: 9.minutes.ago, claim_hold_at: 3.minutes.ago, claim_pause_count: 3)
+    job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 3.minutes.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-910', 'state' => 'PRINTING', 'file' => { 'display_name' => 'held.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    calls = []
+    prusalink.define_singleton_method(:pause_job) { |id| calls << [:pause, id] }
+    prusalink.define_singleton_method(:stop_job) { |id| calls << [:stop, id] }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_equal [[:stop, 'pl-910']], calls
+    assert_equal 'cancelled', job.reload.status
+    assert_equal %w[paused resumed cancelled], job.events.ordered.map(&:event_type)
+  end
+
+  test 'leaves a claimed print running and drops its old hold' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'mine.gcode', status: 'printing', prusalink_job_id: 'pl-909',
+                                started_at: 5.minutes.ago, claim_hold_at: 3.minutes.ago, owner: users(:viewer))
+    job.events.create!(event_type: 'resumed', from_status: 'paused', to_status: 'printing',
+                       occurred_at: 1.minute.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-909', 'state' => 'PRINTING', 'file' => { 'display_name' => 'mine.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    paused = []
+    prusalink.define_singleton_method(:pause_job) { |id| paused << id }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_empty paused
+    assert_not job.reload.held?
+  end
+
   private
 
   def without_environment_columns(&)

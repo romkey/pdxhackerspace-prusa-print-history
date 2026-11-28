@@ -32,6 +32,17 @@ class ClaimEnforcementWebhookTest < ActiveSupport::TestCase
     end
   end
 
+  test 'posts a print_cancelled notice for an unclaimed print that ran out of pauses' do
+    with_http(Net::HTTPOK.new('1.1', '200', 'OK')) do |http|
+      assert ClaimEnforcementWebhook.deliver(@job, 'cancelled', url: @url)
+
+      body = JSON.parse(http.requests.first.body)
+
+      assert_equal 'print_cancelled', body['event']
+      assert_equal 'unclaimed', body['reason']
+    end
+  end
+
   test 'reports every reason a print was paused, and the filament problem' do
     @job.update!(filament_hold_reason: 'ABS needs ventilation.')
 

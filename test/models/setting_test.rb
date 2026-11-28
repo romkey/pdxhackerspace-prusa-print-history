@@ -91,4 +91,16 @@ class SettingTest < ActiveSupport::TestCase
     assert_kind_of Time, health[:polled_at]
     assert_nil health[:error]
   end
+
+  test 'claim_hold_max_pauses defaults to 3 and ignores non-positive values' do
+    assert_equal 3, Setting.claim_hold_max_pauses
+
+    Setting.claim_hold_max_pauses = '5'
+
+    assert_equal 5, Setting.claim_hold_max_pauses
+
+    Setting.claim_hold_max_pauses = '0'
+
+    assert_equal 3, Setting.claim_hold_max_pauses
+  end
 end

@@ -87,6 +87,12 @@ class Job < ApplicationRecord
     claim_held? || filament_held?
   end
 
+  # Paused for a claim as many times as Setting.claim_hold_max_pauses allows: continuing it
+  # again without a claim cancels it.
+  def claim_pauses_used_up?
+    claim_pause_count >= Setting.claim_hold_max_pauses
+  end
+
   private
 
   def claimed_while_held?

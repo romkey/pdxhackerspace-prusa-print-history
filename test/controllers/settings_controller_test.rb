@@ -115,6 +115,18 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select '#enforcement input[name=?][checked]', 'settings[enforce_claims]'
   end
 
+  test 'admins can set how many claim pauses come before cancelling' do
+    login_as(users(:admin))
+
+    patch settings_path, params: { settings: { claim_hold_max_pauses: '4' } }
+
+    assert_equal 4, Setting.claim_hold_max_pauses
+
+    get settings_path
+
+    assert_select '#enforcement input[name=?][value=?]', 'settings[claim_hold_max_pauses]', '4'
+  end
+
   test 'admins can turn on filament type enforcement' do
     login_as(users(:admin))
 

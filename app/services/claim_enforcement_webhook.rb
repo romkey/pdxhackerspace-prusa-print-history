@@ -2,14 +2,16 @@ require 'net/http'
 require 'json'
 
 # POSTs a JSON notice to Setting.enforce_claims_webhook_url when a print is paused because it
-# is unclaimed or its filament isn't allowed on its printer, or continued once claimed.
+# is unclaimed or its filament isn't allowed on its printer, continued once claimed, or
+# cancelled for being continued unclaimed too many times.
 # Filename and claimant are left out of private prints.
 class ClaimEnforcementWebhook
   class Error < StandardError; end
 
   PAUSED = 'paused'.freeze
   CONTINUED = 'continued'.freeze
-  ACTIONS = [PAUSED, CONTINUED].freeze
+  CANCELLED = 'cancelled'.freeze
+  ACTIONS = [PAUSED, CONTINUED, CANCELLED].freeze
   TIMEOUT = 10
 
   def self.deliver(job, action, reasons: nil, url: Setting.enforce_claims_webhook_url)
@@ -23,7 +25,7 @@ class ClaimEnforcementWebhook
 
     @job = job
     @action = action
-    @reasons = Array(reasons).presence || [action == PAUSED ? 'unclaimed' : 'claimed']
+    @reasons = Array(reasons).presence || [action == CONTINUED ? 'claimed' : 'unclaimed']
     @url = url
   end
 

@@ -307,7 +307,7 @@ class PrinterPoller
 
     job = find_or_initialize_job(job_payload)
     job.filename     = extract_filename(job_payload) || job.filename || fallback_filename(job_payload)
-    job.status       = status if status.present?
+    job.status       = status if status.present? && !job.claim_cancel_settling?
     job.started_at ||= Time.current
     job.save!
     job
@@ -374,6 +374,8 @@ class PrinterPoller
   end
 
   def detect_status_change(job, new_status, status_payload = nil)
+    return if job.claim_cancel_settling?
+
     last_status = job.events.recent.first&.to_status
     return if new_status.blank? || new_status == last_status
 
@@ -394,7 +396,8 @@ class PrinterPoller
   def apply_print_holds(job, event, status_payload)
     return PrintStartHolds.apply!(job, client: @client) if event&.event_type == 'started'
     return unless raw_state(status_payload) == 'PRINTING' && hold_settled?(job)
-    return if PrintStartHolds.reapply_claim!(job, client: @client)
+    # A failed pause leaves the hold in place; the next poll tries again.
+    return PrintStartHolds.reapply_claim!(job, client: @client) if PrintStartHolds.claim_required?(job)
 
     clear_print_holds!(job) if job.held?
   end

@@ -630,6 +630,47 @@ class PrinterPollerTest < ActiveJob::TestCase
     assert_equal %w[paused resumed cancelled], job.events.ordered.map(&:event_type)
   end
 
+  test 'a failed re-pause keeps the claim hold so the next poll tries again' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'held.gcode', status: 'paused', prusalink_job_id: 'pl-911',
+                                started_at: 5.minutes.ago, claim_hold_at: 3.minutes.ago, claim_pause_count: 1)
+    job.events.create!(event_type: 'paused', from_status: 'printing', to_status: 'paused', occurred_at: 3.minutes.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-911', 'state' => 'PRINTING', 'file' => { 'display_name' => 'held.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    prusalink.define_singleton_method(:pause_job) { |_id| raise PrinterConnection::Error, 'timeout' }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_predicate job.reload, :claim_held?
+    assert_equal 1, job.claim_pause_count
+  end
+
+  test 'a print cancelled for a claim stays cancelled while the printer catches up' do
+    Setting.enforce_claims = true
+    job = @printer.jobs.create!(filename: 'gone.gcode', status: 'cancelled', prusalink_job_id: 'pl-912',
+                                started_at: 9.minutes.ago, ended_at: 10.seconds.ago,
+                                claim_cancelled_at: 10.seconds.ago, claim_pause_count: 3)
+    job.events.create!(event_type: 'cancelled', from_status: 'printing', to_status: 'cancelled',
+                       occurred_at: 10.seconds.ago)
+    payloads = {
+      status: { 'printer' => { 'state' => 'PRINTING' } },
+      job: { 'id' => 'pl-912', 'state' => 'PRINTING', 'file' => { 'display_name' => 'gone.gcode' } }
+    }
+    prusalink = stub_prusalink(payloads)
+    calls = []
+    prusalink.define_singleton_method(:pause_job) { |id| calls << [:pause, id] }
+    prusalink.define_singleton_method(:stop_job) { |id| calls << [:stop, id] }
+
+    PrinterPoller.new(@printer, prusalink: prusalink, home_assistant: stub_home_assistant).poll!
+
+    assert_empty calls
+    assert_equal 'cancelled', job.reload.status
+    assert_equal %w[cancelled], job.events.map(&:event_type)
+  end
+
   test 'leaves a claimed print running and drops its old hold' do
     Setting.enforce_claims = true
     job = @printer.jobs.create!(filename: 'mine.gcode', status: 'printing', prusalink_job_id: 'pl-909',

@@ -22,8 +22,9 @@ class ClaimHoldCancellation
 
   def record!
     now = Time.current
-    # claim_hold_at is refreshed so the poller doesn't read the printer catching up as a resume.
-    @job.update!(status: 'cancelled', ended_at: now, claim_hold_at: now)
+    # claim_cancelled_at keeps the poller from reading the printer catching up as the print
+    # running again (Job#claim_cancel_settling?).
+    @job.update!(status: 'cancelled', ended_at: now, claim_cancelled_at: now)
     event = @job.events.create!(event_type: 'cancelled', from_status: 'printing', to_status: 'cancelled',
                                 occurred_at: now, message:)
     CaptureEventPhotoJob.perform_later(event.id) if @job.printer.camera_configured?

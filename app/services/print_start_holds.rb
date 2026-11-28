@@ -25,6 +25,11 @@ class PrintStartHolds
     new(job, client:).reapply_claim!
   end
 
+  # Whether a print has to be paused (or cancelled) for a claim right now.
+  def self.claim_required?(job)
+    new(job).claim_required?
+  end
+
   def initialize(job, client: nil)
     @job = job
     @client = client
@@ -44,10 +49,14 @@ class PrintStartHolds
   # Pauses a print that is running unclaimed on a claim-enforcing printer, or cancels it once
   # it has used up its pauses. Returns true when the print was paused or cancelled.
   def reapply_claim!
-    return false unless @job.status == 'printing' && claim_required?
+    return false unless claim_required?
     return ClaimHoldCancellation.new(@job, client: @client).cancel! if @job.claim_pauses_used_up?
 
     pause!(true, nil)
+  end
+
+  def claim_required?
+    @job.status == 'printing' && @job.printer.enforces_claims? && @job.owner_id.nil?
   end
 
   private
@@ -59,10 +68,6 @@ class PrintStartHolds
   rescue PrinterControl::NotAllowed, PrinterConnection::Error => e
     Rails.logger.warn("[PrintStartHolds] couldn't pause job ##{@job.id}: #{e.message}")
     false
-  end
-
-  def claim_required?
-    @job.printer.enforces_claims? && @job.owner_id.nil?
   end
 
   def claim_hold?

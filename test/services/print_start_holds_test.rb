@@ -186,6 +186,7 @@ class PrintStartHoldsTest < ActiveJob::TestCase
     @job.reload
 
     assert_equal 'cancelled', @job.status
+    assert_predicate @job, :claim_cancel_settling?
     assert_equal 2, @job.claim_pause_count
     event = @job.events.recent.first
 

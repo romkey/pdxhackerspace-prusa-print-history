@@ -141,6 +141,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_28_120000) do
     t.datetime "filament_hold_at"
     t.string "filament_hold_reason"
     t.integer "claim_pause_count", default: 0, null: false
+    t.datetime "claim_cancelled_at"
     t.index ["claim_hold_at"], name: "index_jobs_on_claim_hold_at", where: "(claim_hold_at IS NOT NULL)"
     t.index ["cleared_by_id"], name: "index_jobs_on_cleared_by_id"
     t.index ["filament_hold_at"], name: "index_jobs_on_filament_hold_at", where: "(filament_hold_at IS NOT NULL)"
